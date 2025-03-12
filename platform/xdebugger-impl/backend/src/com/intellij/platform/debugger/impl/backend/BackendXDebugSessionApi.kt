@@ -196,7 +196,9 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val executionStackEntity = debuggerEntity<XExecutionStackEntity>(executionStackId.id) ?: return
     val stackFrameEntity = debuggerEntity<XStackFrameEntity>(frameId.id) ?: return
     withEntities(sessionEntity, executionStackEntity, stackFrameEntity) {
-      sessionEntity.session.setCurrentStackFrame(executionStackEntity.obj, stackFrameEntity.obj, isTopFrame)
+      withContext(Dispatchers.EDT) {
+        sessionEntity.session.setCurrentStackFrame(executionStackEntity.obj, stackFrameEntity.obj, isTopFrame)
+      }
     }
   }
 

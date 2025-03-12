@@ -32,10 +32,14 @@ data class XExecutionStackDto(
 
 @ApiStatus.Internal
 @Serializable
-data class XNewStackFrames(
-  val stacks: List<XStackFrameDto>,
-  val last: Boolean // TODO[IJPL-177087] maybe not needed, as we send all via Flow
-)
+sealed interface XStackFramesEvent {
+  @ApiStatus.Internal
+  @Serializable
+  data class XNewStackFrames(val frames: List<XStackFrameDto>, val last: Boolean) : XStackFramesEvent
+
+  @Serializable
+  data class ErrorOccurred(val errorMessage: @NlsContexts.DialogMessage String) : XStackFramesEvent
+}
 
 @ApiStatus.Internal
 @Serializable

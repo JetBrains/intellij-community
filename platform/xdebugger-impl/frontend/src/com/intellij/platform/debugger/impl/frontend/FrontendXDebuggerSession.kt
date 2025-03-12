@@ -110,7 +110,8 @@ internal class FrontendXDebuggerSession private constructor(
           send(null)
           return@collectLatest
         }
-        send(FrontendXExecutionStack(executionStackDto))
+        // TODO[IJPL-177087] narrower scope?
+        send(FrontendXExecutionStack(executionStackDto, cs))
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 

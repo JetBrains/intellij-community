@@ -25,7 +25,8 @@ internal class FrontendXSuspendContext(
             container.errorOccurred(executionStackEvent.errorMessage)
           }
           is XExecutionStacksEvent.NewExecutionStacks -> {
-            val feStacks = executionStackEvent.stacks.map { FrontendXExecutionStack(it) }
+            // TODO[IJPL-177087] narrower scope?
+            val feStacks = executionStackEvent.stacks.map { FrontendXExecutionStack(it, cs) }
             container.addExecutionStack(feStacks, executionStackEvent.last)
           }
         }
