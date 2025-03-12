@@ -4,6 +4,7 @@ package org.jetbrains.plugins.textmate
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +29,8 @@ internal fun registerBundlesInParallel(scope: CoroutineScope,
       }
     }
   }
+
+  ProgressManager.checkCanceled()
 
   val initializationJob = scope.launch(Dispatchers.IO) {
     bundlesToLoad.map { bundleToLoad ->
