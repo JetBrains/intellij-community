@@ -26,6 +26,7 @@ internal class CallableImportCandidatesProvider(
             is ImportPositionContext.InfixCall -> kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD)
 
             is ImportPositionContext.OperatorCall,
+            is ImportPositionContext.Delegate,
             is ImportPositionContext.Destructuring -> kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)
 
             else -> true
@@ -38,6 +39,7 @@ internal class CallableImportCandidatesProvider(
         when (importPositionContext) {
             is ImportPositionContext.InfixCall,
             is ImportPositionContext.OperatorCall,
+            is ImportPositionContext.Delegate,
             is ImportPositionContext.Destructuring -> false
             else -> true
         }
@@ -47,6 +49,7 @@ internal class CallableImportCandidatesProvider(
             is ImportPositionContext.InfixCall -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
 
             is ImportPositionContext.OperatorCall,
+            is ImportPositionContext.Delegate,
             is ImportPositionContext.Destructuring -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isOperator == true
 
             else -> true
