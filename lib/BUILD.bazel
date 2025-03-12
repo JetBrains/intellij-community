@@ -2681,8 +2681,8 @@ java_library(
 
 java_import(
   name = "jetbrains-ml-models-python-imports-ranking-model",
-  jars = ["@python-imports-ranking-model-coral-panda_http//file"],
-  srcjar = "@python-imports-ranking-model-coral-panda-sources_http//file",
+  jars = ["@python-imports-ranking-model-nebulous-albatross_http//file"],
+  srcjar = "@python-imports-ranking-model-nebulous-albatross-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4433,131 +4433,303 @@ java_import(
 java_library(
   name = "libraries-compose-foundation-desktop-compose-foundation-desktop",
   exports = [
-    ":foundation-desktop-1_7_1_http_import",
-    ":annotation-jvm-1_8_0_http_import",
-    ":collection-jvm-1_4_0_http_import",
-    ":animation-desktop-1_7_1_http_import",
-    ":animation-core-desktop-1_7_1_http_import",
-    ":ui-geometry-desktop-1_7_1_http_import",
-    ":foundation-layout-desktop-1_7_1_http_import",
-    ":runtime-desktop-1_7_1_http_import",
-    ":ui-desktop-1_7_1_http_import",
-    ":lifecycle-common-jvm-2_8_5_http_import",
-    ":lifecycle-runtime-desktop-2_8_5_http_import",
+    ":foundation-desktop-1_8_0-alpha04_http_import",
+    ":annotation-jvm-1_9_1_http_import",
+    ":collection-jvm-1_5_0-beta01_http_import",
+    ":performance-annotation-jvm-1_0_0-alpha01_http_import",
+    ":animation-desktop-1_8_0-alpha04_http_import",
+    ":animation-core-desktop-1_8_0-alpha04_http_import",
+    ":ui-geometry-desktop-1_8_0-alpha04_http_import",
+    ":foundation-layout-desktop-1_8_0-alpha04_http_import",
+    ":runtime-desktop-1_8_0-alpha04_http_import",
+    ":ui-desktop-1_8_0-alpha04_http_import",
+    ":lifecycle-common-jvm-2_9_0-alpha08_http_import",
+    ":jspecify-1_0_0_http_import",
+    ":lifecycle-runtime-desktop-2_9_0-alpha08_http_import",
+    ":lifecycle-common-2_9_0-alpha08_http_import",
+    ":annotation-1_8_1_http_import",
+    ":atomicfu-0_17_0_http_import",
     ":core-common-2_2_0_http_import",
-    ":lifecycle-viewmodel-desktop-2_8_5_http_import",
-    ":lifecycle-runtime-compose-desktop-2_8_4_http_import",
-    ":annotation-1_8_0_http_import",
-    ":runtime-saveable-desktop-1_7_1_http_import",
-    ":ui-graphics-desktop-1_7_1_http_import",
-    ":ui-unit-desktop-1_7_1_http_import",
-    ":ui-text-desktop-1_7_1_http_import",
-    ":ui-util-desktop-1_7_1_http_import",
+    ":lifecycle-viewmodel-desktop-2_9_0-alpha08_http_import",
+    ":lifecycle-runtime-compose-desktop-2_9_0-alpha04_http_import",
+    ":runtime-saveable-desktop-1_8_0-alpha04_http_import",
+    ":ui-backhandler-desktop-1_8_0-alpha04_http_import",
+    ":ui-graphics-desktop-1_8_0-alpha04_http_import",
+    ":ui-unit-desktop-1_8_0-alpha04_http_import",
+    ":ui-text-desktop-1_8_0-alpha04_http_import",
+    ":ui-util-desktop-1_8_0-alpha04_http_import",
     ":atomicfu-jvm-0_23_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "foundation-desktop-1_7_1_http_import",
-  jar = "@foundation-desktop-1_7_1_http//file",
-  srcjar = "@foundation-desktop-1_7_1-sources_http//file"
+  name = "foundation-desktop-1_8_0-alpha04_http_import",
+  jar = "@foundation-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@foundation-desktop-1_8_0-alpha04-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "animation-desktop-1_7_1_http_import",
-  jar = "@animation-desktop-1_7_1_http//file",
-  srcjar = "@animation-desktop-1_7_1-sources_http//file"
+  name = "annotation-jvm-1_9_1_http_import",
+  jar = "@annotation-jvm-1_9_1_http//file",
+  srcjar = "@annotation-jvm-1_9_1-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "animation-core-desktop-1_7_1_http_import",
-  jar = "@animation-core-desktop-1_7_1_http//file",
-  srcjar = "@animation-core-desktop-1_7_1-sources_http//file"
+  name = "collection-jvm-1_5_0-beta01_http_import",
+  jar = "@collection-jvm-1_5_0-beta01_http//file",
+  srcjar = "@collection-jvm-1_5_0-beta01-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ui-geometry-desktop-1_7_1_http_import",
-  jar = "@ui-geometry-desktop-1_7_1_http//file",
-  srcjar = "@ui-geometry-desktop-1_7_1-sources_http//file"
+  name = "performance-annotation-jvm-1_0_0-alpha01_http_import",
+  jar = "@performance-annotation-jvm-1_0_0-alpha01_http//file",
+  srcjar = "@performance-annotation-jvm-1_0_0-alpha01-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "foundation-layout-desktop-1_7_1_http_import",
-  jar = "@foundation-layout-desktop-1_7_1_http//file",
-  srcjar = "@foundation-layout-desktop-1_7_1-sources_http//file"
+  name = "animation-desktop-1_8_0-alpha04_http_import",
+  jar = "@animation-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@animation-desktop-1_8_0-alpha04-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "runtime-desktop-1_7_1_http_import",
-  jar = "@runtime-desktop-1_7_1_http//file",
-  srcjar = "@runtime-desktop-1_7_1-sources_http//file"
+  name = "animation-core-desktop-1_8_0-alpha04_http_import",
+  jar = "@animation-core-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@animation-core-desktop-1_8_0-alpha04-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ui-desktop-1_7_1_http_import",
-  jar = "@ui-desktop-1_7_1_http//file",
-  srcjar = "@ui-desktop-1_7_1-sources_http//file"
+  name = "ui-geometry-desktop-1_8_0-alpha04_http_import",
+  jar = "@ui-geometry-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@ui-geometry-desktop-1_8_0-alpha04-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "lifecycle-common-jvm-2_8_5_http_import",
-  jar = "@lifecycle-common-jvm-2_8_5_http//file",
-  srcjar = "@lifecycle-common-jvm-2_8_5-sources_http//file"
+  name = "foundation-layout-desktop-1_8_0-alpha04_http_import",
+  jar = "@foundation-layout-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@foundation-layout-desktop-1_8_0-alpha04-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "lifecycle-runtime-desktop-2_8_5_http_import",
-  jar = "@lifecycle-runtime-desktop-2_8_5_http//file",
-  srcjar = "@lifecycle-runtime-desktop-2_8_5-sources_http//file"
+  name = "runtime-desktop-1_8_0-alpha04_http_import",
+  jar = "@runtime-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@runtime-desktop-1_8_0-alpha04-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "lifecycle-viewmodel-desktop-2_8_5_http_import",
-  jar = "@lifecycle-viewmodel-desktop-2_8_5_http//file",
-  srcjar = "@lifecycle-viewmodel-desktop-2_8_5-sources_http//file"
+  name = "ui-desktop-1_8_0-alpha04_http_import",
+  jar = "@ui-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@ui-desktop-1_8_0-alpha04-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "lifecycle-runtime-compose-desktop-2_8_4_http_import",
-  jar = "@lifecycle-runtime-compose-desktop-2_8_4_http//file",
-  srcjar = "@lifecycle-runtime-compose-desktop-2_8_4-sources_http//file"
+  name = "lifecycle-common-jvm-2_9_0-alpha08_http_import",
+  jar = "@lifecycle-common-jvm-2_9_0-alpha08_http//file",
+  srcjar = "@lifecycle-common-jvm-2_9_0-alpha08-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "runtime-saveable-desktop-1_7_1_http_import",
-  jar = "@runtime-saveable-desktop-1_7_1_http//file",
-  srcjar = "@runtime-saveable-desktop-1_7_1-sources_http//file"
+  name = "jspecify-1_0_0_http_import",
+  jar = "@jspecify-1_0_0_http//file",
+  srcjar = "@jspecify-1_0_0-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ui-graphics-desktop-1_7_1_http_import",
-  jar = "@ui-graphics-desktop-1_7_1_http//file",
-  srcjar = "@ui-graphics-desktop-1_7_1-sources_http//file"
+  name = "lifecycle-runtime-desktop-2_9_0-alpha08_http_import",
+  jar = "@lifecycle-runtime-desktop-2_9_0-alpha08_http//file",
+  srcjar = "@lifecycle-runtime-desktop-2_9_0-alpha08-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ui-unit-desktop-1_7_1_http_import",
-  jar = "@ui-unit-desktop-1_7_1_http//file",
-  srcjar = "@ui-unit-desktop-1_7_1-sources_http//file"
+  name = "lifecycle-common-2_9_0-alpha08_http_import",
+  jar = "@lifecycle-common-2_9_0-alpha08_http//file",
+  srcjar = "@lifecycle-common-2_9_0-alpha08-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ui-text-desktop-1_7_1_http_import",
-  jar = "@ui-text-desktop-1_7_1_http//file",
-  srcjar = "@ui-text-desktop-1_7_1-sources_http//file"
+  name = "annotation-1_8_1_http_import",
+  jar = "@annotation-1_8_1_http//file",
+  srcjar = "@annotation-1_8_1-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ui-util-desktop-1_7_1_http_import",
-  jar = "@ui-util-desktop-1_7_1_http//file",
-  srcjar = "@ui-util-desktop-1_7_1-sources_http//file"
+  name = "atomicfu-0_17_0_http_import",
+  jar = "@atomicfu-0_17_0_http//file",
+  srcjar = "@atomicfu-0_17_0-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "lifecycle-viewmodel-desktop-2_9_0-alpha08_http_import",
+  jar = "@lifecycle-viewmodel-desktop-2_9_0-alpha08_http//file",
+  srcjar = "@lifecycle-viewmodel-desktop-2_9_0-alpha08-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "lifecycle-runtime-compose-desktop-2_9_0-alpha04_http_import",
+  jar = "@lifecycle-runtime-compose-desktop-2_9_0-alpha04_http//file",
+  srcjar = "@lifecycle-runtime-compose-desktop-2_9_0-alpha04-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "runtime-saveable-desktop-1_8_0-alpha04_http_import",
+  jar = "@runtime-saveable-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@runtime-saveable-desktop-1_8_0-alpha04-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-backhandler-desktop-1_8_0-alpha04_http_import",
+  jar = "@ui-backhandler-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@ui-backhandler-desktop-1_8_0-alpha04-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-graphics-desktop-1_8_0-alpha04_http_import",
+  jar = "@ui-graphics-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@ui-graphics-desktop-1_8_0-alpha04-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-unit-desktop-1_8_0-alpha04_http_import",
+  jar = "@ui-unit-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@ui-unit-desktop-1_8_0-alpha04-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-text-desktop-1_8_0-alpha04_http_import",
+  jar = "@ui-text-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@ui-text-desktop-1_8_0-alpha04-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "ui-util-desktop-1_8_0-alpha04_http_import",
+  jar = "@ui-util-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@ui-util-desktop-1_8_0-alpha04-sources_http//file"
 )
 
 kt_jvm_import(
   name = "atomicfu-jvm-0_23_2_http_import",
   jar = "@atomicfu-jvm-0_23_2_http//file",
   srcjar = "@atomicfu-jvm-0_23_2-sources_http//file"
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-hamcrest-hamcrest-core",
+  jars = ["@hamcrest-core-1_3_http//file"],
+  srcjar = "@hamcrest-core-1_3-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-annotations",
+  jars = ["@annotations-23_0_0_http//file"],
+  srcjar = "@annotations-23_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-desktop-desktop",
+  jars = ["@desktop-1_8_0-alpha04_http//file"],
+  srcjar = "@desktop-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-desktop-desktop-jvm",
+  jar = "@desktop-jvm-1_8_0-alpha04_http//file",
+  srcjar = "@desktop-jvm-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-runtime-runtime",
+  jars = ["@runtime-1_8_0-alpha04_http//file"],
+  srcjar = "@runtime-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-runtime-runtime2",
+  jars = ["@runtime-1_8_0-alpha04_http//file"],
+  srcjar = "@runtime-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-runtime-runtime3",
+  jars = ["@runtime-1_8_0-alpha04_http//file"],
+  srcjar = "@runtime-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui",
+  jars = ["@ui-1_8_0-alpha04_http//file"],
+  srcjar = "@ui-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test",
+  jars = ["@ui-test-1_8_0-alpha04_http//file"],
+  srcjar = "@ui-test-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-desktop",
+  jar = "@ui-test-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@ui-test-desktop-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4",
+  jars = ["@ui-test-junit4-1_8_0-alpha04_http//file"],
+  srcjar = "@ui-test-junit4-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
+  jar = "@ui-test-junit4-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@ui-test-junit4-desktop-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-text",
+  jars = ["@ui-text-1_8_0-alpha04_http//file"],
+  srcjar = "@ui-text-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-tooling-preview",
+  jars = ["@ui-tooling-preview-1_8_0-alpha04_http//file"],
+  srcjar = "@ui-tooling-preview-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
+  jar = "@ui-tooling-preview-desktop-1_8_0-alpha04_http//file",
+  srcjar = "@ui-tooling-preview-desktop-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-unit",
+  jars = ["@ui-unit-1_8_0-alpha04_http//file"],
+  srcjar = "@ui-unit-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui2",
+  jars = ["@ui-1_8_0-alpha04_http//file"],
+  srcjar = "@ui-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 java_library(
@@ -4572,15 +4744,15 @@ java_library(
 
 kt_jvm_import(
   name = "libraries-skiko-jetbrains-skiko-awt-compose",
-  jar = "@skiko-awt-0_8_18_http//file",
-  srcjar = "@skiko-awt-0_8_18-sources_http//file",
+  jar = "@skiko-awt-0_9_2_http//file",
+  srcjar = "@skiko-awt-0_9_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_import(
   name = "libraries-skiko-jetbrains-skiko-awt-runtime-all",
-  jars = ["@skiko-awt-runtime-all-0_8_18_http//file"],
-  srcjar = "@skiko-awt-runtime-all-0_8_18-sources_http//file",
+  jars = ["@skiko-awt-runtime-all-0_9_2_http//file"],
+  srcjar = "@skiko-awt-runtime-all-0_9_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7858,366 +8030,9 @@ kt_jvm_import(
 )
 
 java_import(
-  name = "platform-jewel-foundation-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-foundation-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ide_laf_bridge-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
   name = "platform-jewel-markdown-core-org-commonmark-commonmark",
   jars = ["@commonmark-0_24_0_http//file"],
   srcjar = "@commonmark-0_24_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-core-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8249,244 +8064,6 @@ java_import(
   srcjar = "@autolink-0_11_0-sources_http//file"
 )
 
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-autolink-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "platform-jewel-markdown-extension-gfm_strikethrough-commonmark-ext-gfm-strikethrough",
   exports = [
@@ -8503,485 +8080,9 @@ java_import(
 )
 
 java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_strikethrough-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
   name = "platform-jewel-markdown-extension-gfm_tables-commonmark-ext-gfm-tables",
   jars = ["@commonmark-ext-gfm-tables-0_24_0_http//file"],
   srcjar = "@commonmark-ext-gfm-tables-0_24_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-ide_laf_bridge_styling-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-markdown-int_ui_standalone_styling-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9021,20 +8122,6 @@ java_import(
 )
 
 java_import(
-  name = "platform-jewel-ui-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
   name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources",
   jars = ["@components-resources-1_7_0_http//file"],
   srcjar = "@components-resources-1_7_0-sources_http//file",
@@ -9045,230 +8132,6 @@ kt_jvm_import(
   name = "platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
   jar = "@components-resources-desktop-1_7_0_http//file",
   srcjar = "@components-resources-desktop-1_7_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-hamcrest-hamcrest-core",
-  jars = ["@hamcrest-core-1_3_http//file"],
-  srcjar = "@hamcrest-core-1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-annotations",
-  jars = ["@annotations-23_0_0_http//file"],
-  srcjar = "@annotations-23_0_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-desktop-desktop",
-  jars = ["@desktop-1_7_1_http//file"],
-  srcjar = "@desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-desktop-desktop-jvm",
-  jar = "@desktop-jvm-1_7_1_http//file",
-  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-runtime-runtime",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-runtime-runtime2",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-runtime-runtime3",
-  jars = ["@runtime-1_7_1_http//file"],
-  srcjar = "@runtime-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-ui-ui",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-ui-ui-test",
-  jars = ["@ui-test-1_7_1_http//file"],
-  srcjar = "@ui-test-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-ui-ui-test-desktop",
-  jar = "@ui-test-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-ui-ui-test-junit4",
-  jars = ["@ui-test-junit4-1_7_1_http//file"],
-  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
-  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-ui-ui-text",
-  jars = ["@ui-text-1_7_1_http//file"],
-  srcjar = "@ui-text-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-ui-ui-tooling-preview",
-  jars = ["@ui-tooling-preview-1_7_1_http//file"],
-  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
-  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-ui-ui-unit",
-  jars = ["@ui-unit-1_7_1_http//file"],
-  srcjar = "@ui-unit-1_7_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_import(
-  name = "platform-jewel-ui_tests-org-jetbrains-compose-ui-ui2",
-  jars = ["@ui-1_7_1_http//file"],
-  srcjar = "@ui-1_7_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
