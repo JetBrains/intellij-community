@@ -121,7 +121,7 @@ internal class NotificationContent(
   val project: Project,
   private val toolWindow: ToolWindow,
 ) : Disposable, ToolWindowManagerListener {
-  private val myMainPanel = JBPanelWithEmptyText(BorderLayout())
+  private val mainPanel = JBPanelWithEmptyText(BorderLayout())
 
   private val myNotifications = ArrayList<Notification>()
 
@@ -139,7 +139,7 @@ internal class NotificationContent(
   private val splitterWrapper: JPanel
 
   init {
-    myMainPanel.background = NotificationComponent.BG_COLOR
+    mainPanel.background = NotificationComponent.BG_COLOR
     setEmptyState()
     handleFocus()
 
@@ -147,7 +147,7 @@ internal class NotificationContent(
     timeline = NotificationGroupComponent(this, false, project)
     searchController = SearchController(this, suggestions, timeline)
 
-    myMainPanel.add(createSearchComponent(), BorderLayout.NORTH)
+    mainPanel.add(createSearchComponent(), BorderLayout.NORTH)
 
     createGearActions()
 
@@ -157,7 +157,7 @@ internal class NotificationContent(
     splitterWrapper = object : NonOpaquePanel(splitter) {
       override fun isVisible() = super.isVisible() && splitter.isVisible
     }
-    myMainPanel.add(splitterWrapper)
+    mainPanel.add(splitterWrapper)
 
     autoProportionController = AutoProportionController(splitter, suggestions, timeline)
 
@@ -167,8 +167,8 @@ internal class NotificationContent(
 
     Disposer.register(toolWindow.disposable, this)
 
-    val content = ContentFactory.getInstance().createContent(myMainPanel, "", false)
-    content.preferredFocusableComponent = myMainPanel
+    val content = ContentFactory.getInstance().createContent(mainPanel, "", false)
+    content.preferredFocusableComponent = mainPanel
 
     val contentManager = toolWindow.contentManager
     contentManager.addContent(content)
@@ -250,7 +250,7 @@ internal class NotificationContent(
     }
     else {
       gearAction.copyFrom(findAction)
-      gearAction.registerCustomShortcutSet(findAction.shortcutSet, myMainPanel)
+      gearAction.registerCustomShortcutSet(findAction.shortcutSet, mainPanel)
     }
 
     val group = DefaultActionGroup()
@@ -271,18 +271,18 @@ internal class NotificationContent(
   }
 
   fun setEmptyState() {
-    myMainPanel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.first.line"))
+    mainPanel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.first.line"))
     @Suppress("DialogTitleCapitalization")
-    myMainPanel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.second.line"))
+    mainPanel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.second.line"))
   }
 
   fun clearEmptyState() {
-    myMainPanel.emptyText.clear()
+    mainPanel.emptyText.clear()
   }
 
   private fun handleFocus() {
     val listener = AWTEventListener {
-      if (it is MouseEvent && it.id == MouseEvent.MOUSE_PRESSED && !toolWindow.isActive && UIUtil.isAncestor(myMainPanel, it.component)) {
+      if (it is MouseEvent && it.id == MouseEvent.MOUSE_PRESSED && !toolWindow.isActive && UIUtil.isAncestor(mainPanel, it.component)) {
         it.component.requestFocus()
       }
     }
@@ -402,9 +402,9 @@ internal class NotificationContent(
   }
 
   fun fullRepaint() {
-    myMainPanel.doLayout()
-    myMainPanel.revalidate()
-    myMainPanel.repaint()
+    mainPanel.doLayout()
+    mainPanel.revalidate()
+    mainPanel.repaint()
   }
 }
 
