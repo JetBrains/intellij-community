@@ -21,12 +21,12 @@ public final class JavaSdkVersionUtil {
     return actual == null || actual.isAtLeast(expected);
   }
 
-  public static JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
+  public static @Nullable JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     return module != null ? getJavaSdkVersion(ModuleRootManager.getInstance(module).getSdk()) : null;
   }
 
-  public static JavaSdkVersion getJavaSdkVersion(@Nullable Sdk sdk) {
+  public static @Nullable JavaSdkVersion getJavaSdkVersion(@Nullable Sdk sdk) {
     if (sdk != null) {
       SdkTypeId sdkType = sdk.getSdkType();
       if (!(sdkType instanceof JavaSdk) && sdkType instanceof SdkType) {
