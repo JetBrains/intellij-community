@@ -49,7 +49,7 @@ object ApplicationNotificationsModel {
     else {
       val callbacks = mutableListOf<Runnable>()
       for ((project, model) in projectToModel.entries) {
-        val callback = model.addNotification(project, notification, notifications)
+        val callback = model.addNotification(project, notification)
         callbacks.add(callback)
       }
       return Runnable {
@@ -62,7 +62,7 @@ object ApplicationNotificationsModel {
 
   private fun addProjectNotification(project: Project, notification: Notification): Runnable {
     val model = projectToModel.getOrPut(project) { newProjectModel(project) }
-    return model.addNotification(project, notification, notifications)
+    return model.addNotification(project, notification)
   }
 
   @JvmStatic
@@ -219,7 +219,7 @@ object ApplicationNotificationsModel {
       model to initNotifications
     }
     for (notification in initNotifications) {
-      model.addNotification(content.project, notification, emptyList()).run()
+      model.addNotification(content.project, notification).run()
     }
   }
 
@@ -256,14 +256,10 @@ private class ProjectNotificationModel {
     return initNotifications
   }
 
-  fun addNotification(project: Project, notification: Notification, appNotifications: List<Notification>): Runnable {
+  fun addNotification(project: Project, notification: Notification): Runnable {
     unreadNotifications.add(notification)
     if (myContent == null) {
       myNotifications.add(notification)
-
-      val notifications = ArrayList(appNotifications)
-      notifications.addAll(myNotifications)
-
       return Runnable { updateToolWindow(project, notification, false) }
     }
     else {

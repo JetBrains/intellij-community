@@ -101,7 +101,34 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.setContentUiType(ToolWindowContentUiType.TABBED, null)
-    NotificationContent(project, toolWindow)
+    val component = NotificationContent(project, toolWindow.disposable)
+
+    project.messageBus.connect(component).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      private var wasVisible = false
+
+      override fun stateChanged(toolWindowManager: ToolWindowManager) {
+        val visible = toolWindow.isVisible
+        if (wasVisible != visible) {
+          wasVisible = visible
+          if (visible) {
+            project.closeAllBalloons()
+            component.updateComponents()
+          }
+          else {
+            ApplicationNotificationsModel.markAllRead(project)
+          }
+        }
+      }
+    })
+
+    val content = ContentFactory.getInstance().createContent(component.component, "", false)
+    content.preferredFocusableComponent = component.component
+
+    val contentManager = toolWindow.contentManager
+    contentManager.addContent(content)
+    contentManager.setSelectedContent(content)
+
+    (toolWindow as ToolWindowEx).setAdditionalGearActions(component.createActions())
   }
 }
 
@@ -117,11 +144,10 @@ object NotificationsStateWatcher {
 @JvmRecord
 data class StatusMessage(val notification: Notification, val text: @NlsContexts.StatusBarText String, val stamp: Long)
 
-internal class NotificationContent(
-  val project: Project,
-  private val toolWindow: ToolWindow,
-) : Disposable, ToolWindowManagerListener {
-  private val mainPanel = JBPanelWithEmptyText(BorderLayout())
+internal class NotificationContent(val project: Project, parentDisposable: Disposable) : Disposable {
+  private val mainPanel: JBPanelWithEmptyText = JBPanelWithEmptyText(BorderLayout())
+  val component: JComponent
+    get() = mainPanel
 
   private val myNotifications = ArrayList<Notification>()
 
@@ -131,8 +157,6 @@ internal class NotificationContent(
   private val autoProportionController: AutoProportionController
 
   private val singleSelectionHandler = SingleTextSelectionHandler()
-
-  private var myVisible = true
 
   private val searchUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler()
 
@@ -149,8 +173,6 @@ internal class NotificationContent(
 
     mainPanel.add(createSearchComponent(), BorderLayout.NORTH)
 
-    createGearActions()
-
     val splitter = MySplitter()
     splitter.firstComponent = suggestions
     splitter.secondComponent = timeline
@@ -165,18 +187,9 @@ internal class NotificationContent(
     timeline.setRemoveCallback(Consumer(ApplicationNotificationsModel::remove))
     timeline.setClearCallback { ApplicationNotificationsModel.clearTimeline(project) }
 
-    Disposer.register(toolWindow.disposable, this)
+    Disposer.register(parentDisposable, this)
 
-    val content = ContentFactory.getInstance().createContent(mainPanel, "", false)
-    content.preferredFocusableComponent = mainPanel
-
-    val contentManager = toolWindow.contentManager
-    contentManager.addContent(content)
-    contentManager.setSelectedContent(content)
-
-    project.messageBus.connect(toolWindow.disposable).subscribe(ToolWindowManagerListener.TOPIC, this)
-
-    val connection = ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable)
+    val connection = ApplicationManager.getApplication().messageBus.connect(this)
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       suggestions.updateLaf()
       timeline.updateLaf()
@@ -235,7 +248,7 @@ internal class NotificationContent(
     return searchField
   }
 
-  private fun createGearActions() {
+  fun createActions(): ActionGroup {
     val gearAction = object : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) {
         searchController.startSearch()
@@ -266,8 +279,7 @@ internal class NotificationContent(
     if (markAction != null) {
       group.add(markAction)
     }
-
-    (toolWindow as ToolWindowEx).setAdditionalGearActions(group)
+    return group
   }
 
   fun setEmptyState() {
@@ -282,12 +294,14 @@ internal class NotificationContent(
 
   private fun handleFocus() {
     val listener = AWTEventListener {
-      if (it is MouseEvent && it.id == MouseEvent.MOUSE_PRESSED && !toolWindow.isActive && UIUtil.isAncestor(mainPanel, it.component)) {
+      if (it is MouseEvent && it.id == MouseEvent.MOUSE_PRESSED
+          && !UIUtil.isFocusAncestor(mainPanel)
+          && UIUtil.isAncestor(mainPanel, it.component)) {
         it.component.requestFocus()
       }
     }
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK)
-    Disposer.register(toolWindow.disposable, Disposable {
+    Disposer.register(this, Disposable {
       Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
     })
   }
@@ -380,20 +394,9 @@ internal class NotificationContent(
     ApplicationNotificationsModel.setStatusMessage(project, null)
   }
 
-  override fun stateChanged(toolWindowManager: ToolWindowManager) {
-    val visible = toolWindow.isVisible
-    if (myVisible != visible) {
-      myVisible = visible
-      if (visible) {
-        project.closeAllBalloons()
-
-        suggestions.updateComponents()
-        timeline.updateComponents()
-      }
-      else {
-        ApplicationNotificationsModel.markAllRead(project)
-      }
-    }
+  fun updateComponents() {
+    suggestions.updateComponents()
+    timeline.updateComponents()
   }
 
   override fun dispose() {
