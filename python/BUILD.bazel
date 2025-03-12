@@ -266,6 +266,7 @@ jvm_library(
     "//python/services/internal-impl:python-community-services-internal-impl",
     "@lib//:io-github-z4kn4fein-semver-jvm",
     "//python/python-pyproject:pyproject",
+    "//python/python-hatch:hatch",
   ],
   exports = [
     "//python/openapi:community",

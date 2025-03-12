@@ -19,6 +19,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/navbar/backend",
     "//platform/navbar/frontend",
+    "//platform/platform-impl:ide-impl",
   ],
   runtime_deps = [":testFramework_resources"]
 )
