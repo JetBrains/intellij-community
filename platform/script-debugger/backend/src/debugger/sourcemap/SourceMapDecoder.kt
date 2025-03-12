@@ -34,11 +34,15 @@ fun decodeSourceMapFromFile(file: Path,
   return FileBackedSourceMap.newFileBackedSourceMap(file, trimFileScheme, baseUrl, baseUrlIsFile)
 }
 
-fun decodeSourceMapSafely(sourceMapData: CharSequence,
-                          trimFileScheme: Boolean,
-                          baseUrl: Url?,
-                          baseUrlIsFile: Boolean): SourceMap? {
-  return decodeSourceMap(sourceMapData) { sourceUrls -> SourceResolver(sourceUrls, trimFileScheme, baseUrl, baseUrlIsFile) }
+@Deprecated("This function isn not a part of the public API and will be removed in the future")
+fun decodeSourceMapSafely(
+  sourceMapData: CharSequence,
+  trimFileScheme: Boolean,
+  baseUrl: Url?,
+  baseUrlIsFile: Boolean,
+  transformToLocalFileUrlIfPossible: Boolean = true,
+): SourceMap? {
+  return decodeSourceMap(sourceMapData) { sourceUrls -> SourceResolver(sourceUrls, baseUrl, baseUrlIsFile, transformToLocalFileUrlIfPossible) }
 }
 
 @ApiStatus.Internal

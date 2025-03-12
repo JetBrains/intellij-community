@@ -28,16 +28,18 @@ interface SourceFileResolver {
 }
 
 @ApiStatus.Internal
-class SourceResolver(private val rawSources: List<String>,
-                     trimFileScheme: Boolean,
-                     baseUrl: Url?,
-                     baseUrlIsFile: Boolean = true) {
+class SourceResolver(
+  private val rawSources: List<String>,
+  baseUrl: Url?,
+  baseUrlIsFile: Boolean = true,
+  transformToLocalFileUrlIfPossible: Boolean = true,
+) : SourceFileResolver {
   companion object {
     fun isAbsolute(path: String): Boolean = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
   }
 
   val canonicalizedUrls: Array<Url> by lazy {
-    Array(rawSources.size) { canonicalizeUrl(rawSources[it], baseUrl, trimFileScheme, baseUrlIsFile) }
+    Array(rawSources.size) { canonicalizeUrl(rawSources[it], baseUrl, baseUrlIsFile, transformToLocalFileUrlIfPossible) }
   }
 
   private val canonicalizedUrlToSourceIndex: Object2IntMap<Url> by lazy {
@@ -112,6 +114,7 @@ class SourceResolver(private val rawSources: List<String>,
   fun getUrlIfLocalFile(entry: MappingEntry): Url? = canonicalizedUrls.getOrNull(entry.source)?.let { if (it.isInLocalFileSystem) it else null }
 }
 
+@ApiStatus.Internal
 fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String {
   var path = url
   if (!FileUtil.isAbsolute(url) && url.isNotEmpty() && url[0] != '/') {
@@ -149,7 +152,8 @@ private fun isValidPath(path: String): Boolean {
 }
 
 // see canonicalizeUri kotlin impl and https://trac.webkit.org/browser/trunk/Source/WebCore/inspector/front-end/ParsedURL.js completeURL
-fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrlIsFile: Boolean = true): Url {
+@ApiStatus.Internal
+fun canonicalizeUrl(url: String, baseUrl: Url?, baseUrlIsFile: Boolean = true, transformToLocalFileUrlIfPossible: Boolean = true): Url {
   if (url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
     return ScriptDebuggerUrls.toLocalFileUrl(url)
   }
@@ -161,14 +165,14 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrl
     return Urls.parseEncoded(url) ?: Urls.newUri(null, url)
   }
   else {
-    return doCanonicalize(url, baseUrl, baseUrlIsFile, true)
+    return doCanonicalize(url, baseUrl, baseUrlIsFile, transformToLocalFileUrlIfPossible)
   }
 }
 
+@ApiStatus.Internal
 fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFileIfAbsoluteAndExists: Boolean): Url {
   val path = canonicalizePath(url, baseUrl, baseUrlIsFile)
-  if (baseUrl.isInLocalFileSystem ||
-      asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path) && Path(path).exists()) {
+  if (baseUrl.isInLocalFileSystem || asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path) && Path(path).exists()) {
     // file:///home/user/foo.js.map, foo.ts -> file:///home/user/foo.ts (baseUrl is in local fs)
     // http://localhost/home/user/foo.js.map, foo.ts -> file:///home/user/foo.ts (File(path) exists)
     return ScriptDebuggerUrls.newLocalFileUrl(path)

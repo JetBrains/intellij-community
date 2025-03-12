@@ -40,12 +40,8 @@ org.jetbrains.debugger.sourcemap.MappingEntry
 org.jetbrains.debugger.sourcemap.SourceMap
 - a:getSourceMappingsInLine(I,I):java.lang.Iterable
 f:org.jetbrains.debugger.sourcemap.SourceMapDecoderKt
-- sf:decodeSourceMapSafely(java.lang.CharSequence,Z,com.intellij.util.Url,Z):org.jetbrains.debugger.sourcemap.SourceMap
-f:org.jetbrains.debugger.sourcemap.SourceResolverKt
-- sf:canonicalizePath(java.lang.String,com.intellij.util.Url,Z):java.lang.String
-- sf:canonicalizeUrl(java.lang.String,com.intellij.util.Url,Z,Z):com.intellij.util.Url
-- bs:canonicalizeUrl$default(java.lang.String,com.intellij.util.Url,Z,Z,I,java.lang.Object):com.intellij.util.Url
-- sf:doCanonicalize(java.lang.String,com.intellij.util.Url,Z,Z):com.intellij.util.Url
+- sf:decodeSourceMapSafely(java.lang.CharSequence,Z,com.intellij.util.Url,Z,Z):org.jetbrains.debugger.sourcemap.SourceMap
+- bs:decodeSourceMapSafely$default(java.lang.CharSequence,Z,com.intellij.util.Url,Z,Z,I,java.lang.Object):org.jetbrains.debugger.sourcemap.SourceMap
 org.jetbrains.debugger.values.Value
 - a:getType():org.jetbrains.debugger.values.ValueType
 - a:getValueString():java.lang.String

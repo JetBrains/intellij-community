@@ -26,7 +26,7 @@ internal class FileBackedSourceMap private constructor(
                                baseUrlIsFile: Boolean): FileBackedSourceMap? {
       val text = filePath.readText()
       val data = SourceMapDataCache.getOrCreate(text, filePath.toString()) ?: return null
-      return FileBackedSourceMap(filePath, data, SourceResolver(data.sourceMapData.sources, trimFileScheme, baseUrl, baseUrlIsFile))
+      return FileBackedSourceMap(filePath, data, SourceResolver(data.sourceMapData.sources, baseUrl, baseUrlIsFile))
     }
   }
 }
