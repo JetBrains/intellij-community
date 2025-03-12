@@ -568,7 +568,7 @@ public fun EditableListComboBox(
             // cause a call to this very function via SLC's onSelectedIndexesChange.
             textFieldState.edit { replace(0, length, items[index]) }
 
-            if (listState.selectedKeys.size != 1 || !listState.selectedKeys.contains(itemKeys(index, items[index]))) {
+            if (listState.selectedKeys.size != 1 || itemKeys(index, items[index]) !in listState.selectedKeys) {
                 // This guard condition should also help avoid issues caused by side effects
                 // of setting new selected keys, as per the comment above.
                 listState.selectedKeys = setOf(itemKeys(index, items[index]))
