@@ -52,7 +52,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     @Override
     public @NotNull Presentation createTemplatePresentation() {
       Presentation presentation = super.createTemplatePresentation();
-      presentation.setKeepPopupOnPerform(KeepPopupOnPerform.Never);
+      presentation.setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
       return presentation;
     }
 
