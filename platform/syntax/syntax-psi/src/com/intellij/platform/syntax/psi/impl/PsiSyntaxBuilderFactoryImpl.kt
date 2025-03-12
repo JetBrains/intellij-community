@@ -32,7 +32,7 @@ internal class PsiSyntaxBuilderFactoryImpl : PsiSyntaxBuilderFactory {
       lexer = actualLexer,
       charTable = SharedImplUtil.findCharTableByTree(chameleon),
       text = text,
-      originalTree = com.intellij.openapi.util.Pair.getFirst(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)),
+      originalTree = Pair.getFirst(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)),
       lastCommittedText = Pair.getSecond(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)),
       parentLightTree = null,
       startOffset = 0,
