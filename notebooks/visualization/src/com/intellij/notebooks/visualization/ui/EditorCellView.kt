@@ -82,6 +82,10 @@ class EditorCellView(
 
   var selected: Boolean = false
     set(value) {
+      if (field == value) {
+        return
+      }
+
       field = value
       updateFolding()
       updateRunButtonVisibility()
