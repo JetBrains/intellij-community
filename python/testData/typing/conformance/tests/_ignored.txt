@@ -54,7 +54,6 @@ historical_positional.py
 literals_literalstring.py
 literals_semantics.py
 namedtuples_define_class.py
-namedtuples_define_functional.py
 namedtuples_type_compat.py
 namedtuples_usage.py
 narrowing_typeis.py

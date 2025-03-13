@@ -587,6 +587,17 @@ public final @NonNls class PyNames {
     TRY
   );
 
+  // As per: https://docs.python.org/3/reference/lexical_analysis.html#keywords
+  public static final Set<String> PY3_KEYWORDS = Set.of(
+    FALSE,  AWAIT,    ELSE,    IMPORT,   PASS,
+    NONE,   BREAK,    EXCEPT,  IN,       RAISE,
+    TRUE,   CLASS,    FINALLY, IS,       RETURN,
+    AND,    CONTINUE, FOR,     LAMBDA,   TRY,
+    AS,     DEF,      FROM,    NONLOCAL, WHILE,
+    ASSERT, DEL,      GLOBAL,  NOT,      WITH,
+    ASYNC,  ELIF,     IF,      OR,       YIELD
+  );
+
   public static final Set<String> BUILTIN_INTERFACES = Set.of(
     CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING, ABC_COMPLEX, ABC_REAL, ABC_RATIONAL, ABC_INTEGRAL,
     ABC_NUMBER
