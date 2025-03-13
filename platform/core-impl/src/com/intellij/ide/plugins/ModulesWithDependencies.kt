@@ -11,6 +11,7 @@ private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
 private val COVERAGE_ALIAS_ID = PluginId.getId("com.intellij.modules.coverage")
 private val ML_INLINE_ALIAS_ID = PluginId.getId("com.intellij.ml.inline.completion")
+private val JSON_ALIAS_ID = PluginId.getId("com.intellij.modules.json")
 
 internal class ModulesWithDependencies(val modules: List<IdeaPluginDescriptorImpl>,
                                        val directDependencies: Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>) {
@@ -79,6 +80,10 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
       if (!strictCheck) {
         if (System.getProperty("enable.implicit.json.dependency").toBoolean()) {
           moduleMap.get("com.intellij.modules.json")?.let { dependenciesCollector.add(it) }
+          moduleMap.get("intellij.json.backend")?.let { dependenciesCollector.add(it) }
+        }
+        if (doesDependOnPluginAlias(module, JSON_ALIAS_ID)) {
+          moduleMap.get("intellij.json.backend")?.let { dependenciesCollector.add(it) }
         }
         moduleMap.get("intellij.platform.collaborationTools")?.let { dependenciesCollector.add(it) }
       }
