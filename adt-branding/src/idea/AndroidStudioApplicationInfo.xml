@@ -16,7 +16,7 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2024" minor="3" micro="0" patch="0" full="dev build" suffix="" eap="true"/>
+  <version major="2025" minor="1" micro="0" patch="0" full="dev build" suffix="" eap="true"/>
   <company name="Google" url="http://developer.android.com"/>
   <build number="AI-__BUILD__" date="__BUILD_DATE__"/>
   <logo url="/artwork/studio_splash.png"/>
