@@ -3,15 +3,13 @@ package com.intellij.json.split
 
 import com.intellij.json.JsonLanguage
 import com.intellij.json.formatter.JsonCodeStyleSettings
-import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
+import com.intellij.lang.Language
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomDataSynchronizer
 
-//todo split on two separate classes for the backend and the frontend
-@InternalIgnoreDependencyViolation
-class JsonCodeStyleSettingsCustomDataSynchronizer : CodeStyleSettingsCustomDataSynchronizer<JsonCodeStyleSettings>() {
-  override val language
+internal class JsonCodeStyleSettingsCustomDataSynchronizer : CodeStyleSettingsCustomDataSynchronizer<JsonCodeStyleSettings>() {
+  override val language: Language
     get() = JsonLanguage.INSTANCE
 
-  override val customCodeStyleSettingsClass
+  override val customCodeStyleSettingsClass: Class<JsonCodeStyleSettings>
     get() = JsonCodeStyleSettings::class.java
 }

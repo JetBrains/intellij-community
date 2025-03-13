@@ -16,6 +16,7 @@
   </dependencies>
 
   <content>
+    <module name="intellij.json.frontend.split"/>
     <module name="intellij.json.split" loading="required"/>
     <module name="intellij.json" loading="embedded"/>
   </content>  
