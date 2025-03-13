@@ -41,16 +41,6 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
-/**
- * UI Tests for the ListComboBox and EditableListComboBox components. These tests verify the behavior of both editable
- * and non-editable combo boxes in various interaction scenarios including:
- * - Focus management
- * - Keyboard navigation
- * - Mouse interaction
- * - Popup menu behavior
- * - Text input (for editable combo boxes)
- * - State management
- */
 @OptIn(ExperimentalTestApi::class)
 class ListComboBoxUiTest {
     @get:Rule val composeRule = createComposeRule()
@@ -68,7 +58,6 @@ class ListComboBoxUiTest {
     private val comboBox: SemanticsNodeInteraction
         get() = composeRule.onNodeWithTag("ComboBox")
 
-    /** Tests that clicking the chevron container opens the popup menu when the combo box is enabled and editable. */
     @Test
     fun `when enabled and editable clicking the chevron container opens the popup`() {
         editableListComboBox()
@@ -76,7 +65,6 @@ class ListComboBoxUiTest {
         popupMenu.assertExists()
     }
 
-    /** Verifies that clicking the chevron container has no effect when the combo box is disabled. */
     @Test
     fun `when disable clicking the chevron container doesn't open the popup`() {
         injectListComboBox(FocusRequester(), isEnabled = false)
@@ -84,7 +72,6 @@ class ListComboBoxUiTest {
         popupMenu.assertDoesNotExist()
     }
 
-    /** Tests that clicking the chevron twice toggles the popup menu visibility in an editable combo box. */
     @Test
     fun `when editable clicking chevron twice opens and closed the popup`() {
         injectEditableListComboBox(FocusRequester(), isEnabled = true)
@@ -96,10 +83,6 @@ class ListComboBoxUiTest {
         popupMenu.assertDoesNotExist()
     }
 
-    /**
-     * Verifies proper TAB key navigation behavior in editable combo boxes. The test ensures that only the text field
-     * receives focus when tabbing through.
-     */
     @Test
     fun `TAB navigation focuses only the editable combo box's text field`() {
         val focusRequester = FocusRequester()
@@ -134,7 +117,6 @@ class ListComboBoxUiTest {
         composeRule.onNodeWithTag("Pre-Box").assertIsFocused()
     }
 
-    /** Tests that clicking on a non-editable combo box opens the popup menu. */
     @Test
     fun `when not-editable click opens popup`() {
         val comboBox = focusedListComboBox()
@@ -143,7 +125,6 @@ class ListComboBoxUiTest {
         composeRule.onAllNodesWithText("Item 2", useUnmergedTree = true).onLast().assertIsDisplayed()
     }
 
-    /** Verifies that clicking on the combo box area opens the popup menu in a non-editable combo box. */
     @Test
     fun `when not-editable click on comboBox opens popup`() {
         val comboBox = focusedListComboBox()
@@ -152,7 +133,6 @@ class ListComboBoxUiTest {
         popupMenu.assertIsDisplayed()
     }
 
-    /** Tests that double-clicking on a non-editable combo box toggles the popup menu visibility (open then close). */
     @Test
     fun `when not-editable double click on comboBox opens and closes popup`() {
         val comboBox = focusedListComboBox()
@@ -166,7 +146,6 @@ class ListComboBoxUiTest {
         popupMenu.assertDoesNotExist()
     }
 
-    /** Verifies that pressing the spacebar key opens the popup menu in a non-editable combo box. */
     @Test
     fun `when not-editable pressing spacebar opens popup`() {
         val comboBox = focusedListComboBox()
@@ -180,10 +159,6 @@ class ListComboBoxUiTest {
         popupMenu.assertIsDisplayed()
     }
 
-    /**
-     * Tests that pressing spacebar in an editable combo box types a space character instead of opening the popup menu.
-     * Currently ignored due to a known issue tracked in YouTrack.
-     */
     @Ignore("Due to https://youtrack.jetbrains.com/issue/CMP-3710")
     @Test
     fun `when editable pressing spacebar does not open popup`() {
@@ -200,7 +175,6 @@ class ListComboBoxUiTest {
         popupMenu.assertDoesNotExist()
     }
 
-    /** Verifies that pressing enter does not open the popup menu in a non-editable combo box. */
     @Test
     fun `when not-editable pressing enter does not open popup`() {
         val comboBox = focusedListComboBox()
@@ -215,7 +189,6 @@ class ListComboBoxUiTest {
         composeRule.onNodeWithTag("Item 1", useUnmergedTree = true).assertDoesNotExist()
     }
 
-    /** Tests that pressing enter in an editable combo box does not open the popup menu. */
     @Test
     fun `when editable, pressing enter does not open popup`() {
         val comboBox = editableListComboBox()
@@ -230,7 +203,6 @@ class ListComboBoxUiTest {
         popupMenu.assertDoesNotExist()
     }
 
-    /** Verifies that the text field in an editable combo box is properly displayed and can receive text input. */
     @Test
     fun `when editable, textField is displayed and can receive input`() {
         injectEditableListComboBox(FocusRequester(), isEnabled = true)
@@ -243,7 +215,6 @@ class ListComboBoxUiTest {
         textField.assertIsDisplayed()
     }
 
-    /** Tests that a non-editable combo box displays non-editable text instead of a text field. */
     @Suppress("SwallowedException")
     @Test
     fun `when not editable, non editable text is displayed`() {
@@ -253,7 +224,6 @@ class ListComboBoxUiTest {
         composeRule.onNodeWithTag("Jewel.ComboBox.NonEditableText", useUnmergedTree = true).assertIsDisplayed()
     }
 
-    /** Verifies that a disabled combo box cannot be interacted with, preventing both clicks and text input. */
     @Test
     fun `when disabled, ComboBox cannot be interacted with`() {
         val comboBox = disabledEditableListComboBox()
@@ -266,7 +236,6 @@ class ListComboBoxUiTest {
         popupMenu.assertDoesNotExist()
     }
 
-    /** Tests that the divider is properly displayed in an editable combo box. */
     @Test
     fun `when editable divider is displayed`() {
         injectEditableListComboBox(FocusRequester(), isEnabled = true)
@@ -285,7 +254,6 @@ class ListComboBoxUiTest {
         }
     }
 
-    /** Verifies that the divider is not displayed in a non-editable combo box. */
     @Test
     fun `when not-editable divider is not displayed`() {
         injectListComboBox(FocusRequester(), isEnabled = true)
@@ -297,9 +265,6 @@ class ListComboBoxUiTest {
             .assertDoesNotExist()
     }
 
-    /**
-     * Tests that the chevron container in a non-editable combo box is clickable and opens the popup menu when clicked.
-     */
     @Test
     fun `when not-editable the ChevronContainer is clickable and opens popup`() {
         injectListComboBox(FocusRequester(), isEnabled = true)
@@ -318,7 +283,6 @@ class ListComboBoxUiTest {
         popupMenu.assertIsDisplayed()
     }
 
-    /** Verifies that pressing the down arrow key opens the popup menu in an editable combo box. */
     @Test
     fun `when focused and editable pressing arrow down opens the popup`() {
         editableListComboBox()
@@ -330,10 +294,6 @@ class ListComboBoxUiTest {
         popupMenu.assertIsDisplayed()
     }
 
-    /**
-     * Tests that pressing the down arrow key twice in an editable combo box opens the popup and selects the second
-     * item.
-     */
     @Test
     fun `when focused and editable pressing arrow down twice opens the popup and selects the second item`() {
         editableListComboBox()
@@ -348,7 +308,6 @@ class ListComboBoxUiTest {
         composeRule.onAllNodesWithText("Item 2", useUnmergedTree = true).onLast().assertIsDisplayed()
     }
 
-    /** Verifies that clicking on a non-editable combo box both focuses it and opens the popup menu. */
     @Test
     fun `when enabled but not editable clicking on the comboBox focuses it and open the popup`() {
         val focusRequester = FocusRequester()
@@ -360,7 +319,6 @@ class ListComboBoxUiTest {
         popupMenu.assertIsDisplayed()
     }
 
-    /** Tests that pressing spacebar opens the popup menu in a non-editable combo box. */
     @Test
     fun `when enabled but not editable spacebar opens the popup`() {
         val comboBox = focusedListComboBox()
@@ -371,7 +329,6 @@ class ListComboBoxUiTest {
         popupMenu.assertIsDisplayed()
     }
 
-    /** Verifies that pressing spacebar twice toggles the popup menu visibility in a non-editable combo box. */
     @Test
     fun `when enabled but not editable pressing spacebar twice opens and closes the popup`() {
         val comboBox = focusedListComboBox()
@@ -387,10 +344,6 @@ class ListComboBoxUiTest {
         popupMenu.assertDoesNotExist()
     }
 
-    /**
-     * Tests that losing focus in an editable combo box with an open popup keeps the popup open, allowing for
-     * interaction with popup items.
-     */
     @Test
     fun `when enabled and editable with open popup losing focus closes the popup`() {
         val focusRequester = FocusRequester()
@@ -408,7 +361,6 @@ class ListComboBoxUiTest {
         popupMenu.assertIsDisplayed()
     }
 
-    /** Verifies that pressing enter while the popup is open in an editable combo box closes the popup. */
     @Test
     fun `when editable pressing enter on opened popup closes it`() {
         val comboBox = editableListComboBox()
@@ -425,7 +377,6 @@ class ListComboBoxUiTest {
         popupMenu.assertDoesNotExist()
     }
 
-    /** Tests that clicking the text field while the popup is open keeps the popup open in an editable combo box. */
     @Test
     fun `when editable on opened popup clicking the textfield doesn't close the popup`() {
         val comboBox = editableListComboBox()
@@ -437,10 +388,6 @@ class ListComboBoxUiTest {
         popupMenu.assertIsDisplayed()
     }
 
-    /**
-     * Verifies that clicking the chevron opens the popup and allows selection of the first item in an editable combo
-     * box.
-     */
     @Test
     fun `when editable clicking chevron open the popup and select the first item`() {
         // Use the direct composition so we can track the selection state
@@ -481,7 +428,6 @@ class ListComboBoxUiTest {
         textField.assertTextEquals("Item 1")
     }
 
-    /** Tests that pressing down twice selects the second element in an editable combo box. */
     @Test
     fun `when editable pressing down twice selects the second element`() {
         // Use the direct composition so we can track the selection state
@@ -539,7 +485,6 @@ class ListComboBoxUiTest {
         textField.assertTextEquals("Item 2")
     }
 
-    /** Tests that pressing enter selects the previewed item in a non-editable combo box. */
     @Test
     fun `when not editable pressing enter selects the preview selection if any`() {
         injectListComboBox(FocusRequester(), isEnabled = true)
@@ -564,7 +509,6 @@ class ListComboBoxUiTest {
         comboBox.assertTextEquals("Item 2", includeEditableText = false)
     }
 
-    /** Tests that a stateless ListComboBox properly displays and allows selection of the initial selected item. */
     @Test
     fun `stateless ListComboBox displays and selects initial selectedIndex item`() {
         var selectedIndex = 2
@@ -603,7 +547,6 @@ class ListComboBoxUiTest {
         assertEquals("Item 1", selectedText)
     }
 
-    /** Verifies that the ListComboBox updates properly when the selected index changes externally. */
     @Test
     fun `when selectedIndex changes externally ListComboBox updates`() {
         var selectedIndex by mutableStateOf(0)
@@ -646,7 +589,6 @@ class ListComboBoxUiTest {
         assert(selectedIndex == 3) { "Expected selectedIndex to be 3, but was $selectedIndex" }
     }
 
-    /** Tests that editing text in an editable ListComboBox does not affect the selected index. */
     @Test
     fun `when editable ListComboBox text is edited then selectedIndex remains unchanged`() {
         var selectedIndex = 2
@@ -677,7 +619,6 @@ class ListComboBoxUiTest {
         assertEquals(2, selectedIndex)
     }
 
-    /** Verifies that the text field updates when the selected index changes in an editable ListComboBox. */
     @Test
     fun `when editable ListComboBox selectedIndex changes then text field updates`() {
         var selectedIndex by mutableStateOf(0)
@@ -729,10 +670,6 @@ class ListComboBoxUiTest {
         assert(selectedIndex == 3) { "Expected selectedIndex to be 3, but was $selectedIndex" }
     }
 
-    /**
-     * Helper function to create and set up an editable combo box for testing. Initializes the combo box with default
-     * settings and ensures it has focus.
-     */
     private fun editableListComboBox(): SemanticsNodeInteraction {
         val focusRequester = FocusRequester()
         composeRule.setContent {
@@ -756,10 +693,6 @@ class ListComboBoxUiTest {
         return comboBox
     }
 
-    /**
-     * Helper function to create and set up a disabled editable combo box for testing. Used to verify behavior when the
-     * combo box is in a disabled state.
-     */
     private fun disabledEditableListComboBox(): SemanticsNodeInteraction {
         val focusRequester = FocusRequester()
         injectEditableListComboBox(focusRequester, isEnabled = false)
@@ -770,12 +703,6 @@ class ListComboBoxUiTest {
         return comboBox
     }
 
-    /**
-     * Helper function to create and set up a focused non-editable combo box for testing.
-     *
-     * @param focusRequester The FocusRequester to manage focus
-     * @param isEnabled Whether the combo box should be enabled
-     */
     private fun focusedListComboBox(
         focusRequester: FocusRequester = FocusRequester(),
         isEnabled: Boolean = true,
@@ -787,12 +714,6 @@ class ListComboBoxUiTest {
         return comboBox
     }
 
-    /**
-     * Helper function to inject a non-editable combo box into the test environment.
-     *
-     * @param focusRequester The FocusRequester to manage focus
-     * @param isEnabled Whether the combo box should be enabled
-     */
     private fun injectListComboBox(focusRequester: FocusRequester, isEnabled: Boolean) {
         composeRule.setContent {
             IntUiTheme {
@@ -808,12 +729,6 @@ class ListComboBoxUiTest {
         }
     }
 
-    /**
-     * Helper function to inject an editable combo box into the test environment.
-     *
-     * @param focusRequester The FocusRequester to manage focus
-     * @param isEnabled Whether the combo box should be enabled
-     */
     private fun injectEditableListComboBox(focusRequester: FocusRequester, isEnabled: Boolean) {
         composeRule.setContent {
             IntUiTheme {
@@ -830,7 +745,6 @@ class ListComboBoxUiTest {
         }
     }
 
-    /** Sample items used across all tests. Provides a mix of short and long items to test various display scenarios. */
     private val comboBoxItems =
         listOf(
             "Item 1",
