@@ -372,16 +372,17 @@ object K2UnusedSymbolUtil {
       )
       val originalDeclaration = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol?.psi as? KtNamedDeclaration
       if (symbol !is KaNamedFunctionSymbol || !symbol.annotations.contains(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
+          val symbolPointer = symbol?.createPointer()
           if (declaration is KtSecondaryConstructor &&
               declarationContainingClass != null &&
               // when too many occurrences of this class, consider it used
               (isCheapEnoughToSearchUsages(declarationContainingClass) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
                referenceExists(declarationContainingClass, useScope) {
                    val refElement = it.element
-                   analyze(declaration) {
+                   refElement is KtElement && analyze(refElement) {
                        refElement.getStrictParentOfType<KtTypeAlias>() != null // ignore unusedness of type aliased classes - they are too hard to trace
                                || refElement.getStrictParentOfType<KtCallExpression>()?.resolveToCall()
-                           ?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
+                           ?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbolPointer?.restoreSymbol()
                    }
               })) {
               return true
