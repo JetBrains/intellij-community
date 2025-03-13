@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -82,7 +83,7 @@ public fun VerticallyScrollableContainer(
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -112,7 +113,7 @@ internal fun TextAreaScrollableContainer(
     scrollState: ScrollState,
     style: ScrollbarStyle,
     contentModifier: Modifier,
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -168,7 +169,7 @@ public fun VerticallyScrollableContainer(
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -227,7 +228,7 @@ public fun VerticallyScrollableContainer(
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -286,7 +287,7 @@ public fun HorizontallyScrollableContainer(
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -345,7 +346,7 @@ public fun HorizontallyScrollableContainer(
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -404,7 +405,7 @@ public fun HorizontallyScrollableContainer(
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -440,7 +441,7 @@ public fun ScrollableContainer(
     verticalScrollbarModifier: Modifier = Modifier,
     horizontalScrollbarModifier: Modifier = Modifier,
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -477,7 +478,7 @@ public fun ScrollableContainer(
     verticalScrollbarModifier: Modifier = Modifier,
     horizontalScrollbarModifier: Modifier = Modifier,
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -512,7 +513,7 @@ public fun ScrollableContainer(
     verticalScrollbarModifier: Modifier = Modifier,
     horizontalScrollbarModifier: Modifier = Modifier,
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
-    content: @Composable () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -651,13 +652,19 @@ private fun computeContentConstraints(
     horizontalScrollbarPlaceable: Placeable?,
 ): Constraints {
     val visibility = scrollbarStyle.scrollbarVisibility
+    val scrollbarWidth = verticalScrollbarPlaceable?.width ?: 0
+    val scrollbarHeight = horizontalScrollbarPlaceable?.height ?: 0
 
-    fun width() =
+    val maxWidth = incomingConstraints.maxWidth
+    val maxHeight = incomingConstraints.maxHeight
+    val minWidth = incomingConstraints.minWidth
+    val minHeight = incomingConstraints.minHeight
+
+    fun maxWidth() =
         if (incomingConstraints.hasBoundedWidth) {
-            val maxWidth = incomingConstraints.maxWidth
             when {
                 !isMacOs -> maxWidth // Scrollbars on Win/Linux are always overlaid
-                visibility is AlwaysVisible -> maxWidth - (verticalScrollbarPlaceable?.width ?: 0)
+                visibility is AlwaysVisible -> maxWidth - scrollbarWidth
                 visibility is WhenScrolling -> maxWidth
                 else -> error("Unsupported visibility style: $visibility")
             }
@@ -665,30 +672,49 @@ private fun computeContentConstraints(
             error("Incoming constraints have infinite width, should not use fixed width")
         }
 
-    fun height() =
-        if (incomingConstraints.hasBoundedHeight) {
-            val maxHeight = incomingConstraints.maxHeight
+    fun minWidth() =
+        if (minWidth > 0) {
             when {
-                !isMacOs -> maxHeight // Scrollbars on Win/Linux are always overlaid
-                visibility is AlwaysVisible -> maxHeight - (horizontalScrollbarPlaceable?.height ?: 0)
-                visibility is WhenScrolling -> maxHeight
+                !isMacOs -> minWidth
+                visibility is AlwaysVisible -> minWidth - scrollbarWidth
+                visibility is WhenScrolling -> minWidth
                 else -> error("Unsupported visibility style: $visibility")
             }
+        } else 0
+
+    fun maxHeight() =
+        if (incomingConstraints.hasBoundedHeight) {
+            when {
+                !isMacOs -> maxHeight // Scrollbars on Win/Linux are always overlaid
+                visibility is AlwaysVisible -> maxHeight - scrollbarHeight
+                visibility is WhenScrolling -> maxHeight
+                else -> error("Unsupported visibility style: $visibility")
+            }.coerceAtLeast(incomingConstraints.minHeight)
         } else {
             error("Incoming constraints have infinite height, should not use fixed height")
         }
 
+    fun minHeight() =
+        if (minHeight > 0) {
+            when {
+                !isMacOs -> minHeight // Scrollbars on Win/Linux are always overlaid
+                visibility is AlwaysVisible -> minHeight - scrollbarHeight
+                visibility is WhenScrolling -> minHeight
+                else -> error("Unsupported visibility style: $visibility")
+            }.coerceAtLeast(incomingConstraints.minHeight)
+        } else 0
+
     return when {
         incomingConstraints.hasBoundedWidth && incomingConstraints.hasBoundedHeight -> {
-            Constraints.fixed(width(), height())
+            Constraints(minWidth = minWidth(), maxWidth = maxWidth(), minHeight = minHeight(), maxHeight = maxHeight())
         }
         !incomingConstraints.hasBoundedWidth && incomingConstraints.hasBoundedHeight -> {
-            Constraints.fixedHeight(height())
+            incomingConstraints.copy(minHeight = minHeight(), maxHeight = maxHeight())
         }
         incomingConstraints.hasBoundedWidth && !incomingConstraints.hasBoundedHeight -> {
-            Constraints.fixedWidth(width())
+            incomingConstraints.copy(minWidth = minWidth(), maxWidth = maxWidth())
         }
-        else -> Constraints()
+        else -> incomingConstraints
     }
 }
 
