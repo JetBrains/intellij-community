@@ -154,7 +154,7 @@
     files:
     - name: $PROJECT_DIR$/community/lib/ant/lib/ant.jar
     reason: withProjectLibrary
-- name: lib/gradle-api-8.13.jar
+- name: lib/gradle-api-8.14-milestone-4.jar
   projectLibraries:
   - name: Gradle
     files:
