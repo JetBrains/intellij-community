@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.hasNoExceptionsToBeUnderSourceRoot
 import org.jetbrains.kotlin.idea.isStandaloneKotlinScript
 import org.jetbrains.kotlin.utils.addIfNotNull
 
-class ModuleScriptAdditionalIdeaDependenciesProvider: ScriptAdditionalIdeaDependenciesProvider {
+class ModuleScriptAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenciesProvider {
     override fun getRelatedModules(file: VirtualFile, project: Project): List<Module> =
         if (!compilerAllowsAnyScriptsInSourceRoots(project) &&
             RootKindFilter.projectSources.matches(project, file) &&

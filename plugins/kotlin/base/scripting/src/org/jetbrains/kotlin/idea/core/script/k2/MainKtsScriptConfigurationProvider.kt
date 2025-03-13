@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -11,19 +10,19 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.SequentialProgressReporter
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.psi.util.childrenOfType
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.amper.dependency.resolution.LocalM2RepositoryFinder
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptClassPathUtil.Companion.findVirtualFiles
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
-import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -31,7 +30,6 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import java.io.File
-import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.jdkHome
@@ -41,25 +39,54 @@ import kotlin.script.experimental.jvm.jvm
 class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScope: CoroutineScope) : ScriptRefinedConfigurationResolver,
                                                                                                      ScriptWorkspaceModelManager {
     private val data = ConcurrentHashMap<VirtualFile, ScriptConfigurationWithSdk>()
-    private val m2LocalRepositoryPath = LocalM2RepositoryFinder.findPath()
+
+    var reporter: SequentialProgressReporter? = null
+        private set
 
     override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data[virtualFile]
 
     override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk? {
-        val ktFile = readAction { virtualFile.toPsiFile(project) as? KtFile } ?: return null
-        val hasNoDependencies = readAction { ktFile.hasNoDependencies() }
-        if (hasNoDependencies || ktFile.dependenciesExistLocally()) {
-            refineConfiguration(virtualFile)
+        withBackgroundProgress(project, title = KotlinBaseScriptingBundle.message("progress.title.dependency.resolution")) {
+            reportSequentialProgress { theReporter ->
+                try {
+                    reporter = theReporter
+                    val mainKtsConfiguration = resolveMainKtsConfiguration(virtualFile, definition)
+                    val importedScripts = mainKtsConfiguration.importedScripts
+                    if (importedScripts.isNotEmpty()) {
+                        val results = ConcurrentHashMap.newKeySet<ScriptConfigurationWithSdk>()
+                        coroutineScope.resolveConfigurations(importedScripts, results).await()
+                    }
+
+                    data[virtualFile] = mainKtsConfiguration
+                } finally {
+                    reporter = null
+                }
+            }
         }
 
         return data[virtualFile]
     }
 
-    suspend fun refineConfiguration(virtualFile: VirtualFile) {
-        val sdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()
+    fun CoroutineScope.resolveConfigurations(
+        scripts: Collection<VirtualFile>,
+        results: MutableSet<ScriptConfigurationWithSdk>
+    ): Deferred<Unit> {
+        return async {
+            for (it in scripts) {
+                val scriptSource = VirtualFileScriptSource(it)
+                val definition = findScriptDefinition(project, scriptSource)
 
-        val scriptSource = VirtualFileScriptSource(virtualFile)
-        val definition = findScriptDefinition(project, scriptSource)
+                val result = definition.getConfigurationResolver(project).create(it, definition) ?: continue
+                results += result
+
+                resolveConfigurations(result.importedScripts, results)
+            }
+        }
+    }
+
+    private suspend fun resolveMainKtsConfiguration(mainKts: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk {
+        val scriptSource = VirtualFileScriptSource(mainKts)
+        val sdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()
 
         val providedConfiguration = sdk?.homePath?.let { jdkHome ->
             definition.compilationConfiguration.with {
@@ -70,15 +97,21 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         val result = smartReadAction(project) {
             refineScriptCompilationConfiguration(scriptSource, definition, project, providedConfiguration)
         }
+        project.service<ScriptReportSink>().attachReports(mainKts, result.reports)
 
-        project.service<ScriptReportSink>().attachReports(virtualFile, result.reports)
-
-        val newData = ScriptConfigurationWithSdk(result, sdk)
-
-        data[virtualFile] = newData
+        return ScriptConfigurationWithSdk(result, sdk)
     }
 
     override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {
+        val mainKtsScript = configurationPerFile.entries.firstOrNull()?.key ?: return
+        val importedScripts = data[mainKtsScript]?.importedScripts ?: emptyList()
+        for (it in importedScripts) {
+            val scriptSource = VirtualFileScriptSource(it)
+            val definition = findScriptDefinition(project, scriptSource)
+            val configuration = definition.getConfigurationResolver(project).get(it) ?: continue
+            definition.getWorkspaceModelManager(project).updateWorkspaceModel(mapOf(it to configuration))
+        }
+
         val workspaceModel = project.workspaceModel
         workspaceModel.update("updating .main.kts modules") { targetStorage ->
             val updatedStorage = getUpdatedStorage(project, configurationPerFile, workspaceModel)
@@ -86,6 +119,10 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
             targetStorage.applyChangesFrom(updatedStorage)
         }
     }
+
+    private val ScriptConfigurationWithSdk.importedScripts
+        get() = this.scriptConfiguration.valueOrNull()?.importedScripts?.mapNotNull { imported -> (imported as? VirtualFileScriptSource)?.virtualFile }
+            ?: emptyList()
 
     private fun getUpdatedStorage(
         project: Project,
@@ -123,8 +160,6 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
 
         return storageToUpdate
     }
-
-    private fun KtFile.hasNoDependencies() = annotationEntries.none { it.text.startsWith("@file:DependsOn") }
 
     private fun MutableEntityStorage.getDependencies(
         wrapper: ScriptCompilationConfigurationWrapper,
@@ -170,41 +205,6 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
 
     private fun ScriptCompilationConfigurationWrapper.isUberDependencyAllowed(): Boolean {
         return dependenciesSources.size + dependenciesClassPath.size < 20
-    }
-
-    private suspend fun KtFile.dependenciesExistLocally(): Boolean {
-        val artifactLocations = readAction {
-            script?.annotationEntries?.filter { it.text.startsWith("@file:DependsOn") }?.mapNotNull {
-                it.childrenOfType<KtValueArgumentList>()
-                    .singleOrNull()?.arguments?.singleOrNull()?.stringTemplateExpression?.childrenOfType<KtLiteralStringTemplateEntry>()
-                    ?.singleOrNull()?.text
-            }
-        } ?: return true
-
-        return artifactLocations.all {
-            val splitted = it.split(":")
-            val group = splitted[0]
-            val module = splitted[1]
-            val version = splitted[2]
-            val dependencyPath = m2LocalRepositoryPath.resolve(
-                "${group.split('.').joinToString("/")}/$module/$version"
-            )
-            Files.exists(dependencyPath)
-        }
-    }
-
-    private fun createNoDependenciesConfiguration(script: VirtualFile) {
-        val sourceCode = VirtualFileScriptSource(script)
-        val definition = findScriptDefinition(project, sourceCode)
-        val result = ResultWithDiagnostics.Success(
-            ScriptCompilationConfigurationWrapper.FromCompilationConfiguration(
-                sourceCode, definition.compilationConfiguration
-            )
-        )
-
-        val projectSdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()
-
-        data[script] = ScriptConfigurationWithSdk(result, projectSdk)
     }
 
     companion object {

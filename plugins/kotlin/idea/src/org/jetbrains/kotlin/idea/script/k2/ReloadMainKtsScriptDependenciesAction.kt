@@ -6,15 +6,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
-import org.jetbrains.kotlin.idea.core.script.k2.DependencyResolutionService
 import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptResolutionStrategy
-import org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptConfigurationProvider
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.ConcurrentHashMap
 
@@ -28,13 +25,9 @@ internal class ReloadMainKtsScriptDependenciesAction : AnAction() {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val ktFile = getKotlinScriptFile(editor) ?: return
 
-        DependencyResolutionService.getInstance(project).resolveInBackground {
-            project.serviceAsync<MainKtsScriptConfigurationProvider>().refineConfiguration(ktFile.alwaysVirtualFile)
-            DefaultScriptResolutionStrategy.getInstance(project).execute(ktFile)
-
-            annotations[ktFile] = readAction { ktFile.getScriptAnnotationsList() }
-            EditorNotifications.getInstance(project).updateNotifications(ktFile.alwaysVirtualFile)
-        }
+        DefaultScriptResolutionStrategy.getInstance(project).execute(ktFile)
+        annotations[ktFile] = runReadAction { ktFile.getScriptAnnotationsList() }
+        EditorNotifications.getInstance(project).updateNotifications(ktFile.alwaysVirtualFile)
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
