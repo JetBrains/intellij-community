@@ -79,14 +79,6 @@ internal fun <D : Difference, T : DiffCapable<T, D>> deepDiffForSets(
   }
 }
 
-private fun <T> computeCollectionDiff(a: Collection<T>, b: Collection<T>): Collection<T> {
-  return when {
-    a is PersistentSet<T> -> a.removeAll(b)
-    a.size < SET_THRESHOLD -> a.filterTo(ArrayList()) { !b.contains(it) }
-    else -> a.filterTo(ObjectOpenHashSet()) { !b.contains(it) }
-  }
-}
-
 private fun <T> computeCustomCollectionDiff(a: ObjectOpenCustomHashSet<T>, b: ObjectOpenCustomHashSet<T>): Collection<T> {
   return when {
     a.size < SET_THRESHOLD -> a.filterTo(ArrayList()) { !b.contains(it) }
@@ -149,6 +141,13 @@ internal fun <T> diff(past: Collection<T>?, now: Collection<T>?): Specifier<T, D
   }
 
   return diffForSets(past = past, now = now)
+}
+
+private fun <T> computeCollectionDiff(a: Collection<T>, b: Collection<T>): Collection<T> {
+  return when {
+    a is PersistentSet<T> -> a.removeAll(b)
+    else -> a.filterTo(ArrayList()) { !b.contains(it) }
+  }
 }
 
 internal fun <T> diffForSets(past: Collection<T>, now: Collection<T>): Specifier<T, Difference> {

@@ -143,16 +143,8 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
   fun getRetentionPolicy(): RetentionPolicy? = retentionPolicy
 
   override fun difference(past: JvmClass): Diff {
-    // we call updateMappingsOnRoundCompletion after compilation, and check delta again,
-    // so, is it possible that nodesBefore is equal to nodesAfter
-    if (past === this) {
-      return Diff(
-        past = past,
-        interfacesDiff = lazyOf(emptyDiff()),
-        methodsDiff = lazyOf(emptyDiff()),
-        fieldsDiff = lazyOf(emptyDiff()),
-        annotationTargetsDiff = lazyOf(emptyDiff())
-      )
+    check(this !== past) {
+      "Diff must not be called for identical class"
     }
     return Diff(
       past = past,
