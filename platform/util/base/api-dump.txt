@@ -58,6 +58,7 @@ c:com.intellij.openapi.util.TextRange
 - intersectsStrict(I,I):Z
 - intersectsStrict(com.intellij.openapi.util.TextRange):Z
 - isEmpty():Z
+- isProperRange():Z
 - s:isProperRange(I,I):Z
 - replace(java.lang.String,java.lang.String):java.lang.String
 - shiftLeft(I):com.intellij.openapi.util.TextRange
