@@ -90,7 +90,7 @@ class IdeaPluginDescriptorImpl private constructor(
   private var vendor: String? = raw.vendor
   private val vendorEmail: String? = raw.vendorEmail
   private val vendorUrl: String? = raw.vendorUrl
-  private var category: String? = raw.category
+  private val category: String? = raw.category
 
   @JvmField
   internal val url: String? = raw.url
