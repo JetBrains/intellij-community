@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +70,8 @@ public final class IdeaLogger extends JulLogger {
     var counter = MyCache.getOrCreate(hash, t);
     var occurrences = counter.incrementAndGet();
     if (isFascinatingNumber(occurrences)) {
-      warn("Suppressed a frequent exception logged for the " + occurrences + (occurrences == 2 ? "nd" : "th") + " time: " + t.getMessage());
+      warn("Suppressed a frequent exception logged for the " + occurrences + (occurrences == 2 ? "nd" : "th") + " time: " +
+           shortenErrorMessage(t.getMessage()));
     }
     return occurrences != 1;
   }
@@ -81,6 +83,13 @@ public final class IdeaLogger extends JulLogger {
     if (number <= 1) return false;
     while (number % 10 == 0) number /= 10;
     return number == 1 || number == 2 || number == 5;
+  }
+
+  private static @NotNull String shortenErrorMessage(@Nullable String message) {
+    if (message == null) return "null";
+    int newLine = message.indexOf('\n');
+    message = message.substring(0, newLine != -1 ? newLine : message.length());
+    return StringUtil.shortenTextWithEllipsis(message, 300, 0);
   }
 
   private static void reportToFus(@NotNull Throwable t) {
