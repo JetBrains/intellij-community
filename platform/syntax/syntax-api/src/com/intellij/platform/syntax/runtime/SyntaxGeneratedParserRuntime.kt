@@ -11,7 +11,6 @@ import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
 import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Hook
-import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Parser
 import com.intellij.platform.syntax.LimitedPool
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.NoopLogger
@@ -51,21 +50,21 @@ private const val FRAMES_POOL_SIZE = 500
 @ApiStatus.Experimental @JvmField val _NOT_: Int = 0x10
 @ApiStatus.Experimental @JvmField val _UPPER_: Int = 0x20
 
+typealias Parser = (stateHolder: SyntaxGeneratedParserRuntime, level: Int) -> Boolean
+
 @ApiStatus.Experimental 
 @JvmField
-val TOKEN_ADVANCER: Parser = object : Parser {
-  override fun parse(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean {
+val TOKEN_ADVANCER: Parser = ::advanceToken
+
+fun advanceToken(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean { 
     if (stateHolder.builder.eof()) return false
     stateHolder.builder.advanceLexer()
     return true
-  }
 }
 
 @ApiStatus.Experimental
 @JvmField
-val TRUE_CONDITION: Parser = object : Parser {
-  override fun parse(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean = true
-}
+val TRUE_CONDITION: Parser = { stateHolder: SyntaxGeneratedParserRuntime, level: Int -> true }
 
 @ApiStatus.Experimental
 @JvmField
@@ -116,13 +115,9 @@ final class SyntaxGeneratedParserRuntime(
   internal val isLanguageCaseSensitive get() = isCaseSensitive
   internal val errorState get() = error
 
-  fun init(parse: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit, extendsSets: Array<Set<SyntaxElementType>>? = null) {
+  fun init(parse: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit, extendsSets: Array<Set<SyntaxElementType?>>? = null) {
     parser = parse
-    errorState.initState(builder, this, extendsSets)
-  }
-
-  interface Parser {
-    fun parse(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean
+    errorState.initState(this, extendsSets)
   }
 
   interface Hook<T> {
@@ -164,9 +159,9 @@ final class SyntaxGeneratedParserRuntime(
     internal var suppressErrors: Boolean = false
     internal var hooks: Hooks<*>? = null
 
-    internal var extendsSets: Array<Set<SyntaxElementType>>? = null
+    internal var extendsSets: Array<Set<SyntaxElementType?>>? = null
     internal var braces: Array<BracePair>? = null
-    internal var tokenAdvancer: Parser = TOKEN_ADVANCER
+    internal var advanceToken: Parser = TOKEN_ADVANCER
     internal var altMode: Boolean = false
 
     internal val VARIANTS: LimitedPool<Variant> = LimitedPool<Variant>(VARIANTS_POOL_SIZE) { Variant() }
@@ -242,7 +237,7 @@ final class SyntaxGeneratedParserRuntime(
       return false
     }
 
-    fun initState(builder: SyntaxTreeBuilder, util: SyntaxGeneratedParserRuntime, extendsSets: Array<Set<SyntaxElementType>>?) {
+    fun initState(util: SyntaxGeneratedParserRuntime, extendsSets: Array<Set<SyntaxElementType?>>?) {
       this.extendsSets = extendsSets
       this.braces = util.braces?.toTypedArray()
     }
@@ -759,7 +754,7 @@ private fun SyntaxGeneratedParserRuntime.exit_section_impl_(
   val lastErrorPos = if (frame.lastVariantAt < 0) initialPos else frame.lastVariantAt
   if (!state.suppressErrors && eatMore != null) {
     state.suppressErrors = true
-    val eatMoreFlagOnce = !builder.eof() && eatMore.parse(this, frame.level + 1)
+    val eatMoreFlagOnce = !builder.eof() && eatMore(this, frame.level + 1)
     var eatMoreFlag = eatMoreFlagOnce || !result && frame.position == initialPos && lastErrorPos > frame.position
 
     val latestDoneMarker: SyntaxTreeBuilder.Marker? =
@@ -777,8 +772,8 @@ private fun SyntaxGeneratedParserRuntime.exit_section_impl_(
         return@let 0
       } ?: 0
       if (builder.rawTokenIndex() >= lastErrorPos) break
-      state.tokenAdvancer.parse(this, frame.level + 1)
-      eatMoreFlag = eatMore.parse(this, frame.level + 1)
+      state.advanceToken(this, frame.level + 1)
+      eatMoreFlag = eatMore(this, frame.level + 1)
     }
     var errorReported = frame.errorReportedAt == initialPos || !result && frame.errorReportedAt >= frame.position
     if (errorReported || eatMoreFlag) {
@@ -786,10 +781,10 @@ private fun SyntaxGeneratedParserRuntime.exit_section_impl_(
         errorReported = reportError(state, frame, false, true, true)
       }
       else if (eatMoreFlag) {
-        state.tokenAdvancer.parse(this, frame.level + 1)
+        state.advanceToken(this, frame.level + 1)
       }
-      if (eatMore.parse(this, frame.level + 1)) {
-        parseAsTree(state, frame.level + 1, DUMMY_BLOCK, true, state.tokenAdvancer, eatMore)
+      if (eatMore(this, frame.level + 1)) {
+        parseAsTree(state, frame.level + 1, DUMMY_BLOCK, true, state.advanceToken, eatMore)
       }
     }
     else if (eatMoreFlagOnce || !result && frame.position != builder.rawTokenIndex() || frame.errorReportedAt > initialPos) {
@@ -1016,7 +1011,7 @@ private fun SyntaxGeneratedParserRuntime.reportError(
   }
   if (advance) {
     val mark: SyntaxTreeBuilder.Marker = builder.mark()
-    state.tokenAdvancer.parse(this, frame.level + 1)
+    state.advanceToken(this, frame.level + 1)
     mark.error(message)
   }
   else if (inner) {
@@ -1112,7 +1107,7 @@ fun SyntaxGeneratedParserRuntime.parseAsTree(
         parens.addFirst(Pair(builder.mark(), prev.first))
       }
       checkSiblings(chunkType, parens, siblings)
-      state.tokenAdvancer.parse(this, level)
+      state.advanceToken(this, level)
       if (tokenType == rBrace) {
         val pair: Pair<SyntaxTreeBuilder.Marker?, SyntaxTreeBuilder.Marker?> = parens.removeFirst()
         pair.first?.let {
@@ -1131,8 +1126,8 @@ fun SyntaxGeneratedParserRuntime.parseAsTree(
         marker = builder.mark()
         marker.setCustomEdgeTokenBinders(WhitespacesBinders.greedyLeftBinder(), null)
       }
-      val result = (!parens.isEmpty() || eatMoreCondition.parse(this, level + 1)) &&
-                   parser.parse(this, level + 1)
+      val result = (!parens.isEmpty() || eatMoreCondition(this, level + 1)) &&
+                   parser(this, level + 1)
       if (result) {
         tokenCount++
         totalCount++
