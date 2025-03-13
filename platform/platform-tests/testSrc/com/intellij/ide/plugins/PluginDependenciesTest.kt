@@ -3,7 +3,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -533,6 +532,30 @@ internal class PluginDependenciesTest {
       .doesNotHaveDirectParentClassloaders(core, req, emb)
       .hasTransitiveParentClassloaders(core, emb)
       .doesNotHaveTransitiveParentClassloaders(req)
+  }
+
+  @Test
+  fun `transitive optional depends is allowed`() {
+    foo()
+    baz()
+    PluginBuilder.empty().id("bar")
+      .depends(
+        "foo",
+        PluginBuilder.empty()
+          .depends(
+            "baz",
+            PluginBuilder.empty().extensions("""
+              <applicationService serviceImplementation="service"/>
+            """.trimIndent())
+          )
+      )
+      .build(pluginDirPath.resolve("bar"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo", "baz")
+    val bar = pluginSet.getEnabledPlugin("bar")
+    val sub = bar.pluginDependencies[0].subDescriptor!!
+    val subsub = sub.pluginDependencies[0].subDescriptor!!
+    assertThat(subsub).hasExactlyApplicationServices("service")
   }
 
   private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
