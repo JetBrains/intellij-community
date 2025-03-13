@@ -9,7 +9,6 @@ import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.concurrent.thread
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
@@ -41,29 +40,6 @@ internal class JpsModuleToBazel {
           .sortedBy { projectDir.relativize(it).invariantSeparatorsPathString }
           .toList(),
       )
-
-      val communityTargets = communityFiles.keys
-        .asSequence()
-        .map { projectDir.relativize(it).invariantSeparatorsPathString }
-        .sorted()
-        .joinToString("\n") { path ->
-          val dir = path.removePrefix("community/").takeIf { it != "community" } ?: ""
-          val ruleDir = "build/jvm-rules/"
-          if (dir.startsWith(ruleDir)) {
-            "@rules_jvm//${dir.removePrefix(ruleDir)}:all"
-          }
-          else {
-            "@community//$dir:all"
-          }
-        }
-      val ultimateTargets = ultimateFiles.keys
-        .sorted()
-        .map { projectDir.relativize(it).invariantSeparatorsPathString }
-        .joinToString("\n") {
-          "//$it:all"
-        }
-      Files.writeString(projectDir.resolve("build/bazel-community-targets.txt"), communityTargets)
-      Files.writeString(projectDir.resolve("build/bazel-targets.txt"), communityTargets + "\n" + ultimateTargets)
 
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
 
