@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine.events
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
-import com.intellij.debugger.engine.DebuggerThreadDispatcher
 import com.intellij.debugger.impl.DebuggerTaskImpl
 import com.intellij.debugger.impl.PrioritizedTask
 import kotlinx.coroutines.*
@@ -98,7 +97,7 @@ abstract class DebuggerCommandImpl(override val priority: PrioritizedTask.Priori
     resetContinuation(null)?.run()
   }
 
-  internal fun invokeCommand(dispatcher: DebuggerThreadDispatcher, parentScope: CoroutineScope) {
+  internal fun invokeCommand(dispatcher: CoroutineDispatcher, parentScope: CoroutineScope) {
     val exception = AtomicReference<Throwable>()
     if (continuation.get() == null) {
       // executed synchronously until the first suspend, resume is handled by dispatcher
