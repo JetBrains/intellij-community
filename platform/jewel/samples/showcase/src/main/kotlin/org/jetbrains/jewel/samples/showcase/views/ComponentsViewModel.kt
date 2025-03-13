@@ -2,7 +2,6 @@
 // Apache 2.0 license.
 package org.jetbrains.jewel.samples.showcase.views
 
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,7 +29,6 @@ import org.jetbrains.jewel.samples.showcase.components.Tooltips
 import org.jetbrains.jewel.ui.component.SplitLayoutState
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 
-@ExperimentalLayoutApi
 public class ComponentsViewModel(
     alwaysVisibleScrollbarVisibility: ScrollbarVisibility.AlwaysVisible,
     whenScrollingScrollbarVisibility: ScrollbarVisibility.WhenScrolling,
