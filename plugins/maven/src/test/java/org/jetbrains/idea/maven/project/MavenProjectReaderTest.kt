@@ -1,23 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.model.*
 import org.junit.Assume
 import org.junit.Test
-import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -259,41 +251,58 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
   @Test
   fun testDefaults() = runBlocking {
-    val file = writeAction {
-      val res = projectRoot.createChildData(this, "pom.xml")
-      VfsUtil.saveText(res, """
-        <project>
+    createProjectPom("""
           <groupId>test</groupId>
           <artifactId>project</artifactId>
           <version>1</version>
-        </project>
         """.trimIndent())
-      res
-    }
-    withContext(Dispatchers.EDT) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
-    val p = readProject(file)
+
+    importProjectAsync()
+    val p = projectsTree.findProject(projectPom)!!
 
     assertEquals("jar", p.packaging)
-    assertNull(p.name)
-    assertNull(p.parent)
 
-    assertEquals("project-1", p.build.finalName)
-    assertEquals(null, p.build.defaultGoal)
-    UsefulTestCase.assertSize(1, p.build.sources)
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir("src/main/java"), p.build.sources[0])
-    UsefulTestCase.assertSize(1, p.build.testSources)
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir("src/test/java"), p.build.testSources[0])
-    assertEquals(1, p.build.resources.size)
-    assertResource(p.build.resources[0], pathFromBasedir("src/main/resources"),
-                   false, null, emptyList(), emptyList())
-    assertEquals(1, p.build.testResources.size)
-    assertResource(p.build.testResources[0], pathFromBasedir("src/test/resources"),
-                   false, null, emptyList(), emptyList())
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir("target"), p.build.directory)
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir("target/classes"), p.build.outputDirectory)
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir("target/test-classes"), p.build.testOutputDirectory)
+    forMaven3 {
+      assertNull(p.name)
+    }
+    forMaven4 {
+      assertEquals("project", p.name)
+    }
+    assertNull(p.parentId)
+
+    assertEquals("project-1", p.finalName)
+    assertEquals(null, p.defaultGoal)
+    UsefulTestCase.assertSize(1, p.sources)
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("src/main/java"), p.sources[0])
+    UsefulTestCase.assertSize(1, p.testSources)
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("src/test/java"), p.testSources[0])
+
+    forMaven3 {
+      assertEquals(1, p.resources.size)
+      assertResource(p.resources[0], pathFromBasedir("src/main/resources"),
+                     false, null, emptyList(), emptyList())
+      assertEquals(1, p.testResources.size)
+      assertResource(p.testResources[0], pathFromBasedir("src/test/resources"),
+                     false, null, emptyList(), emptyList())
+    }
+
+    forMaven4 {
+      assertEquals(2, p.resources.size)
+      assertResource(p.resources[0], pathFromBasedir("src/main/resources"),
+                     false, null, emptyList(), emptyList())
+      assertResource(p.resources[1], pathFromBasedir("src/main/resources-filtered"),
+                     true, null, emptyList(), emptyList())
+      assertEquals(2, p.testResources.size)
+      assertResource(p.testResources[0], pathFromBasedir("src/test/resources"),
+                     false, null, emptyList(), emptyList())
+      assertResource(p.testResources[1], pathFromBasedir("src/test/resources-filtered"),
+                     true, null, emptyList(), emptyList())
+    }
+
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("target"), p.buildDirectory)
+
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("target/classes"), p.outputDirectory)
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("target/test-classes"), p.testOutputDirectory)
   }
 
   @Test
@@ -358,11 +367,12 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
   @Test
   fun testCustomSettings() = runBlocking {
-    val file = writeAction {
-      val res = projectRoot.createChildData(this, "pom.xml")
-      VfsUtil.saveText(res, """
-        <project>
-          <modelVersion>1.2.3</modelVersion>
+    val parent = createModulePom("../parent", """
+                <groupId>testParent</groupId>
+                <artifactId>projectParent</artifactId>
+                <version>2</version>
+""".trimIndent())
+    createProjectPom("""
           <groupId>test</groupId>
           <artifactId>project</artifactId>
           <version>1</version>
@@ -399,35 +409,30 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
             <outputDirectory>myClasses</outputDirectory>
             <testOutputDirectory>myTestClasses</testOutputDirectory>
           </build>
-        </project>
         """.trimIndent())
-      res
-    }
-    withContext(Dispatchers.EDT) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
-    val p = readProject(file)
+    importProjectsAsync(projectPom, parent)
+    val p = projectsTree.findProject(projectPom)!!
 
     assertEquals("pom", p.packaging)
     assertEquals("foo", p.name)
 
     assertParent(p, "testParent", "projectParent", "2")
 
-    assertEquals("xxx", p.build.finalName)
-    assertEquals("someGoal", p.build.defaultGoal)
-    UsefulTestCase.assertSize(1, p.build.sources)
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir("mySrc"), p.build.sources[0])
-    UsefulTestCase.assertSize(1, p.build.testSources)
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myTestSrc"), p.build.testSources[0])
-    assertEquals(1, p.build.resources.size)
-    assertResource(p.build.resources[0], pathFromBasedir("myRes"),
+    assertEquals("xxx", p.finalName)
+    assertEquals("someGoal", p.defaultGoal)
+    UsefulTestCase.assertSize(1, p.sources)
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("mySrc"), p.sources[0])
+    UsefulTestCase.assertSize(1, p.testSources)
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myTestSrc"), p.testSources[0])
+    assertEquals(1, p.resources.size)
+    assertResource(p.resources[0], pathFromBasedir("myRes"),
                    true, "dir", listOf("**.properties"), listOf("**.xml"))
-    assertEquals(1, p.build.testResources.size)
-    assertResource(p.build.testResources[0], pathFromBasedir("myTestRes"),
+    assertEquals(1, p.testResources.size)
+    assertResource(p.testResources[0], pathFromBasedir("myTestRes"),
                    false, null, listOf("**.properties"), emptyList())
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myOutput"), p.build.directory)
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myClasses"), p.build.outputDirectory)
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myTestClasses"), p.build.testOutputDirectory)
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myOutput"), p.buildDirectory)
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myClasses"), p.outputDirectory)
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir("myTestClasses"), p.testOutputDirectory)
   }
 
   @Test
@@ -447,97 +452,6 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target"), p.buildDirectory)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/classes"), p.outputDirectory)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), p.testOutputDirectory)
-  }
-
-  @Test
-  fun testDoesNotIncludeResourcesWithoutDirectory() = runBlocking {
-    createProjectPom("""
-                       <build>
-                         <resources>
-                           <resource>
-                             <directory></directory>
-                           </resource>
-                           <resource>
-                             <directory>myRes</directory>
-                           </resource>
-                         </resources>
-                         <testResources>
-                           <testResource>
-                             <filtering>true</filtering>
-                           </testResource>
-                           <testResource>
-                             <directory>myTestRes</directory>
-                           </testResource>
-                         </testResources>
-                       </build>
-                       """.trimIndent())
-
-    importProjectAsync()
-    val p = projectsTree.projects.first()
-
-    assertEquals(1, p.resources.size)
-    assertResource(p.resources[0], pathFromBasedir("myRes"),
-                   false, null, emptyList(), emptyList())
-
-    assertEquals(1, p.testResources.size)
-    assertResource(p.testResources[0], pathFromBasedir("myTestRes"),
-                   false, null, emptyList(), emptyList())
-  }
-
-  @Test
-  fun testRepairResourcesWithoutDirectory() = runBlocking {
-    createProjectPom("""
-                    <build>
-                       <resources>
-                         <resource>
-                         </resource>
-                       </resources>
-                       <testResources>
-                         <testResource>
-                         </testResource>
-                       </testResources>
-                    </build>
-                    """.trimIndent())
-
-    importProjectAsync()
-    val p = projectsTree.projects.first()
-
-    assertEquals(1, p.resources.size)
-    assertResource(p.resources[0], pathFromBasedir("src/main/resources"),
-                   false, null, emptyList(), emptyList())
-
-    assertEquals(1, p.testResources.size)
-    assertResource(p.testResources[0], pathFromBasedir("src/test/resources"),
-                   false, null, emptyList(), emptyList())
-  }
-
-  @Test
-  fun testRepairResourcesWithEmptyDirectory() = runBlocking {
-    createProjectPom("""
-                       <build>
-                         <resources>
-                           <resource>
-                             <directory></directory>
-                           </resource>
-                         </resources>
-                         <testResources>
-                           <testResource>
-                             <directory></directory>
-                           </testResource>
-                         </testResources>
-                       </build>
-                       """.trimIndent())
-
-    importProjectAsync()
-    val p = projectsTree.projects.first()
-
-    assertEquals(1, p.resources.size)
-    assertResource(p.resources[0], pathFromBasedir("src/main/resources"),
-                   false, null, emptyList(), emptyList())
-
-    assertEquals(1, p.testResources.size)
-    assertResource(p.testResources[0], pathFromBasedir("src/test/resources"),
-                   false, null, emptyList(), emptyList())
   }
 
   @Test
@@ -616,6 +530,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   @Test
   fun testExpandingPropertiesRecursively() = runBlocking {
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <properties>
                          <prop1>value1</prop1>
                          <prop2>${'$'}{prop1}2</prop2>
@@ -729,6 +646,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   @Test
   fun testExpandingSystemAndEnvProperties() = runBlocking {
     createProjectPom("""
+  <groupId>test</groupId>
+  <artifactId>project</artifactId>
+  <version>1</version>      
   <name>${"$"}{java.home}</name>
   <packaging>${"$"}{env.${envVar}}</packaging>
   """.trimIndent())
@@ -742,6 +662,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   @Test
   fun testExpandingPropertiesFromProfiles() = runBlocking {
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <name>${'$'}{prop1}</name>
                        <packaging>${'$'}{prop2}</packaging>
                        <profiles>
@@ -772,6 +695,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   @Test
   fun testExpandingPropertiesFromManuallyActivatedProfiles() = runBlocking {
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <name>${'$'}{prop1}</name>
                        <packaging>${'$'}{prop2}</packaging>
                        <profiles>
@@ -793,7 +719,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    val p = readProject(projectPom, "two")
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("two"))
+    importProjectAsync()
+    val p = projectsTree.findProject(projectPom)!!
     assertEquals("\${prop1}", p.name)
     assertEquals("value2", p.packaging)
   }
@@ -811,6 +739,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     val module = createModulePom("module",
                                  """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>1</version>
                                            <parent>
                                              <groupId>test</groupId>
                                              <artifactId>parent</artifactId>
@@ -818,8 +749,8 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            </parent>
                                            <name>${'$'}{prop}</name>
                                            """.trimIndent())
-
-    val p = readProject(module)
+    importProjectsAsync(projectPom, module)
+    val p = projectsTree.findProject(module)!!
     assertEquals("value", p.name)
   }
 
@@ -850,18 +781,20 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
   @Test
   fun testExpandingPropertiesFromParentNotInVfs() = runBlocking {
-    FileUtil.writeToFile(File(projectRoot.path, "pom.xml"),
-                         createPomXml("""
-                                        <groupId>test</groupId>
-                                        <artifactId>parent</artifactId>
-                                        <version>1</version>
-                                        <properties>
-                                          <prop>value</prop>
-                                        </properties>
-                                        """.trimIndent()).toByteArray(StandardCharsets.UTF_8))
+    createProjectPom("""
+                  <groupId>test</groupId>
+                  <artifactId>parent</artifactId>
+                  <version>1</version>
+                  <properties>
+                    <prop>value</prop>
+                  </properties>
+                  """.trimIndent())
 
     val module = createModulePom("module",
                                  """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>1</version>
                                            <parent>
                                              <groupId>test</groupId>
                                              <artifactId>parent</artifactId>
@@ -869,8 +802,8 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            </parent>
                                            <name>${'$'}{prop}</name>
                                            """.trimIndent())
-
-    val p = readProject(module)
+    importProjectsAsync(projectPom, module)
+    val p = projectsTree.findProject(module)!!
     assertEquals("value", p.name)
   }
 
@@ -1060,7 +993,8 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            <artifactId>module</artifactId>
                                            """.trimIndent())
 
-    val id = readProject(module).mavenId
+    importProjectsAsync(projectPom, module)
+    val id = projectsTree.findProject(module)!!.mavenId
     assertEquals("test:module:1", id.groupId + ":" + id.artifactId + ":" + id.version)
   }
 
@@ -1077,6 +1011,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     val module = createModulePom("module",
                                  """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>1</version>
                                            <parent>
                                              <groupId>test</groupId>
                                              <artifactId>parent</artifactId>
@@ -1084,8 +1021,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            </parent>
                                            """.trimIndent())
 
-    val p = readProject(module)
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.parent, "custom"), p.build.directory)
+    importProjectsAsync(projectPom, module)
+    val p = projectsTree.findProject(module)!!
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.parent, "custom"), p.buildDirectory)
   }
 
   @Test
@@ -1104,6 +1042,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     val module = createModulePom("module",
                                  """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>1</version>
                                            <parent>
                                              <groupId>test</groupId>
                                              <artifactId>parent</artifactId>
@@ -1111,8 +1052,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            </parent>
                                            """.trimIndent())
 
-    val p = readProject(module)
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.parent, "subDir/custom"), p.build.directory)
+    importProjectsAsync(projectPom, module)
+    val p = projectsTree.findProject(module)!!
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.parent, "subDir/custom"), p.buildDirectory)
   }
 
   @Test
@@ -1148,13 +1090,19 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("one"))
     importProjectsAsync(projectPom, module)
-    val p = projectsTree.projects.first { it.mavenId.artifactId == "module" }
+    val p = projectsTree.findProject(module)!!
     PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.parent, "subDir/custom"), p.buildDirectory)
   }
 
   @Test
   fun testPropertiesFromSettingsXml() = runBlocking {
-    createProjectPom("<name>\${prop}</name>")
+    createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>      
+      <name>${'$'}{prop}</name>
+      """.trimIndent())
+
     updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -1166,10 +1114,13 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                         </profiles>
                         """.trimIndent())
 
-    var mavenProject = readProject(projectPom)
+    importProjectAsync()
+    var mavenProject = projectsTree.findProject(projectPom)!!
     assertEquals("\${prop}", mavenProject.name)
 
-    mavenProject = readProject(projectPom, "one")
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("one"))
+    updateAllProjects()
+    mavenProject = projectsTree.findProject(projectPom)!!
     assertEquals("foo", mavenProject.name)
   }
 
