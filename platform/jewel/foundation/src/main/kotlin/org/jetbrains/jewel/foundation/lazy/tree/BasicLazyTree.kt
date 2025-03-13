@@ -164,11 +164,9 @@ public fun <T> BasicLazyTree(
                         .padding(elementContentPadding)
                         .padding(start = (element.depth * indentSize.value).dp)
                         .semantics(mergeDescendants = true) {
-                            contentDescription = buildString {
-                                if (element is Tree.Element.Node) {
-                                    append(if (element.id in treeState.openNodes) "expanded " else "collapsed ")
-                                }
-                                append(element.data?.toString() ?: "")
+                            // Only set expansion state in content description for nodes
+                            if (element is Tree.Element.Node) {
+                                contentDescription = if (element.id in treeState.openNodes) "expanded" else "collapsed"
                             }
 
                             selected = element.id in treeState.delegate.selectedKeys
