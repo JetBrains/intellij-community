@@ -34,6 +34,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/util/coroutines",
     "//platform/execution-impl",
+    "//platform/platform-util-io:ide-util-io",
   ],
   runtime_deps = [
     ":debugger-impl-backend_resources",

@@ -195,6 +195,7 @@ jvm_library(
     "//platform/kernel/backend",
     "//platform/platform-impl/rpc:ide-rpc",
     "//platform/project/shared:project",
+    "//platform/testFramework/extensions:testExtensions",
   ],
   runtime_deps = [
     ":vcs-git_resources",
