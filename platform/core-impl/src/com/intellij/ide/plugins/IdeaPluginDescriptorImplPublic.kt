@@ -8,4 +8,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface IdeaPluginDescriptorImplPublic : IdeaPluginDescriptor {
   val moduleName: String?
+
+  /**
+   * aka `<dependencies>` element from plugin.xml
+   *
+   * Note that it's different from [getDependencies] (which is for `<depends>`)
+   */
+  val dependenciesV2: ModuleDependenciesDescriptor
 }

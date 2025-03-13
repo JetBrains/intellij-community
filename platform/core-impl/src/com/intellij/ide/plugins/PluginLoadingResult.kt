@@ -160,8 +160,8 @@ internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescrip
          descriptor.packagePrefix == null &&
          !descriptor.implementationDetail &&
          descriptor.content.modules.isEmpty() &&
-         descriptor.dependencies.modules.isEmpty() &&
-         descriptor.dependencies.plugins.isEmpty() &&
+         descriptor.dependenciesV2.modules.isEmpty() &&
+         descriptor.dependenciesV2.plugins.isEmpty() &&
          descriptor.pluginId != PluginManagerCore.CORE_ID &&
          descriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
          !hasModuleDependencies(descriptor)

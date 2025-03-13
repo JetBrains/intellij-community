@@ -456,7 +456,7 @@ private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: IdeaPlugi
 }
 
 private fun getDependencyPackagePrefixes(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): List<String> {
-  val dependencies = descriptor.dependencies.modules
+  val dependencies = descriptor.dependenciesV2.modules
   if (dependencies.isEmpty()) {
     return Collections.emptyList()
   }

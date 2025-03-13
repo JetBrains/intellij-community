@@ -96,7 +96,7 @@ class IdeaPluginDescriptorImpl private constructor(
   /**
    * aka `<depends>` elements from the plugin.xml
    *
-   * Note that it's different from [dependencies]
+   * Note that it's different from [dependenciesV2]
    */
   @JvmField
   val pluginDependencies: List<PluginDependency>
@@ -141,13 +141,7 @@ class IdeaPluginDescriptorImpl private constructor(
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
 
-  /**
-   * aka `<dependencies>` element from plugin.xml
-   *
-   * Note that it's different from [pluginDependencies]
-   */
-  @JvmField
-  val dependencies: ModuleDependenciesDescriptor = raw.dependencies.let(::convertDependencies)
+  override val dependenciesV2: ModuleDependenciesDescriptor = raw.dependencies.let(::convertDependencies)
 
   @JvmField
   var pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
@@ -241,7 +235,7 @@ class IdeaPluginDescriptorImpl private constructor(
         return
       }
 
-      for (pluginDependency in dependencies.plugins) {
+      for (pluginDependency in dependenciesV2.plugins) {
         if (context.isPluginDisabled(pluginDependency.id)) {
           markAsIncomplete(pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
         }

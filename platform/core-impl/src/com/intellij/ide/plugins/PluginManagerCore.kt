@@ -979,7 +979,7 @@ object PluginManagerCore {
         dependencies.add(dependency.pluginId)
       }
     }
-    for (plugin in descriptor.dependencies.plugins) {
+    for (plugin in descriptor.dependenciesV2.plugins) {
       dependencies.add(plugin.id)
     }
     return dependencies
