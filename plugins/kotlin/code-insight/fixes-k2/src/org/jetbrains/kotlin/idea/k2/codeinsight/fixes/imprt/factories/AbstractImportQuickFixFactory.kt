@@ -5,10 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAndReceiver
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
 import org.jetbrains.kotlin.name.Name
 
 internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.IntentionBased<KaDiagnosticWithPsi<*>> {
@@ -16,13 +13,13 @@ internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.In
     /**
      * Returns the detected [ImportPositionTypeAndReceiver] for the given diagnostic.
      */
-    protected abstract fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportPositionTypeAndReceiver<*, *>?
+    protected abstract fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext?
 
-    protected abstract fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>): Set<Name>
+    protected abstract fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name>
 
     protected abstract fun KaSession.provideImportCandidates(
         unresolvedName: Name,
-        importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>,
+        importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ImportCandidate>
 

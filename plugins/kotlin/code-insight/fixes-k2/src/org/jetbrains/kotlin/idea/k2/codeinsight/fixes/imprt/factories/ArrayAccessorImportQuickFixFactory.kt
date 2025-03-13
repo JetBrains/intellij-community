@@ -7,25 +7,26 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportContext
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAndReceiver
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object ArrayAccessorImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportPositionTypeAndReceiver<*, *>? {
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         return when (diagnostic) {
             is KaFirDiagnostic.NoGetMethod,
             is KaFirDiagnostic.NoSetMethod -> {
                 val arrayAccess = diagnostic.psi
                 val arrayExpression = arrayAccess.arrayExpression ?: return null
 
-                ImportPositionTypeAndReceiver.OperatorCall(arrayAccess, arrayExpression)
+                ImportContext(arrayAccess, ImportPositionTypeAndReceiver.OperatorCall(arrayExpression))
             }
             else -> null
         }
     }
 
-    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>): Set<Name> {
+    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name> {
         val unresolvedName = when (diagnostic) {
             is KaFirDiagnostic.NoGetMethod -> OperatorNameConventions.GET
             is KaFirDiagnostic.NoSetMethod -> OperatorNameConventions.SET
@@ -37,10 +38,10 @@ internal object ArrayAccessorImportQuickFixFactory : AbstractImportQuickFixFacto
 
     override fun KaSession.provideImportCandidates(
         unresolvedName: Name,
-        importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>,
+        importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider
     ): List<ImportCandidate> {
-        val provider = CallableImportCandidatesProvider(importPositionTypeAndReceiver)
+        val provider = CallableImportCandidatesProvider(importContext)
         return provider.collectCandidates(unresolvedName, indexProvider)
     }
 }
