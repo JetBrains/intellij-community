@@ -17,6 +17,10 @@ sealed interface DataRenderer<in T> {
     override val serialName: String = "inline_long"
   }
 
+  data object InlineDouble : DataRenderer<Double> {
+    override val serialName: String = "inline_double"
+  }
+
   data object Text : DataRenderer<String> {
     override val serialName: String = "text"
   }
@@ -41,6 +45,7 @@ sealed interface DataRenderer<in T> {
       return when (type) {
         "inline_boolean" -> InlineBoolean
         "inline_long" -> InlineLong
+        "inline_double" -> InlineDouble
         "text" -> Text
         "lines" -> Lines
         "text_diff" -> TextDiff

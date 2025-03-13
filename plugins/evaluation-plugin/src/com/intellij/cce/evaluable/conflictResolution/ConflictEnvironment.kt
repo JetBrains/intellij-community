@@ -17,7 +17,7 @@ import kotlin.io.path.readText
 class ConflictEnvironment(
   override val datasetRef: DatasetRef,
   private val conflictResolver: ConflictResolver<*>
-) : SimpleFileEnvironment() {
+) : SimpleFileEnvironment {
 
   override val preparationDescription: String = "Checking that conflict dataset exists"
 
@@ -35,14 +35,13 @@ class ConflictEnvironment(
   ) : EvaluationChunk {
     override val name: String = "${fileConflict.hash} - ${fileConflict.fileName}"
     override val datasetName: String = datasetRef.name
-    override val presentationText: String = readText("target")
 
     override fun evaluate(
       handler: InterpretationHandler,
       filter: InterpretFilter, // TODO should we use it somehow?
       order: InterpretationOrder, // TODO should we use somehow?
       sessionHandler: (Session) -> Unit
-    ): List<Session> {
+    ): EvaluationChunk.Result {
       val props = ConflictResolver.Props(
         base = readText("base"),
         parent1 = readText("parent1"),
@@ -65,7 +64,7 @@ class ConflictEnvironment(
 
       handler.onFileProcessed(name)
 
-      return sessions
+      return EvaluationChunk.Result(sessions, props.target)
     }
 
     private fun <T> conflictSession(

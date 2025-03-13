@@ -3,9 +3,10 @@ package com.intellij.cce.evaluable
 
 import com.intellij.cce.actions.ProjectActionsEnvironment
 import com.intellij.cce.core.Language
-import com.intellij.cce.evaluation.*
+import com.intellij.cce.evaluation.EvaluationEnvironment
+import com.intellij.cce.evaluation.EvaluationRootInfo
+import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.interpreter.FeatureInvoker
-import com.intellij.cce.metric.Metric
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.cce.report.BasicFileReportGenerator
 import com.intellij.cce.report.FileReportGenerator

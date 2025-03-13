@@ -311,6 +311,7 @@ private data class PropertyValue(
       return when (property.renderer) {
         is DataRenderer.InlineBoolean -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineLong -> PropertyValue(null, "${property.value}")
+        is DataRenderer.InlineDouble -> PropertyValue(null, "${property.value}")
         is DataRenderer.Text -> PropertyValue("""openText($element, ${stringValues[0]});""", null)
         is DataRenderer.Lines -> PropertyValue("""openText($element, ${stringValues[0]});""", null)
         is DataRenderer.TextDiff -> PropertyValue("""openDiff($element, ${stringValues[0]}, ${stringValues[1]});""", null)
@@ -326,6 +327,9 @@ private data class PropertyValue(
     ): List<String> {
       return when (placement) {
         is DataPlacement.AdditionalBoolean -> listOf(
+          """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"].toString()"""
+        )
+        is DataPlacement.AdditionalDouble -> listOf(
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"].toString()"""
         )
         is DataPlacement.Latency -> listOf(
@@ -352,6 +356,7 @@ private data class PropertyValue(
       return when (renderer) {
         DataRenderer.InlineBoolean -> listOf("\"${value}\"")
         DataRenderer.InlineLong -> listOf("\"${value}\"")
+        DataRenderer.InlineDouble -> listOf("\"${value}\"")
         DataRenderer.Text -> listOf(embedString(value as String))
         DataRenderer.Lines -> listOf(embedString((value as List<*>).joinToString("\n") { "• $it" }))
         DataRenderer.TextDiff -> listOf(

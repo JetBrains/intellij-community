@@ -60,18 +60,18 @@ class ActionsInterpretationHandler(
 
       workspace.fullLineLogsStorage.enableLogging(chunk.name)
       try {
-        val sessions = logsSaver.invokeRememberingLogs {
+        val result = logsSaver.invokeRememberingLogs {
           chunk.evaluate(handler, filter, interpretationConfig.order) { session ->
             featuresStorage.saveSession(session, chunk.name)
           }
         }
 
-        if (sessions.isNotEmpty()) {
+        if (result.sessions.isNotEmpty()) {
           val sessionsInfo = FileSessionsInfo(
             projectName = chunk.datasetName,
             filePath = chunk.name,
-            text = chunk.presentationText,
-            sessions = sessions
+            text = result.presentationText ?: "",
+            sessions = result.sessions
           )
           workspace.sessionsStorage.saveSessions(sessionsInfo)
           fileCount += 1

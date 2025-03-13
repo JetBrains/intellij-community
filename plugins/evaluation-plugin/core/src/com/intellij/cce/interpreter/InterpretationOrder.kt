@@ -13,11 +13,11 @@ enum class InterpretationOrder {
 
 private val ORDER_RANDOM = Random(42)
 
-fun <T : Action> List<T>.reorder(order: InterpretationOrder): List<T> {
-  val groups = groupBy { it.sessionId }.values
-  return when (order) {
-    LINEAR -> groups.flatten()
-    REVERSED -> groups.reversed().flatten()
-    RANDOM -> groups.shuffled(ORDER_RANDOM).flatten()
-  }
+fun <T> List<T>.naiveReorder(order: InterpretationOrder): List<T> = when (order) {
+  LINEAR -> this
+  REVERSED -> this.reversed()
+  RANDOM -> this.shuffled(ORDER_RANDOM)
 }
+
+fun <T : Action> List<T>.reorder(order: InterpretationOrder): List<T> =
+  groupBy { it.sessionId }.values.toList<List<T>>().naiveReorder<List<T>>(order).flatten()
