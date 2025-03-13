@@ -46,18 +46,6 @@ internal sealed class ImportPositionTypeAndReceiver<out TReceiver : KtElement?>(
     class TypeReference(receiver: KtExpression?) :
         ImportPositionTypeAndReceiver<KtExpression?>(receiver)
 
-    /**
-     * Important: this position is not detected by [detect] function.
-     */
-    class Delegate(receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
-
-    /**
-     * Important: this position is not detected by [detect] function.
-     */
-    class Destructuring(destructuredExpression: KtExpression) :
-        ImportPositionTypeAndReceiver<KtExpression>(destructuredExpression)
-
     class Annotation(receiver: KtExpression?) :
         ImportPositionTypeAndReceiver<KtExpression?>(receiver)
 
