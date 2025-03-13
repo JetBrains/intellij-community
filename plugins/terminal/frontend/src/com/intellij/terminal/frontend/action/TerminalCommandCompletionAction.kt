@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.frontend.TerminalInput
 import com.intellij.terminal.frontend.TerminalLookup
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.outputModelImpl
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
@@ -68,6 +69,7 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction() {
 
   private fun invokeCompletionGen2Terminal(e: AnActionEvent, type: CompletionType, time: Int) {
     val terminalInput = e.terminalInput
+    val outputModel = e.outputModelImpl
     val commonEditor = e.getData(CommonDataKeys.EDITOR)
     if (commonEditor == null) {
       TODO()
@@ -77,11 +79,16 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction() {
       TODO()
     }
 
-    val inputEvent = e.inputEvent;
-
+    val inputEvent = e.inputEvent
+    val caret = commonEditor.caretModel
+    val primaryCaret = caret.primaryCaret
+    if (outputModel == null) {
+      throw AssertionError("Output model is null while terminal command completion action")
+    }
+    primaryCaret.moveToOffset(outputModel.cursorOffsetState.value)
     CodeCompletionHandlerBase.clearCaretMarkers(commonEditor)
     invokeCompletionGen2Terminal(project, commonEditor, time, inputEvent != null && inputEvent.modifiersEx != 0,
-                                 commonEditor.getCaretModel().getPrimaryCaret(), type, terminalInput)
+                                 primaryCaret, type, terminalInput)
   }
 
 
@@ -162,13 +169,11 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction() {
         val psiFile = PsiUtilBase.getPsiFileInEditor(caret, project)
         context = CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount)
       }
-      // перепробуем
 
       val mylookup = obtainLookup(editor, project, autopopup, terminalInput)
       val clientLookupManager = ClientLookupManager.getInstance(project.currentSession) as? ClientLookupManagerBase
       clientLookupManager?.putLookup(mylookup)
 
-      // вот тут я должна добавить свой lookUp
       handler.doComplete(context, hasModifiers, hasValidContext, startingTime)
     }
     try {

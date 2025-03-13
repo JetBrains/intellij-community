@@ -66,6 +66,7 @@ internal class ReworkedTerminalView(
 
   private val outputEditor: EditorEx
   private val alternateBufferEditor: EditorEx
+  private val outputModel: TerminalOutputModelImpl
 
   private val terminalPanel: TerminalPanel
 
@@ -100,6 +101,7 @@ internal class ReworkedTerminalView(
     )
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
+    outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
     val outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
     updatePsiOnOutputModelChange(project, outputModel, coroutineScope.childScope("TerminalOutputPsiUpdater"))
 
@@ -397,6 +399,7 @@ internal class ReworkedTerminalView(
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.EDITOR] = curEditor
       sink[TerminalInput.KEY] = terminalInput
+      sink[TerminalOutputModelImpl.KEY] = outputModel
       sink[TerminalSearchController.KEY] = terminalSearchController
     }
 
