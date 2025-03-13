@@ -158,7 +158,8 @@ suspend fun collectPluginDescriptors(
     if (xml.getChildren("content").any { contentElement ->
         contentElement.getChildren("module").any {
           val name = it.getAttributeValue("name", "")
-          name.startsWith("intellij.platform.vcs.") || name == "intellij.ide.startup.importSettings"
+          //intellij.platform.vcs.*.split modules are currently included in the CodeWithMe plugin 
+          name.startsWith("intellij.platform.vcs.") && !name.endsWith(".split") || name == "intellij.ide.startup.importSettings"
         }
       }) {
       Span.current().addEvent(

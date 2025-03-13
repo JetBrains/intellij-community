@@ -46,6 +46,8 @@ abstract class JetBrainsProductProperties : ProductProperties() {
         (
           // FIXME IDEA-356970
           pluginId == "com.intellij.plugins.projectFragments" ||
+          // FIXME IJPL-169105
+          pluginId == "com.jetbrains.codeWithMe" ||
           // FIXME IJPL-159498
           pluginId == "org.jetbrains.plugins.docker.gateway" || pluginId == "com.intellij.java" || pluginId == "com.intellij.java.ide" ||
           // it's an internal plugin that should be compatible with older IDEA versions as well,
