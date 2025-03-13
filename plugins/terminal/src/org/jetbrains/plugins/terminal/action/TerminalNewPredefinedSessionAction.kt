@@ -75,7 +75,10 @@ class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehavi
     if (shells.size + customActions.size > 0) {
       group.addSeparator()
     }
-    group.add(TerminalSettingsAction())
+    val settingsAction = ActionManager.getInstance().getAction("Terminal.Settings")
+    if (settingsAction != null) { // can be null on the backend, but this action is frontend-only anyway
+      group.add(settingsAction)
+    }
 
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, true, false, null, -1, null)
   }
