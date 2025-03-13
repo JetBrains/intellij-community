@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtEnumEntry
 
-internal class EnumEntryImportCandidatesProvider(override val importPositionContext: ImportPositionContext.DefaultCall) :
+internal class EnumEntryImportCandidatesProvider(override val importPositionTypeAndReceiver: ImportPositionTypeAndReceiver.DefaultCall) :
     AbstractImportCandidatesProvider() {
 
     private fun acceptsKotlinEnumEntry(enumEntry: KtEnumEntry): Boolean {
@@ -33,7 +33,7 @@ internal class EnumEntryImportCandidatesProvider(override val importPositionCont
             psiFilter = { it is PsiEnumConstant && acceptsJavaEnumEntry(it) },
         ).filterIsInstance<KaEnumEntrySymbol>()
 
-        val visibilityChecker = createUseSiteVisibilityChecker(getFileSymbol(), receiverExpression = null, importPositionContext.position)
+        val visibilityChecker = createUseSiteVisibilityChecker(getFileSymbol(), receiverExpression = null, importPositionTypeAndReceiver.position)
 
         return (kotlinEnumEntries + javaEnumEntries)
             .map { CallableImportCandidate.create(it) }

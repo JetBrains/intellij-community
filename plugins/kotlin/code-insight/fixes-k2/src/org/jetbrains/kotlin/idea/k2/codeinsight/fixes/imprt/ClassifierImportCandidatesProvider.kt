@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
 internal open class ClassifierImportCandidatesProvider(
-    override val importPositionContext: ImportPositionContext<*, *>,
+    override val importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>,
 ) : AbstractImportCandidatesProvider() {
 
     protected open fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean =
@@ -40,10 +40,10 @@ internal open class ClassifierImportCandidatesProvider(
         name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ClassLikeImportCandidate> {
-        if (importPositionContext.receiver != null) return emptyList()
+        if (importPositionTypeAndReceiver.receiver != null) return emptyList()
 
         val fileSymbol = getFileSymbol()
-        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, importPositionContext.position)
+        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, importPositionTypeAndReceiver.position)
 
         return buildList {
             addAll(indexProvider.getKotlinClassesByName(name) { acceptsKotlinClass(it) })
@@ -55,8 +55,8 @@ internal open class ClassifierImportCandidatesProvider(
 }
 
 internal class AnnotationImportCandidatesProvider(
-    importPositionContext: ImportPositionContext.Annotation,
-) : ClassifierImportCandidatesProvider(importPositionContext) {
+    importPositionTypeAndReceiver: ImportPositionTypeAndReceiver.Annotation,
+) : ClassifierImportCandidatesProvider(importPositionTypeAndReceiver) {
 
     override fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean {
         val isPossiblyAnnotation = when (kotlinClass) {
@@ -77,8 +77,8 @@ internal class AnnotationImportCandidatesProvider(
 }
 
 internal class ConstructorReferenceImportCandidatesProvider(
-    importPositionContext: ImportPositionContext.CallableReference,
-) : ClassifierImportCandidatesProvider(importPositionContext) {
+    importPositionTypeAndReceiver: ImportPositionTypeAndReceiver.CallableReference,
+) : ClassifierImportCandidatesProvider(importPositionTypeAndReceiver) {
 
     override fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean {
         val possiblyHasAcceptableConstructor = when (kotlinClass) {
