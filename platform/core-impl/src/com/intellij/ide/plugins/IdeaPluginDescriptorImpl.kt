@@ -79,7 +79,7 @@ class IdeaPluginDescriptorImpl private constructor(
   @Volatile
   private var description: String? = null
   private val productCode: String? = raw.productCode
-  private var releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
+  private val releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
   private val releaseVersion: Int = raw.releaseVersion
   private val isLicenseOptional: Boolean = raw.isLicenseOptional
 
