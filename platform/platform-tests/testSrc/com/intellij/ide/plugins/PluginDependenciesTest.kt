@@ -8,7 +8,6 @@ import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
-@TestApplication
 internal class PluginDependenciesTest {
   @RegisterExtension
   @JvmField
