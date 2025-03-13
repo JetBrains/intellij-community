@@ -42,7 +42,7 @@ internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String =
   joinToString(prefix = "Plugins to $operation: [", postfix = "]") { it.idString }
 
 @ApiStatus.Internal
-class IdeaPluginDescriptorImpl(
+class IdeaPluginDescriptorImpl private constructor(
   raw: RawPluginDescriptor,
   private val path: Path,
   private val isBundled: Boolean,
@@ -51,13 +51,31 @@ class IdeaPluginDescriptorImpl(
   override val moduleLoadingRule: ModuleLoadingRule? = null,
   override val useCoreClassLoader: Boolean = false,
   override val isIndependentFromCoreClassLoader: Boolean = false,
+  internal val descriptorPath: String? = null
 ) : IdeaPluginDescriptorEx {
+
+  constructor(
+    raw: RawPluginDescriptor,
+    path: Path,
+    isBundled: Boolean,
+    id: PluginId?,
+    moduleName: String?,
+    moduleLoadingRule: ModuleLoadingRule? = null,
+    useCoreClassLoader: Boolean = false,
+    isIndependentFromCoreClassLoader: Boolean = false,
+  ) : this(
+    raw = raw,
+    path = path,
+    isBundled = isBundled,
+    id = id,
+    moduleName = moduleName,
+    moduleLoadingRule = moduleLoadingRule,
+    useCoreClassLoader = useCoreClassLoader,
+    isIndependentFromCoreClassLoader = isIndependentFromCoreClassLoader,
+    descriptorPath = null)
+
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id?.idString ?: raw.id!! // if it throws, it throws on `id` above
-
-  // only for sub descriptors
-  @JvmField
-  internal var descriptorPath: String? = null
 
   @Volatile
   private var description: String? = null
@@ -177,9 +195,17 @@ class IdeaPluginDescriptorImpl(
   ): IdeaPluginDescriptorImpl {
     subBuilder.name = name
     val raw = subBuilder.build()
-    val result = IdeaPluginDescriptorImpl(raw, path, isBundled, id, module?.name, module?.loadingRule, useCoreClassLoader, raw.isIndependentFromCoreClassLoader)
+    val result = IdeaPluginDescriptorImpl(
+      raw = raw,
+      path = path,
+      isBundled = isBundled,
+      id = id,
+      moduleName = module?.name,
+      moduleLoadingRule = module?.loadingRule,
+      useCoreClassLoader = useCoreClassLoader,
+      isIndependentFromCoreClassLoader = raw.isIndependentFromCoreClassLoader,
+      descriptorPath = descriptorPath)
     context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
-    result.descriptorPath = descriptorPath
     result.vendor = vendor
     result.resourceBundleBaseName = resourceBundleBaseName
     if (raw.resourceBundleBaseName != null) {
