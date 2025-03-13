@@ -5,12 +5,14 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UIThemeProvider
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JetBrainsProtocolHandler
 import com.intellij.openapi.application.PathManager
@@ -201,6 +203,24 @@ private fun loadPluginIconsFromUrl(idPlugin: String, lazyIcon: LazyPluginLogoIco
   putIcon(idPlugin = idPlugin, lazyIcon = lazyIcon, light = light, dark = dark)
 }
 
+private fun loadPluginIconsFromExploded(paths: Collection<Path>, idPlugin: String, lazyIcon: LazyPluginLogoIcon) {
+  for (path in paths) {
+    if (Files.isDirectory(path)) {
+      if (tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = path)) {
+        return
+      }
+    }
+    else {
+      // todo why some JARs do not have pluginIcon.svg packed?
+      if (tryLoadJarIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = path, put = false)) {
+        return
+      }
+    }
+  }
+
+  putMissingIcon(idPlugin = idPlugin)
+}
+
 private fun loadPluginIconsFromFile(path: Path, idPlugin: String, lazyIcon: LazyPluginLogoIcon) {
   if (Files.isDirectory(path)) {
     if (System.getProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) != null) {
@@ -217,10 +237,10 @@ private fun loadPluginIconsFromFile(path: Path, idPlugin: String, lazyIcon: Lazy
     val files = try {
       Files.newDirectoryStream(libFile).use { it.toList() }
     }
-    catch (e: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
       null
     }
-    catch (e: NotDirectoryException) {
+    catch (_: NotDirectoryException) {
       null
     }
     catch (e: Exception) {
@@ -261,10 +281,12 @@ private fun tryLoadDirIcons(idPlugin: String, lazyIcon: LazyPluginLogoIcon, path
   return true
 }
 
-private fun tryLoadJarIcons(idPlugin: String,
-                                    lazyIcon: LazyPluginLogoIcon,
-                                    path: Path,
-                                    put: Boolean): Boolean {
+private fun tryLoadJarIcons(
+  idPlugin: String,
+  lazyIcon: LazyPluginLogoIcon,
+  path: Path,
+  put: Boolean,
+): Boolean {
   val pathString = path.toString()
   if (!(pathString.endsWith(".zip", ignoreCase = true) || pathString.endsWith(".jar", ignoreCase = true)) || !Files.exists(path)) {
     return false
@@ -383,6 +405,10 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
           val path = info.first.pluginPath
           if (path == null) {
             loadPluginIconsFromUrl(idPlugin = idPlugin, lazyIcon = info.second, coroutineContext = coroutineContext)
+          }
+          else if (AppMode.isDevServer()) {
+            val descriptor = info.first as? IdeaPluginDescriptorImpl
+            loadPluginIconsFromExploded(paths = descriptor?.jarFiles ?: listOf(path), idPlugin = idPlugin, lazyIcon = info.second)
           }
           else {
             loadPluginIconsFromFile(path = path, idPlugin = idPlugin, lazyIcon = info.second)
