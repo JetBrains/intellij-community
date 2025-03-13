@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.*
@@ -82,8 +83,7 @@ class IdeaPluginDescriptorImpl private constructor(
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id?.idString ?: raw.id!! // if it throws, it throws on `id` above
 
-  @Volatile
-  private var description: String? = null
+  private val rawDescription: @NlsSafe String? = raw.description
   private val productCode: String? = raw.productCode
   private val releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
   private val releaseVersion: Int = raw.releaseVersion
@@ -145,8 +145,6 @@ class IdeaPluginDescriptorImpl private constructor(
   @JvmField
   var pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
 
-  private val descriptionChildText = raw.description
-
   @JvmField
   val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
 
@@ -170,6 +168,9 @@ class IdeaPluginDescriptorImpl private constructor(
 
   @JvmField
   internal var isIncomplete: PluginLoadingError? = null
+
+  @Volatile
+  private var loadedDescriptionText: String? = null
 
   override fun getDescriptorPath(): String? = descriptorPath
 
@@ -489,21 +490,21 @@ class IdeaPluginDescriptorImpl private constructor(
 
   @Suppress("HardCodedStringLiteral")
   override fun getDescription(): String? {
-    var result = description
+    var result = loadedDescriptionText
     if (result != null) {
       return result
     }
 
     if (isCommunity()) {
       CE_PLUGIN_CARDS[id.idString]?.let {
-        description = it.description
+        loadedDescriptionText = it.description
         return it.description
       }
     }
 
-    result = fromPluginBundle("plugin.$id.description", descriptionChildText)
+    result = fromPluginBundle("plugin.$id.description", rawDescription)
 
-    description = result
+    loadedDescriptionText = result
     return result
   }
 
