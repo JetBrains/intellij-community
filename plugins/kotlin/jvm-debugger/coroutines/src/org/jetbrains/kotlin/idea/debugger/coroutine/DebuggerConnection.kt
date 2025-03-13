@@ -49,7 +49,7 @@ class DebuggerConnection(
     init {
         if (params is JavaParameters && shouldAttachCoroutineAgent) {
             // gradle related logic in KotlinGradleCoroutineDebugProjectResolver
-            coroutineAgentAttached = CoroutineAgentConnector.attachCoroutineAgent(project, params, configuration)
+            coroutineAgentAttached = CoroutineAgentConnector.attachCoroutineAgent(project, params)
         } else {
             coroutineAgentAttached = false
             log.debug("Coroutine debugger disabled.")
