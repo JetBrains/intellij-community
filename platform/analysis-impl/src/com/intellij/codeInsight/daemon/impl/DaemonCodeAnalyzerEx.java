@@ -19,8 +19,10 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,7 +167,15 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   protected abstract void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress);
   @ApiStatus.Internal
-  public static final int ANY_GROUP = -409423948;
+  protected static final int ANY_GROUP = -409423948;
   @ApiStatus.Internal
-  public static final int FILE_LEVEL_FAKE_LAYER = -4094; // the layer the (fake) RangeHighlighter is created for file-level HighlightInfo in
+  protected static final int FILE_LEVEL_FAKE_LAYER = -4094; // the layer the (fake) RangeHighlighter is created for file-level HighlightInfo in
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public void rescheduleShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull HighlightInfo.Builder builder) {
+    rescheduleShowIntentionsPass(psiFile, ((HighlightInfoB)builder).getRangeSoFar());
+  }
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  protected abstract void rescheduleShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull TextRange visibleRange);
 }
