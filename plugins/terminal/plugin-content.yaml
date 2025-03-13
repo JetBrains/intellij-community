@@ -1,3 +1,6 @@
+- name: lib/modules/intellij.terminal.frontend.split.jar
+  contentModules:
+  - name: intellij.terminal.frontend.split
 - name: lib/terminal.jar
   modules:
   - name: intellij.terminal
