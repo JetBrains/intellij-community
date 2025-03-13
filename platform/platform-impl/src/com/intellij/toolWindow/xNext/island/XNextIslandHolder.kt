@@ -19,11 +19,16 @@ import kotlin.math.max
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class XNextToolWindowHolder private constructor() : JPanel() {
+class XNextIslandHolder private constructor() : JPanel() {
   companion object {
     @JvmStatic
-    fun create(fillColor: (c: JComponent) -> Paint?): JComponent = XNextToolWindowHolder().apply {
+    fun createToolWindowIsland(fillColor: (c: JComponent) -> Paint?): JComponent = XNextIslandHolder().apply {
       border = XNextRoundedBorder.createIslandBorder(fillColor)
+    }
+
+    @JvmStatic
+    fun createNewSolutionIsland(fillColor: (c: JComponent) -> Paint?): JComponent = XNextIslandHolder().apply {
+      border = XNextRoundedBorder.createNewSolutionIslandBorder(fillColor)
     }
   }
 
@@ -42,7 +47,7 @@ class XNextToolWindowHolder private constructor() : JPanel() {
 
   override fun setBorder(border: Border?) {
     if (border !is XNextRoundedBorder) {
-      logger<XNextToolWindowHolder>().warn {
+      logger<XNextIslandHolder>().warn {
         "Border type is invalid. Expected JRoundedCornerBorder, but received: ${border?.javaClass?.name ?: "null"}."
       }
       return

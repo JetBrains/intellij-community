@@ -40,6 +40,18 @@ class XNextRoundedBorder private constructor(
       return XNextRoundedBorder(fillColor, borderColor, emptyCornersGraphics, emptyCornersColor, arcDiameter, thickness, innerInsets, outerInsets)
     }
 
+    fun createNewSolutionIslandBorder(fillColor: (c: JComponent) -> Paint? = { c: JComponent -> c.background }): XNextRoundedBorder {
+      val borderColor = fillColor
+      val emptyCornersGraphics = { g: Graphics, c: JComponent -> IdeBackgroundUtil.withEditorBackground(g, c) }
+      val emptyCornersColor = { c: JComponent -> InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() }
+      val arcDiameter: Int = 30
+      val thickness: Int = JBUI.scale(2)
+      val innerInsets: Insets = JBInsets(12, 6, 12, 12)
+      val outerInsets: Insets = JBInsets(6, 0, 0, 5)
+
+      return XNextRoundedBorder(fillColor, borderColor, emptyCornersGraphics, emptyCornersColor, arcDiameter, thickness, innerInsets, outerInsets)
+    }
+
     fun createNewSolutionAiChatBorder(fillColor: (c: JComponent) -> Paint? = { c: JComponent -> c.background }, borderColor: (c: JComponent) -> Paint? = { c: JComponent -> c.background }): XNextRoundedBorder {
 
       val emptyCornersGraphics = { g: Graphics, c: JComponent -> IdeBackgroundUtil.withEditorBackground(g, c) }
