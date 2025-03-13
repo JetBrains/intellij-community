@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +53,9 @@ public abstract class FileTypeRegistry {
 
   public FileTypeRegistry() {
     Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      application.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    MessageBus messageBus;
+    if (application != null && !application.isDisposed() && !(messageBus = application.getMessageBus()).isDisposed()) {
+      messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
         public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
           CharsetUtil.clearFileTypeCaches();
