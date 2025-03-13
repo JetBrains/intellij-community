@@ -9,7 +9,7 @@
   ]]></description>
 
   <dependencies>
-    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.json.backend"/>
   </dependencies>
 
   <resource-bundle>messages.JsonPathBundle</resource-bundle>

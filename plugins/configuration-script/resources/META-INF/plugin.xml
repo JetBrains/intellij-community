@@ -10,7 +10,7 @@
   <vendor>JetBrains</vendor>
 
   <dependencies>
-    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.json.backend"/>
   </dependencies>
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
