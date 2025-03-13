@@ -55,11 +55,6 @@ class IdeaPluginDescriptorImpl(
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id?.idString ?: raw.id!! // if it throws, it throws on `id` above
 
-  @Suppress("EnumEntryName")
-  enum class OS {
-    mac, linux, windows, unix, freebsd
-  }
-
   // only for sub descriptors
   @JvmField
   internal var descriptorPath: String? = null
