@@ -7,27 +7,27 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionContext
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAndReceiver
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportPositionContext<*, *>? {
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportPositionTypeAndReceiver<*, *>? {
         return when (diagnostic) {
             is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable,
             is KaFirDiagnostic.DelegateSpecialFunctionMissing -> {
                 val delegateExpression = diagnostic.psi
                 val propertyDelegate = delegateExpression.parent as? KtPropertyDelegate ?: return null
 
-                ImportPositionContext.Delegate(delegateExpression, propertyDelegate.expression)
+                ImportPositionTypeAndReceiver.Delegate(delegateExpression, propertyDelegate.expression)
             }
 
             else -> null
         }
     }
 
-    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionContext: ImportPositionContext<*, *>): Set<Name> {
+    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>): Set<Name> {
         val expectedFunctionSignature = when (diagnostic) {
             is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable -> diagnostic.expectedFunctionSignature
             is KaFirDiagnostic.DelegateSpecialFunctionMissing -> diagnostic.expectedFunctionSignature
@@ -49,11 +49,11 @@ internal object DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFact
 
     override fun KaSession.provideImportCandidates(
         unresolvedName: Name,
-        importPositionContext: ImportPositionContext<*, *>,
+        importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>,
         indexProvider: KtSymbolFromIndexProvider
     ): List<ImportCandidate> {
-        if (importPositionContext !is ImportPositionContext.Delegate) return emptyList()
-        val providers = CallableImportCandidatesProvider(importPositionContext)
+        if (importPositionTypeAndReceiver !is ImportPositionTypeAndReceiver.Delegate) return emptyList()
+        val providers = CallableImportCandidatesProvider(importPositionTypeAndReceiver)
         return providers.collectCandidates(unresolvedName, indexProvider)
     }
 }

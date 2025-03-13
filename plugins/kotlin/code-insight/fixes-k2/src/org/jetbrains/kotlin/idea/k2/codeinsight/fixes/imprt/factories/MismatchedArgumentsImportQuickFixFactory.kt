@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 
 internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportPositionContext<*, *>? {
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportPositionTypeAndReceiver<*, *>? {
         return when (diagnostic) {
             is KaFirDiagnostic.TooManyArguments,
             is KaFirDiagnostic.NoValueForParameter,
@@ -38,23 +38,23 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
                     else -> originalDiagnosticPsi.parentOfType<KtCallExpression>()?.calleeExpression
                 } ?: return null
 
-                ImportPositionContext.detect(adjustedDiagnosticPsi)
+                ImportPositionTypeAndReceiver.detect(adjustedDiagnosticPsi)
             }
 
             else -> null
         }
     }
 
-    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionContext: ImportPositionContext<*, *>): Set<Name> {
-        return (importPositionContext.position as? KtSimpleNameExpression)?.mainReference?.resolvesByNames?.toSet().orEmpty()
+    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>): Set<Name> {
+        return (importPositionTypeAndReceiver.position as? KtSimpleNameExpression)?.mainReference?.resolvesByNames?.toSet().orEmpty()
     }
 
     override fun KaSession.provideImportCandidates(
         unresolvedName: Name,
-        importPositionContext: ImportPositionContext<*, *>,
+        importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>,
         indexProvider: KtSymbolFromIndexProvider
     ): List<ImportCandidate> {
-        val providers = getCandidateProvidersForUnresolvedNameReference(importPositionContext)
+        val providers = getCandidateProvidersForUnresolvedNameReference(importPositionTypeAndReceiver)
 
         // TODO add applicability check here, see KTIJ-33214
 
@@ -63,18 +63,18 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
 
     context(KaSession)
     private fun getCandidateProvidersForUnresolvedNameReference(
-        importPositionContext: ImportPositionContext<*, *>,
-    ): Sequence<AbstractImportCandidatesProvider> = when (importPositionContext) {
-        is ImportPositionContext.DefaultCall -> sequenceOf(
-            CallableImportCandidatesProvider(importPositionContext),
-            ClassifierImportCandidatesProvider(importPositionContext),
+        importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>,
+    ): Sequence<AbstractImportCandidatesProvider> = when (importPositionTypeAndReceiver) {
+        is ImportPositionTypeAndReceiver.DefaultCall -> sequenceOf(
+            CallableImportCandidatesProvider(importPositionTypeAndReceiver),
+            ClassifierImportCandidatesProvider(importPositionTypeAndReceiver),
         )
 
-        is ImportPositionContext.DotCall,
-        is ImportPositionContext.SafeCall,
-        is ImportPositionContext.InfixCall,
-        is ImportPositionContext.OperatorCall -> sequenceOf(
-            CallableImportCandidatesProvider(importPositionContext),
+        is ImportPositionTypeAndReceiver.DotCall,
+        is ImportPositionTypeAndReceiver.SafeCall,
+        is ImportPositionTypeAndReceiver.InfixCall,
+        is ImportPositionTypeAndReceiver.OperatorCall -> sequenceOf(
+            CallableImportCandidatesProvider(importPositionTypeAndReceiver),
         )
 
         else -> sequenceOf()
