@@ -50,7 +50,7 @@ class IdeaPluginDescriptorImpl(
   override val moduleName: String?,
   override val moduleLoadingRule: ModuleLoadingRule? = null,
   override val useCoreClassLoader: Boolean = false,
-  val isIndependentFromCoreClassLoader: Boolean = false,
+  override val isIndependentFromCoreClassLoader: Boolean = false,
 ) : IdeaPluginDescriptorEx {
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id?.idString ?: raw.id!! // if it throws, it throws on `id` above

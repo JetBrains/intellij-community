@@ -7,4 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
   val moduleLoadingRule: ModuleLoadingRule?
   val useCoreClassLoader: Boolean
+  val isIndependentFromCoreClassLoader: Boolean
 }
