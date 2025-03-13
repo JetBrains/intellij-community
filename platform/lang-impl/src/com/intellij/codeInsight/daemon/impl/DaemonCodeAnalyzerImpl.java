@@ -66,6 +66,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -73,6 +74,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -1687,5 +1689,22 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   @TestOnly
   public void waitForUpdateFileStatusBackgroundQueueInTests() {
     myListeners.waitForUpdateFileStatusQueue();
+  }
+
+  @Override
+  @RequiresBackgroundThread
+  protected void rescheduleShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull TextRange visibleRange) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return;
+    }
+    Editor editor = PsiEditorUtil.getInstance().findEditorByPsiElement(psiFile);
+    if (editor != null) {
+      TextEditorHighlightingPass showAutoImportPass = new ShowAutoImportPass(psiFile, editor, ProperTextRange.create(visibleRange.isProperRange() ? visibleRange : psiFile.getTextRange()));
+      // have to restart ShowAutoImportPass manually because the highlighting session might very well be over by now
+      ApplicationManager.getApplication().invokeLater(() -> {
+        DaemonProgressIndicator sessionIndicator = new DaemonProgressIndicator();
+        ProgressManager.getInstance().executeProcessUnderProgress(() -> showAutoImportPass.doApplyInformationToEditor(), sessionIndicator);
+      }, __ -> editor.isDisposed() || psiFile.getProject().isDisposed());
+    }
   }
 }
