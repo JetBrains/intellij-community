@@ -2,12 +2,6 @@
   modules:
   - name: intellij.junit.rt
 - name: lib/junit.jar
-  projectLibraries:
-  - name: JUnit4
-    files:
-    - name: $MAVEN_REPOSITORY$/junit/junit/4/junit-4.jar
-    - name: $MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1/hamcrest-core-1.jar
-    reason: <- intellij.junit
   modules:
   - name: intellij.junit
 - name: lib/junit5-rt.jar
