@@ -2,7 +2,6 @@ package com.intellij.python.hatch.service
 
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES
-import com.intellij.platform.eel.fs.move
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
@@ -92,7 +91,7 @@ internal class CliBasedHatchService private constructor(
 
     hatchRuntime.hatchCli().new(projectName, tempDir.asNioPath()).getOr { return it }
     val target = workingDirectoryPath.asEelPath()
-    eelApi.fs.move(tempDir, target).replaceExisting(DO_NOT_REPLACE_DIRECTORIES).eelIt().getOr { failure ->
+    eelApi.fs.move(tempDir, target, DO_NOT_REPLACE_DIRECTORIES, false).getOr { failure ->
       return Result.failure(FileSystemOperationHatchError(failure.error))
     }
 
