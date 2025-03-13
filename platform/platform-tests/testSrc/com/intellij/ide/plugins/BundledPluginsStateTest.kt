@@ -32,10 +32,18 @@ class BundledPluginsStateTest {
       assertThat(CoreBundle.messageOrNull("plugin.category.${category.replace(' ', '.')}")).isEqualTo(category)
     }
   }
-}
 
-private fun getIdeaDescriptor(id: String, category: Category): IdeaPluginDescriptorImpl {
-  val descriptor = IdeaPluginDescriptorImpl(PluginDescriptorBuilder.builder().build(), Path.of(""), true, PluginId.getId(id), null)
-  descriptor.category = category
-  return descriptor
+  companion object {
+    private fun getIdeaDescriptor(id: String, category: Category): IdeaPluginDescriptorImpl {
+      val descriptor = IdeaPluginDescriptorImpl(
+        PluginDescriptorBuilder.builder().apply {
+          this.category = category
+        }.build(),
+        Path.of(""),
+        true,
+        PluginId.getId(id),
+        null)
+      return descriptor
+    }
+  }
 }

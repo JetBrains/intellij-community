@@ -563,15 +563,6 @@ class IdeaPluginDescriptorImpl private constructor(
     CoreBundle.messageOrNull(key) ?: fromPluginBundle(key, getCategory())
   }
 
-  /**
-   * This setter was explicitly defined to be able to set a category for a descriptor outside its loading from the XML file.
-   * The problem was that most commonly plugin authors do not publish the plugin's category in its .xml file,
-   * so to be consistent in plugin representation (e.g., in the Plugins form) we have to set this value outside.
-   */
-  fun setCategory(category: String?) {
-    this.category = category
-  }
-
   override fun getVendorEmail(): String? = vendorEmail
 
   override fun getVendorUrl(): String? = vendorUrl
