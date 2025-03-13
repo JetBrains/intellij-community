@@ -22,7 +22,7 @@ internal class PsiSyntaxBuilderFactoryImpl : PsiSyntaxBuilderFactory {
   ): PsiSyntaxBuilder {
     val parserDefinition = getParserDefinition(lang, chameleon.getElementType())
     val tokenConverter = getConverter(lang, chameleon.getElementType())
-    val syntaxDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(lang)
+    val syntaxDefinition = LanguageSyntaxDefinitions.INSTANCE.forLanguage(lang) ?: throw IllegalStateException("No SyntaxDefinition for language: $lang")
     val actualLexer = lexer ?: syntaxDefinition.getLexer()
 
     return PsiSyntaxBuilderImpl(
