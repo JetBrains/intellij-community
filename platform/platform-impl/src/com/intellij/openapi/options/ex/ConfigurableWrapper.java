@@ -9,10 +9,12 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.Predicate;
 
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable, ConfigurableMarkerProvider {
@@ -34,15 +36,24 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
   }
 
   private static @Nullable <T extends UnnamedConfigurable> T createConfigurable(@NotNull ConfigurableEP<T> ep, boolean log) {
-    long time = System.currentTimeMillis();
-    T configurable = ep.createConfigurable();
-    if (configurable instanceof Configurable) {
-      ConfigurableCardPanel.warn((Configurable)configurable, "init", time);
-      if (log) {
-        LOG.debug("cannot create configurable wrapper for " + configurable.getClass());
+    try {
+      long time = System.currentTimeMillis();
+      T configurable = ep.createConfigurable();
+      if (configurable instanceof Configurable) {
+        ConfigurableCardPanel.warn((Configurable)configurable, "init", time);
+        if (log) {
+          LOG.debug("cannot create configurable wrapper for " + configurable.getClass());
+        }
       }
+      return configurable;
     }
-    return configurable;
+    catch (CancellationException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public static @Unmodifiable <T extends UnnamedConfigurable> List<T> createConfigurables(@NotNull ExtensionPointName<? extends ConfigurableEP<T>> name) {
@@ -311,7 +322,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
       if (super.myEp.children != null) {
         for (ConfigurableEP<?> ep : super.myEp.getChildren()) {
           if (ep.isAvailable()) {
-            list.add((Configurable)wrapConfigurable(ep));
+            ContainerUtil.addIfNotNull(list, (Configurable)wrapConfigurable(ep));
           }
         }
       }
@@ -330,7 +341,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
         if (!extensions.isEmpty()) {
           if (extensions.get(0) instanceof ConfigurableEP) {
             for (Object object : extensions) {
-              list.add((Configurable)wrapConfigurable((ConfigurableEP<?>)object));
+              ContainerUtil.addIfNotNull(list, (Configurable)wrapConfigurable((ConfigurableEP<?>)object));
             }
           }
           else if (!super.myEp.dynamic) {
