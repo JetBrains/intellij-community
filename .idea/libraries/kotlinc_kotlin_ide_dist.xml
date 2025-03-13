@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-ide-dist" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dist-for-ide:2.2.0-dev-6100">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dist-for-ide:2.2.0-ij251-48">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.0-dev-6100/kotlin-dist-for-ide-2.2.0-dev-6100.jar">
-          <sha256sum>acdbd9703ae77ffee048bdf8f314e81b68cdad43dcf20b793e95e066308cb5ea</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.0-ij251-48/kotlin-dist-for-ide-2.2.0-ij251-48.jar">
+          <sha256sum>dd3ac6504ec8d75b66714f13931963ba8b3d1061fb0a088c0450c573da78d2d5</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.0-dev-6100/kotlin-dist-for-ide-2.2.0-dev-6100.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.0-ij251-48/kotlin-dist-for-ide-2.2.0-ij251-48.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.0-dev-6100/kotlin-dist-for-ide-2.2.0-dev-6100-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/2.2.0-ij251-48/kotlin-dist-for-ide-2.2.0-ij251-48-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
