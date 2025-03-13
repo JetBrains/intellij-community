@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
@@ -39,6 +40,8 @@ data class TestCompileConfiguration(
     val useInlineScopes: Boolean,
     val jvmDefaultMode: JvmDefaultMode?,
 )
+
+const val COMPILER_ARGS_FILENAME = "compiler.args"
 
 open class DebuggerTestCompilerFacility(
     private val project: Project,
@@ -68,13 +71,15 @@ open class DebuggerTestCompilerFacility(
             error("Library $name does not exist")
         }
 
-        val testFiles = libSrcPath.walk().filter { it.isFile }.toList().map {
+        val testFiles = libSrcPath.walk().filter { it.isFile && it.name != COMPILER_ARGS_FILENAME }.toList().map {
             val path = it.toRelativeString(libSrcPath)
             TestFileWithModule(DebuggerTestModule.Jvm.Default, path, FileUtil.loadFile(it, true))
         }
 
+        val compilerArgsFile = libSrcPath.walk().filter { it.name == COMPILER_ARGS_FILENAME }.singleOrNull()
+
         val libraryFiles = splitByLanguage(testFiles)
-        compileLibrary(libraryFiles, srcDir, classesDir)
+        compileLibrary(libraryFiles, compilerArgsFile, srcDir, classesDir)
     }
 
     fun addDependencies(libraryPaths: List<String>) {
@@ -93,7 +98,7 @@ open class DebuggerTestCompilerFacility(
         mavenArtifacts.find { it.contains(Regex("""kotlin-stdlib-\d+\.\d+\.\d+(-\w+)?""")) }
 
     fun compileLibrary(srcDir: File, classesDir: File) {
-        compileLibrary(this.libraryFiles, srcDir, classesDir)
+        compileLibrary(this.libraryFiles, compilerArgsFile = null, srcDir, classesDir)
 
         srcDir.refreshAndToVirtualFile()?.let { KtUsefulTestCase.refreshRecursively(it) }
         classesDir.refreshAndToVirtualFile()?.let { KtUsefulTestCase.refreshRecursively(it) }
@@ -101,6 +106,7 @@ open class DebuggerTestCompilerFacility(
 
     private fun compileLibrary(
         libraryFiles: TestFilesByLanguageAndPlatform,
+        compilerArgsFile: File?,
         srcDir: File,
         classesDir: File
     ) = with(libraryFiles) {
@@ -112,6 +118,10 @@ open class DebuggerTestCompilerFacility(
 
         val options = mutableListOf("-jvm-target", jvmTarget.description)
         options.addAll(getCompilerOptionsCommonForLibAndSource())
+
+        if (compilerArgsFile != null) {
+            options.addAll(Files.readAllLines(compilerArgsFile.toPath()))
+        }
 
         if (kotlinJvm.isNotEmpty()) {
             KotlinCompilerStandalone(
