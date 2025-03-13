@@ -364,7 +364,8 @@ public final class ConfigImportHelper {
     log.info(builder.toString());
   }
 
-  static @Nullable ConfigImportSettings findCustomConfigImportSettings() {
+  @ApiStatus.Internal
+  public static @Nullable ConfigImportSettings findCustomConfigImportSettings() {
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
       @SuppressWarnings("unchecked")
