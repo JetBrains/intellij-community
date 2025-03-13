@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportContext
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAndReceiver
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFactory() {
@@ -19,9 +18,7 @@ internal object DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFact
             is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable,
             is KaFirDiagnostic.DelegateSpecialFunctionMissing -> {
                 val delegateExpression = diagnostic.psi
-                val propertyDelegate = delegateExpression.parent as? KtPropertyDelegate ?: return null
-
-                ImportContext(delegateExpression, ImportPositionTypeAndReceiver.Delegate(propertyDelegate.expression))
+                ImportContext(delegateExpression, ImportPositionTypeAndReceiver.OperatorCall(delegateExpression))
             }
 
             else -> null
