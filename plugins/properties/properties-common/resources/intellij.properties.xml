@@ -19,5 +19,10 @@
                         serviceImplementation="com.intellij.lang.properties.PropertiesUtilService$Empty"/>
 
     <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.editor.PropertiesFoldingBuilder"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.lang.properties.codeStyle.PropertiesLanguageCodeStyleSettingsProvider"/>
+    <lang.ast.factory language="Properties" implementationClass="com.intellij.lang.properties.psi.impl.PropertiesASTFactory"/>
+    <enterHandlerDelegate implementation="com.intellij.lang.properties.EnterInPropertiesFileHandler" id="EnterInPropertiesFileHandler"/>
+
+    <stripTrailingSpacesFilterFactory implementation="com.intellij.lang.properties.formatting.PropertiesStripTrailingSpacesFilterFactory"/>
   </extensions>
 </idea-plugin>

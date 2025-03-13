@@ -56,10 +56,7 @@
                                       implementationClass="com.intellij.lang.properties.PropertiesWordCompletionFilter"/>
     <lang.psiStructureViewFactory language="Properties"
                                   implementationClass="com.intellij.lang.properties.structureView.PropertiesStructureViewBuilderFactory"/>
-    <lang.ast.factory language="Properties" implementationClass="com.intellij.lang.properties.psi.impl.PropertiesASTFactory"/>
     <joinLinesHandler implementation="com.intellij.lang.properties.PropertiesJoinLinesHandler"/>
-
-    <enterHandlerDelegate implementation="com.intellij.lang.properties.EnterInPropertiesFileHandler" id="EnterInPropertiesFileHandler"/>
 
     <automaticRenamerFactory implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleRenamerFactory"/>
     <renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>
@@ -115,8 +112,6 @@
     <iconProvider implementation="com.intellij.lang.properties.xml.XmlPropertiesIconProvider"/>
     <psi.referenceContributor language="XML" implementation="com.intellij.lang.properties.xml.XmlPropertiesReferenceContributor"/>
 
-    <langCodeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesLanguageCodeStyleSettingsProvider"/>
-
     <internalFileTemplate name="XML Properties File.xml"/>
     <refactoring.copyHandler implementation="com.intellij.lang.properties.editor.PropertiesCopyHandler" id="properties"/>
 
@@ -124,8 +119,6 @@
     <gotoDeclarationHandler implementation="com.intellij.lang.properties.editor.GotoPropertyParentDeclarationHandler"/>
 
     <properties.implicitPropertyUsageProvider implementation="com.intellij.lang.properties.codeInspection.unused.LoggerConfigPropertyUsageProvider"/>
-
-    <stripTrailingSpacesFilterFactory implementation="com.intellij.lang.properties.formatting.PropertiesStripTrailingSpacesFilterFactory"/>
 
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.lang.properties.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.lang.properties.ide.actions.PropertiesQualifiedNameProvider"/>
