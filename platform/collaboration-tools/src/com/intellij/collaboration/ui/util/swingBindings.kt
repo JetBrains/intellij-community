@@ -450,7 +450,7 @@ private typealias Block = CoroutineScope.() -> Unit
 
 @ApiStatus.Internal
 @Deprecated("It is much better to pass a proper scope where needed")
-class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { Dispatchers.Main })
+class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { Dispatchers.EDT })
   : Activatable {
 
   private var scope: CoroutineScope? = null

@@ -19,6 +19,7 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
@@ -119,7 +120,7 @@ private suspend fun MutableDiffRequestProcessor.applyRequestUpdateable(
   request: DiffRequest,
   inRequestScope: suspend () -> Unit = {},
 ) {
-  withContext(Dispatchers.Main.immediate) {
+  withContext(Dispatchers.EdtImmediate) {
     while (true) {
       checkCanceled()
       val needReload = supervisorScope {
@@ -175,7 +176,7 @@ private suspend fun MutableDiffRequestProcessor.handleScrolling(producer: DiffVi
 
 private suspend fun DiffViewerBase.executeScroll(cmd: DiffViewerScrollRequest) {
   val v = this
-  withContext(Dispatchers.Main.immediate) {
+  withContext(Dispatchers.EdtImmediate) {
     viewerReadyFlow().first { it }
     DiffViewerScrollRequestProcessor.scroll(v, cmd)
   }

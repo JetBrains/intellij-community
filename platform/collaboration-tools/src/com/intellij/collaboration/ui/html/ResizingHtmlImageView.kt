@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.html
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.util.containers.ComparatorUtil.min
 import com.intellij.util.ui.JBImageToolkit
@@ -241,7 +242,7 @@ private class ImageLoader(
 
   @OptIn(DelicateCoroutinesApi::class)
   private fun requestImageAsync(loader: AsyncHtmlImageLoader, baseUrl: URL?, src: String): Job =
-    GlobalScope.launch(Dispatchers.Main + CoroutineName("HTML image requestor")) {
+    GlobalScope.launch(Dispatchers.UI + CoroutineName("HTML image requestor")) {
       state = State.Loading()
       val image = try {
         loader.load(baseUrl, src)!!

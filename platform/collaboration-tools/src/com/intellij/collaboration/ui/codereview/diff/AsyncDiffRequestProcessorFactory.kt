@@ -17,6 +17,7 @@ import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.diff.requests.NoDiffRequest
 import com.intellij.diff.tools.combined.*
 import com.intellij.openapi.ListSelection
+import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
@@ -47,7 +48,7 @@ object AsyncDiffRequestProcessorFactory {
     cs.launchNow(CoroutineName("Code Review Diff UI")) {
       diffVmFlow.collectScoped { vm ->
         if (vm != null) {
-          withContext(Dispatchers.Main.immediate) {
+          withContext(Dispatchers.EdtImmediate) {
             val context = createContext(vm)
             try {
               context.forEach { processor.putData(it) }
@@ -166,7 +167,7 @@ object AsyncDiffRequestProcessorFactory {
     cs.launchNow(CoroutineName("Code Review Combined Diff UI")) {
       reviewDiffVm.collectLatest { diffVm ->
         if (diffVm != null) {
-          withContext(Dispatchers.Main.immediate) {
+          withContext(Dispatchers.EdtImmediate) {
             val context = createContext(diffVm)
             try {
               context.forEach { processor.context.putData(it) }
