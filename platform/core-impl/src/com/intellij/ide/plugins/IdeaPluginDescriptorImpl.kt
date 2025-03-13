@@ -62,7 +62,6 @@ class IdeaPluginDescriptorImpl private constructor(
     moduleName: String?,
     moduleLoadingRule: ModuleLoadingRule? = null,
     useCoreClassLoader: Boolean = false,
-    isIndependentFromCoreClassLoader: Boolean = false,
   ) : this(
     raw = raw,
     path = path,
@@ -71,7 +70,7 @@ class IdeaPluginDescriptorImpl private constructor(
     moduleName = moduleName,
     moduleLoadingRule = moduleLoadingRule,
     useCoreClassLoader = useCoreClassLoader,
-    isIndependentFromCoreClassLoader = isIndependentFromCoreClassLoader,
+    isIndependentFromCoreClassLoader = false,
     descriptorPath = null)
 
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
