@@ -881,9 +881,9 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/invokeExtensionNoOperator.test");
             }
 
-            @TestMetadata("iteratorOperator.before.Main.kt")
+            @TestMetadata("iteratorOperator.test")
             public void testIteratorOperator() throws Exception {
-                runTest("testData/quickfix/autoImports/iteratorOperator.before.Main.kt");
+                runTest("testData/quickfix/autoImports/iteratorOperator.test");
             }
 
             @TestMetadata("ktij27440.test")

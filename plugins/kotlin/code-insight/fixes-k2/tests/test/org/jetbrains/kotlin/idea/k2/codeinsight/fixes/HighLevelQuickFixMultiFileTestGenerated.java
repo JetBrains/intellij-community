@@ -769,9 +769,9 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtensionNoOperator.test");
             }
 
-            @TestMetadata("iteratorOperator.before.Main.kt")
+            @TestMetadata("iteratorOperator.test")
             public void testIteratorOperator() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/iteratorOperator.before.Main.kt");
+                runTest("../../../idea/tests/testData/quickfix/autoImports/iteratorOperator.test");
             }
 
             @TestMetadata("ktij27440.test")
