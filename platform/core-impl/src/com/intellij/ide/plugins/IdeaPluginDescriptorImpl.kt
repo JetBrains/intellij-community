@@ -73,6 +73,12 @@ class IdeaPluginDescriptorImpl private constructor(
     isIndependentFromCoreClassLoader = false,
     descriptorPath = null)
 
+  init {
+    if (moduleName != null) {
+      require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
+    }
+  }
+
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id?.idString ?: raw.id!! // if it throws, it throws on `id` above
 
@@ -99,19 +105,12 @@ class IdeaPluginDescriptorImpl private constructor(
    * Note that it's different from [dependenciesV2]
    */
   @JvmField
-  val pluginDependencies: List<PluginDependency>
+  val pluginDependencies: List<PluginDependency> = raw.depends
+    .let(::convertDepends)
+    .let(::fixDepends)
 
   @JvmField
   val incompatibilities: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
-
-  init {
-    if (moduleName != null) {
-      require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
-    }
-    pluginDependencies = raw.depends
-      .let(::convertDepends)
-      .let(::fixDepends)
-  }
 
   @Transient
   @JvmField
