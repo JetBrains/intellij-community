@@ -364,10 +364,6 @@
     <registryKey key="markdown.experimental.allow.external.requests"
                  defaultValue="true"
                  description="Enables requests for external resources from the preview (e.g. non-local images)."/>
-
-    <registryKey key="markdown.use.fallback.link.opener"
-                 defaultValue="false"
-                 description="Use the old implementation of the link opener."/>
     <!--endregion-->
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>

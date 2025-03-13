@@ -1,7 +1,6 @@
 package org.intellij.plugins.markdown.frontend.preview.accessor.impl
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
@@ -16,7 +15,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.project.projectId
 import com.intellij.ui.awt.RelativePoint
@@ -40,7 +38,7 @@ internal class MarkdownLinkOpenerImpl
   private val coroutineScope: CoroutineScope
 )
   : MarkdownLinkOpener {
-  override fun openLink(project: Project?, link: String, virtualFile: VirtualFile?) {
+  override fun openLink(project: Project?, link: String) {
     val uri = createUri(link) ?: return
     if (tryOpenInEditor(project, uri)) {
       return
