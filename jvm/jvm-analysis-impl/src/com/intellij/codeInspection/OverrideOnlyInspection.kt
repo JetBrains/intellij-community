@@ -6,29 +6,31 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.MethodSignatureUtil
+import com.intellij.psi.util.PsiFormatUtil
+import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.uast.UastVisitorAdapter
+import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.USuperExpression
-import org.jetbrains.uast.getAnchorPsi
-import org.jetbrains.uast.getContainingUMethod
+import org.jetbrains.uast.*
 
 private inline val ANNOTATION_NAME get() = ApiStatus.OverrideOnly::class.java.canonicalName!!
 
 /**
  * UAST-based inspection checking that no API method, which is marked with [ApiStatus.OverrideOnly] annotation,
  * is referenced or invoked in client code.
+ *
+ * It also checks that the annotation itself is applied on a correct target.
+ *
+ * @see NonExtendableApiUsageInspection
  */
 @VisibleForTesting
 class OverrideOnlyInspection : LocalInspectionTool() {
@@ -45,22 +47,44 @@ class OverrideOnlyInspection : LocalInspectionTool() {
     apiUsageProcessor: ApiUsageProcessor,
     private val problemsHolder: ProblemsHolder,
   ) : ApiUsageUastVisitor(apiUsageProcessor) {
-    override fun visitMethod(method: UMethod): Boolean {
-      val containingClass = method.uastParent as? UClass
-      val hasAnnotation = method.findAnnotation(ANNOTATION_NAME) != null
-      if (hasAnnotation && (containingClass == null || containingClass.isFinal || !method.javaPsi.isOverridable())) {
-        val anchor = method.getAnchorPsi() ?: return true
-        val methodName = HighlightMessageUtil.getSymbolName(method.javaPsi) ?: return true
-        val description = JvmAnalysisBundle.message("jvm.inspections.api.override.only.on.invalid.method.description", methodName)
+
+    override fun visitClass(node: UClass): Boolean {
+      val annName = ANNOTATION_NAME
+      val hasAnnotation = node.findAnnotation(annName) != null
+      if (hasAnnotation && node.isFinal) {
+        val anchor = node.getAnchorPsi() ?: return super.visitClass(node)
+        val options = PsiFormatUtilBase.SHOW_NAME
+        val className = PsiFormatUtil.formatClass(node.javaPsi, options)
+        val elementName = StringUtil.capitalize(ElementDescriptionUtil.getElementDescription(node.javaPsi, UsageViewTypeLocation.INSTANCE))
+        val description = JvmAnalysisBundle.message("jvm.inspections.api.override.only.on.invalid.class.description", elementName, className)
         problemsHolder.registerProblem(anchor, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
+      return super.visitClass(node)
+    }
 
-      return true
+    override fun visitMethod(node: UMethod): Boolean {
+      val containingClass = node.getContainingUClass()
+      val hasAnnotation = node.findAnnotation(ANNOTATION_NAME) != null
+      if (hasAnnotation) {
+        val isRedundant = containingClass?.isFinal == false && containingClass.findAnnotation(ANNOTATION_NAME) != null
+        val isIncorrect = (containingClass == null || containingClass.isFinal || !node.javaPsi.isOverridable())
+
+        val anchor = node.getAnchorPsi() ?: return super.visitMethod(node)
+        val methodName = HighlightMessageUtil.getSymbolName(node.javaPsi) ?: return super.visitMethod(node)
+        val description = if (isRedundant) JvmAnalysisBundle.message("jvm.inspections.api.override.only.on.invalid.method.redundant.description")
+        else if (isIncorrect) JvmAnalysisBundle.message("jvm.inspections.api.override.only.on.invalid.method.description", methodName)
+        else null
+
+        if (description != null) {
+          problemsHolder.registerProblem(anchor, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        }
+      }
+
+      return super.visitMethod(node)
     }
   }
 
   private class OverrideOnlyProcessor(private val problemsHolder: ProblemsHolder) : ApiUsageProcessor {
-
 
     private fun isLibraryElement(method: PsiMethod): Boolean {
       val containingVirtualFile = PsiUtilCore.getVirtualFile(method)
@@ -73,14 +97,14 @@ class OverrideOnlyInspection : LocalInspectionTool() {
 
     private fun isInsideOverridenOnlyMethod(sourceNode: UElement, target: PsiMethod): Boolean = sourceNode.getContainingUMethod()?.let {
       MethodSignatureUtil.areSignaturesEqual(it.javaPsi, target)
-    } ?: false
+    } == true
 
     private fun isSuperCall(qualifier: UExpression?) = qualifier is USuperExpression
 
     private fun isDelegateCall(qualifier: UExpression?, target: PsiMethod) = qualifier?.let {
       val methodClassName = target.containingClass?.qualifiedName ?: return@let false
       it.getExpressionType()?.isInheritorOf(methodClassName)
-    } ?: false
+    } == true
 
     private fun isSuperOrDelegateCall(sourceNode: UElement, target: PsiMethod, qualifier: UExpression?): Boolean {
       if (!isInsideOverridenOnlyMethod(sourceNode, target)) return false
