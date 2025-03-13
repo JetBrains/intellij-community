@@ -91,9 +91,7 @@ class IdeaPluginDescriptorImpl private constructor(
   private val vendorEmail: String? = raw.vendorEmail
   private val vendorUrl: String? = raw.vendorUrl
   private val category: String? = raw.category
-
-  @JvmField
-  internal val url: String? = raw.url
+  private val url: String? = raw.url
 
   /**
    * aka `<depends>` elements from the plugin.xml
