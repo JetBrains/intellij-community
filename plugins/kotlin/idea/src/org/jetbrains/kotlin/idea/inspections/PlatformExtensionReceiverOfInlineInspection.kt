@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -30,19 +30,19 @@ import java.util.regex.PatternSyntaxException
 
 class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
 
-    private var nameRegex: Regex? = defaultNamePattern.toRegex()
-    private var namePattern: String = defaultNamePattern
+    private var nameRegex: Regex? = DEFAULT_NAME_PATTERN.toRegex()
+    private var namePattern: String = DEFAULT_NAME_PATTERN
         set(value) {
             field = value
             nameRegex = try {
                 value.toRegex()
-            } catch (e: PatternSyntaxException) {
+            } catch (_: PatternSyntaxException) {
                 null
             }
         }
 
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): KtVisitorVoid =
         object : KtVisitorVoid() {
             override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
                 super.visitDotQualifiedExpression(expression)
@@ -89,6 +89,6 @@ class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
         .onValue("namePattern", this::namePattern)
 
     companion object {
-        const val defaultNamePattern = "(toBoolean)|(content.*)"
+        const val DEFAULT_NAME_PATTERN: String = "(toBoolean)|(content.*)"
     }
 }
