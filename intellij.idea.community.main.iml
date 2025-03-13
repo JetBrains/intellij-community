@@ -118,7 +118,7 @@
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.structuralSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy.git" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.json" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.json.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.typeMigration" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
