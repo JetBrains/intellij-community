@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.coroutines.limitedParallelism
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.findAmongRoots
