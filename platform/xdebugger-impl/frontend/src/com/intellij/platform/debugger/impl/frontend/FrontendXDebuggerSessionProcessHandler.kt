@@ -83,13 +83,15 @@ private open class FrontendXDebuggerSessionProcessHandler(
 
   override fun destroyProcessImpl() {
     cs.launch {
-      XDebugSessionProcessHandlerApi.getInstance().destroyProcess(sessionId)
+      val exitCode = XDebugSessionProcessHandlerApi.getInstance().destroyProcess(sessionId).await()
+      notifyProcessTerminated(exitCode ?: 0)
     }
   }
 
   override fun detachProcessImpl() {
     cs.launch {
-      XDebugSessionProcessHandlerApi.getInstance().destroyProcess(sessionId)
+      XDebugSessionProcessHandlerApi.getInstance().detachProcess(sessionId).await()
+      notifyProcessDetached()
     }
   }
 

@@ -16,9 +16,9 @@ interface XDebugSessionProcessHandlerApi : RemoteApi<Unit> {
 
   suspend fun waitFor(sessionId: XDebugSessionId, timeoutInMilliseconds: Long?): Deferred<Boolean>
 
-  suspend fun destroyProcess(sessionId: XDebugSessionId)
+  suspend fun destroyProcess(sessionId: XDebugSessionId): Deferred<Int?>
 
-  suspend fun detachProcess(sessionId: XDebugSessionId)
+  suspend fun detachProcess(sessionId: XDebugSessionId): Deferred<Int?>
   
   suspend fun killProcess(sessionId: XDebugSessionId)
 
