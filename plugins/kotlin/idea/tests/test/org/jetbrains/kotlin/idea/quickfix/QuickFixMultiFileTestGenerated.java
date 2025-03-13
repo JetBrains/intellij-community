@@ -886,6 +886,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/iteratorOperator.test");
             }
 
+            @TestMetadata("iteratorOperator_literalReceiver.test")
+            public void testIteratorOperator_literalReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/iteratorOperator_literalReceiver.test");
+            }
+
+            @TestMetadata("iteratorOperator_wrongReceiverType.test")
+            public void testIteratorOperator_wrongReceiverType() throws Exception {
+                runTest("testData/quickfix/autoImports/iteratorOperator_wrongReceiverType.test");
+            }
+
             @TestMetadata("ktij27440.test")
             public void testKtij27440() throws Exception {
                 runTest("testData/quickfix/autoImports/ktij27440.test");
