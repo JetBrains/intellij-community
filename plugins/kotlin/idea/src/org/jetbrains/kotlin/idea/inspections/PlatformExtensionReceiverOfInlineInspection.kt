@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.quickfix.getAddExclExclCallFix
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -77,7 +77,7 @@ class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
                         receiverExpression,
                         KotlinBundle.message("call.of.inline.function.with.nullable.extension.receiver.can.cause.npe.in.kotlin.1.2"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                        IntentionWrapper(it)
+                        it.asQuickFix(),
                     )
                 }
             }

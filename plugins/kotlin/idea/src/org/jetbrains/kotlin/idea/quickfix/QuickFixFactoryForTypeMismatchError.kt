@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -199,7 +199,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                 val checkCalleeExpression =
                     diagnostic.factory == ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS &&
                     targetExpression.parent?.safeAs<KtCallExpression>()?.calleeExpression == targetExpression
-                getAddExclExclCallFix(targetExpression, checkCalleeExpression)?.let { actions.add(it) }
+                getAddExclExclCallFix(targetExpression, checkCalleeExpression)?.let { actions.add(it.asIntention()) }
                 if (expectedType.isBoolean()) {
                     actions.add(AddEqEqTrueFix(targetExpression).asIntention())
                 }

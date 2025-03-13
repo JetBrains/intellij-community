@@ -1,7 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k.k2
 
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommandWithContext
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.project.Project
@@ -108,7 +110,7 @@ internal class K2QuickFixDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWith
 
 internal class K2AddExclExclDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWithPsi<*>>(
     override val diagnosticClass: KClass<DIAGNOSTIC>,
-    private val fixFactory: KotlinQuickFixFactory.IntentionBased<DIAGNOSTIC>
+    private val fixFactory: KotlinQuickFixFactory.ModCommandBased<DIAGNOSTIC>
 ) : K2DiagnosticBasedProcessing<DIAGNOSTIC> {
 
     context(KaSession)
@@ -119,8 +121,14 @@ internal class K2AddExclExclDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticW
             } ?: return null
         return object : K2DiagnosticFix {
             override fun apply(element: PsiElement) {
-                addExclExclCallFix.invoke(element.project, null, element.containingFile)
+                val context = context(element)
+                val perform = addExclExclCallFix.perform(context)
+                val commandWithContext = ModCommandWithContext(context, perform)
+                commandWithContext.executeInBatch()
             }
+
+            private fun context(element: PsiElement): ActionContext =
+                ActionContext(element.project, element.containingFile, element.textRange.startOffset, element.textRange, element)
         }
     }
 }

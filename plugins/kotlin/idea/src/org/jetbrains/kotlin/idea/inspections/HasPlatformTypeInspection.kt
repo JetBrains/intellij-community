@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.intentions.isFlexibleRecursive
 import org.jetbrains.kotlin.idea.quickfix.getAddExclExclCallFix
@@ -45,7 +45,7 @@ class HasPlatformTypeInspection(
             if (expression != null &&
                 (!reportPlatformArguments || !TypeUtils.makeNotNullable(type).isFlexibleRecursive())
             ) {
-                return listOfNotNull(getAddExclExclCallFix(expression)?.let { IntentionWrapper(it) })
+                return listOfNotNull(getAddExclExclCallFix(expression)?.asQuickFix())
             }
         }
 
