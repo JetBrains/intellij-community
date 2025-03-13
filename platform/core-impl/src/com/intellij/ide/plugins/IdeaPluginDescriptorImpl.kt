@@ -51,7 +51,7 @@ class IdeaPluginDescriptorImpl private constructor(
   override val moduleLoadingRule: ModuleLoadingRule? = null,
   override val useCoreClassLoader: Boolean = false,
   override val isIndependentFromCoreClassLoader: Boolean = false,
-  internal val descriptorPath: String? = null
+  private val descriptorPath: String? = null
 ) : IdeaPluginDescriptorEx {
 
   constructor(
