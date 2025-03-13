@@ -6,4 +6,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
   val moduleLoadingRule: ModuleLoadingRule?
+  val useCoreClassLoader: Boolean
 }
