@@ -46,10 +46,9 @@ native-dialog = "0.7.0"
 cargo-deny = "0.16.2"  # checks licenses and problematic dependencies
 cargo-about = "0.6.5"  # generates license report
 
+# Android Studio: b/363795669 Cross compile Windows launcher on Linux
 [build-dependencies]
 anyhow = { version = "1.0.95", features = ["std", "backtrace"] }
-
-[target.'cfg(target_os = "windows")'.build-dependencies]
 curl = { version = "0.4.47", features = ["static-curl"] }
 sha1 = "0.10.6"
 winresource = "0.1.19"
