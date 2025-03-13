@@ -27,7 +27,7 @@ public final class PropertiesPsiCompletionUtil {
     }
   }
 
-  static Set<Object> getPropertiesKeys(final PropertyReferenceBase propertyReference) {
+  public static Set<Object> getPropertiesKeys(final PropertyReferenceBase propertyReference) {
     final Set<Object> variants = new ObjectOpenCustomHashSet<>(new Hash.Strategy<>() {
       @Override
       public int hashCode(@Nullable Object object) {
