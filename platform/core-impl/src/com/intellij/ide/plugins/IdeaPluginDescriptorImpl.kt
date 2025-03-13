@@ -21,7 +21,6 @@ import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.io.File
 import java.io.IOException
@@ -89,7 +88,6 @@ class IdeaPluginDescriptorImpl private constructor(
   private val releaseVersion: Int = raw.releaseVersion
   private val isLicenseOptional: Boolean = raw.isLicenseOptional
 
-  @NonNls
   private var resourceBundleBaseName: String? = null
   private val changeNotes: String? = raw.changeNotes
   private var version: String? = raw.version
@@ -170,7 +168,7 @@ class IdeaPluginDescriptorImpl private constructor(
   internal var isIncomplete: PluginLoadingError? = null
 
   @Volatile
-  private var loadedDescriptionText: String? = null
+  private var loadedDescriptionText: @Nls String? = null
 
   override fun getDescriptorPath(): String? = descriptorPath
 
@@ -488,36 +486,36 @@ class IdeaPluginDescriptorImpl private constructor(
       }
     }
 
-  @Suppress("HardCodedStringLiteral")
-  override fun getDescription(): String? {
+  override fun getDescription(): @Nls String? {
     var result = loadedDescriptionText
     if (result != null) {
       return result
     }
-
     if (isCommunity()) {
       CE_PLUGIN_CARDS[id.idString]?.let {
         loadedDescriptionText = it.description
         return it.description
       }
     }
-
     result = fromPluginBundle("plugin.$id.description", rawDescription)
-
     loadedDescriptionText = result
     return result
   }
 
-  private fun fromPluginBundle(key: String, @Nls defaultValue: String?): String? {
-    if (!isEnabled) return defaultValue // if the plugin is disabled, its classloader is null and the resource bundle cannot be found
-    return (resourceBundleBaseName?.let { baseName ->
-      try {
-        AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key, defaultValue ?: "")
-      }
-      catch (_: MissingResourceException) {
-        LOG.info("Cannot find plugin $id resource-bundle: $baseName")
-        null
-      }
+  private fun fromPluginBundle(key: String, @Nls defaultValue: String?): @Nls String? {
+    if (!isEnabled) { // if the plugin is disabled, its classloader is null and the resource bundle cannot be found
+      return defaultValue
+    }
+    val baseName = resourceBundleBaseName
+    if (baseName == null) {
+      return defaultValue
+    }
+    return (try {
+      AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key, defaultValue ?: "")
+    }
+    catch (_: MissingResourceException) {
+      LOG.info("Cannot find plugin $id resource-bundle: $baseName")
+      null
     }) ?: defaultValue
   }
 
@@ -551,7 +549,6 @@ class IdeaPluginDescriptorImpl private constructor(
 
   override fun getDisplayCategory(): @Nls String? = getCategory()?.let {
     val key = "plugin.category.${category?.replace(' ', '.')}"
-    @Suppress("HardCodedStringLiteral")
     CoreBundle.messageOrNull(key) ?: fromPluginBundle(key, getCategory())
   }
 
@@ -749,9 +746,10 @@ private fun isCommunity(): Boolean {
 
 private var unitTestIsCommunityDespammer = false
 
-private data class PluginCardInfo(val title: String, val description: String)
+private data class PluginCardInfo(val title: String, val description: @Nls String)
 
-private val CE_PLUGIN_CARDS = mapOf<String, PluginCardInfo>(
+@Suppress("HardCodedStringLiteral")
+private val CE_PLUGIN_CARDS: Map<String, PluginCardInfo> = mapOf(
   "org.jetbrains.completion.full.line" to PluginCardInfo(
     "AI Promo",
     "Provides an easy way to install AI assistant to your IDE"
