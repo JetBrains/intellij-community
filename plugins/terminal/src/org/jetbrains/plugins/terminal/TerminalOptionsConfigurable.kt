@@ -26,6 +26,7 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.util.execution.ParametersListUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
@@ -38,7 +39,8 @@ import javax.swing.JTextField
 import javax.swing.UIManager
 import javax.swing.event.DocumentEvent
 
-internal const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
+@ApiStatus.Internal
+const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
 
 internal class TerminalOptionsConfigurable(private val project: Project) : BoundSearchableConfigurable(
   displayName = IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name"),
