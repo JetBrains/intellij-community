@@ -165,6 +165,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.util.xmlDom",
     "intellij.platform.tracing.rt",
     "intellij.platform.util.base",
+    "intellij.platform.util.base.kmp",
     "intellij.platform.diagnostic",
     // it contains common telemetry related code (utils, TelemetryContext) for OpenTelemetry
     "intellij.platform.diagnostic.telemetry.rt",

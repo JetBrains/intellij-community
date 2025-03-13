@@ -71,6 +71,7 @@ internal class AddDependencyToImlByUsage {
         //"intellij.platform.remote.core",
         //"intellij.platform.codeStyle",
         //"intellij.platform.util.base",
+        //"intellij.platform.util.base.kmp",
         //"intellij.platform.util.diff",
         //"intellij.platform.indexing",
         //"intellij.platform.ide",
