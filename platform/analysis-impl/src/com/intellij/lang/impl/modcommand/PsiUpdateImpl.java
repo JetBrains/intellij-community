@@ -350,7 +350,7 @@ final class PsiUpdateImpl {
     }
 
     private @Nullable TextRange getRange(@NotNull PsiElement element) {
-      if (!element.isValid()) throw new IllegalArgumentException();
+      if (!element.isValid()) throw new IllegalArgumentException("Element " + element + " is not valid");
       if (!PsiTreeUtil.isAncestor(myTracker.myCopyFile, element, false)) {
         PsiFile file = element.getContainingFile();
         // allow navigating to the beginning of files

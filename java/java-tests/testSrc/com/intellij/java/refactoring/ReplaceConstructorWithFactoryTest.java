@@ -36,7 +36,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   }
 
   public void testEmptyConstructor() { runTest("01", null); }
-  
+
   public void testWithSelection() {
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     configureByFile("/refactoring/replaceConstructorWithFactory/beforeWithSelection.java");
@@ -59,17 +59,19 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testSubclass() { runTest("02", null); }
 
   public void testDefaultConstructor() { runTest("03", null); }
+
   public void testDefaultConstructorWithTypeParams() { runTest("TypeParams", null); }
+
   public void testPreserveComments() { runTest(getTestName(false), null); }
 
   public void testInnerClass() { runTest("04", null); }
-  
+
   public void testNestedClass() { runTest("NestedClass", "OuterClass"); }
-  
+
   public void testNestedClass2() { runTest("NestedClass2", "InnerClass"); }
-  
+
   public void testAnonymousInheritor() { runTest("AnonymousInheritor", "Inner"); }
-  
+
   public void testAnonymousInheritor2() { runTest("AnonymousInheritor2", null); }
 
   public void testSubclassVisibility() { runTest("05", null); }
@@ -79,28 +81,28 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testImplicitConstructorCreation() { runTest("07", null); }
 
   public void testConstructorTypeParameters() { runTest("08", null); }
-  
+
   public void testInnerClass2() { runTest("InnerClass2", "SimpleClass"); }
-  
+
   public void testInjection() {
-    runTest("Injection", null); 
+    runTest("Injection", null);
   }
-  
+
   public void testRecords() {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + "RecordConstructor" + ".java");
     ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
     ActionContext context = ActionContext.from(getEditor(), getFile());
     Presentation presentation = action.getPresentation(context);
     assertNull(presentation);
- }
+  }
 
-  public void testImplicitClass(){
+  public void testImplicitClass() {
     configureFromFileText("A.java", """
       enum E {A, B}
-            
+      
       record Rar() {
       }
-            
+      
       void main() {
           Rar rar = new R<caret>ar();
       }
@@ -111,7 +113,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     assertNull(presentation);
   }
 
-  public void testImplicitClassNotChoose(){
+  public void testImplicitClassNotChoose() {
     configureFromFileText("A.java", """
       private static class Neste<caret>d {
       
@@ -129,9 +131,9 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     }
     assertSize(1, modChooseAction.actions());
   }
-  
-  public void testAnonymousUsage() {
-    
+
+  public void testRedCode() {
+    runTest("RedCode", null);
   }
 
   private void runTest(final String testIndex, @NonNls String targetClassName) {
@@ -152,7 +154,9 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     Presentation presentation = action.getPresentation(context);
     assertNotNull(presentation);
     ModCommand command = action.perform(context);
-    ModCommandExecutor.getInstance().executeInteractively(context, command, getEditor());
+    ModCommandExecutor modCommandExecutor = ModCommandExecutor.getInstance();
+    modCommandExecutor.getPreview(command, context);
+    modCommandExecutor.executeInteractively(context, command, getEditor());
     IdeEventQueue.getInstance().flushQueue();
   }
 }
