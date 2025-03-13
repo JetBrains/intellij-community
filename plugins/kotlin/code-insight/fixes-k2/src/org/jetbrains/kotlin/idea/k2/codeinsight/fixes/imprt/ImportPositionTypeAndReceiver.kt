@@ -10,105 +10,104 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
  * N.B. This class is heavily copied from [org.jetbrains.kotlin.idea.util.CallTypeAndReceiver].
  * It is currently used only in an auto-import subsystem, so it has a very narrow name.
  */
-internal sealed class ImportPositionTypeAndReceiver<out TPosition : KtElement, out TReceiver : KtElement?>(
-    val position: TPosition,
+internal sealed class ImportPositionTypeAndReceiver<out TReceiver : KtElement?>(
     val receiver: TReceiver,
 ) {
-    class Unknown(position: KtElement) :
-        ImportPositionTypeAndReceiver<KtElement, Nothing?>(position, null)
+    class Unknown() :
+        ImportPositionTypeAndReceiver<Nothing?>(null)
 
-    class DefaultCall(position: KtSimpleNameExpression) :
-        ImportPositionTypeAndReceiver<KtSimpleNameExpression, Nothing?>(position, null)
+    class DefaultCall() :
+        ImportPositionTypeAndReceiver<Nothing?>(null)
 
-    class DotCall(position: KtSimpleNameExpression, receiver: KtExpression) :
-        ImportPositionTypeAndReceiver<KtSimpleNameExpression, KtExpression>(position, receiver)
+    class DotCall(receiver: KtExpression) :
+        ImportPositionTypeAndReceiver<KtExpression>(receiver)
 
-    class SafeCall(position: KtSimpleNameExpression, receiver: KtExpression) :
-        ImportPositionTypeAndReceiver<KtSimpleNameExpression, KtExpression>(position, receiver)
+    class SafeCall(receiver: KtExpression) :
+        ImportPositionTypeAndReceiver<KtExpression>(receiver)
 
-    class SuperMembers(position: KtSimpleNameExpression, receiver: KtSuperExpression) :
-        ImportPositionTypeAndReceiver<KtSimpleNameExpression, KtSuperExpression>(position, receiver)
+    class SuperMembers(receiver: KtSuperExpression) :
+        ImportPositionTypeAndReceiver<KtSuperExpression>(receiver)
 
-    class InfixCall(position: KtOperationReferenceExpression, receiver: KtExpression) :
-        ImportPositionTypeAndReceiver<KtOperationReferenceExpression, KtExpression>(position, receiver)
+    class InfixCall(receiver: KtExpression) :
+        ImportPositionTypeAndReceiver<KtExpression>(receiver)
 
-    class OperatorCall(position: KtReferenceExpression, receiver: KtExpression) :
-        ImportPositionTypeAndReceiver<KtReferenceExpression, KtExpression>(position, receiver)
+    class OperatorCall(receiver: KtExpression) :
+        ImportPositionTypeAndReceiver<KtExpression>(receiver)
 
-    class CallableReference(position: KtSimpleNameExpression, receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtSimpleNameExpression, KtExpression?>(position, receiver)
+    class CallableReference(receiver: KtExpression?) :
+        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
 
-    class ImportDirective(position: KtSimpleNameExpression, receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtSimpleNameExpression, KtExpression?>(position, receiver)
+    class ImportDirective(receiver: KtExpression?) :
+        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
 
-    class PackageDirective(position: KtSimpleNameExpression, receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtSimpleNameExpression, KtExpression?>(position, receiver)
+    class PackageDirective(receiver: KtExpression?) :
+        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
 
-    class TypeReference(position: KtSimpleNameExpression, receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtSimpleNameExpression, KtExpression?>(position, receiver)
+    class TypeReference(receiver: KtExpression?) :
+        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
 
     /**
      * Important: this position is not detected by [detect] function.
      */
-    class Delegate(position: KtExpression, receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtExpression, KtExpression?>(position, receiver)
+    class Delegate(receiver: KtExpression?) :
+        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
 
     /**
      * Important: this position is not detected by [detect] function.
      */
     class Destructuring(destructuredExpression: KtExpression) :
-        ImportPositionTypeAndReceiver<KtExpression, KtExpression>(destructuredExpression, destructuredExpression)
+        ImportPositionTypeAndReceiver<KtExpression>(destructuredExpression)
 
-    class Annotation(position: KtSimpleNameExpression, receiver: KtExpression?) :
-        ImportPositionTypeAndReceiver<KtSimpleNameExpression, KtExpression?>(position, receiver)
+    class Annotation(receiver: KtExpression?) :
+        ImportPositionTypeAndReceiver<KtExpression?>(receiver)
 
     /**
      * Important: this position is not detected by [detect] function.
      */
-    class KDocNameReference(position: KDocName, receiver: KDocName?) :
-        ImportPositionTypeAndReceiver<KDocName, KDocName?>(position, receiver)
+    class KDocNameReference(receiver: KDocName?) :
+        ImportPositionTypeAndReceiver<KDocName?>(receiver)
 
     companion object {
-        fun detect(expression: KtElement): ImportPositionTypeAndReceiver<*, *> {
-            if (expression !is KtSimpleNameExpression) return Unknown(expression)
+        fun detect(expression: KtElement): ImportPositionTypeAndReceiver<*> {
+            if (expression !is KtSimpleNameExpression) return Unknown()
 
             val parent = expression.parent
             if (parent is KtCallableReferenceExpression && expression == parent.callableReference) {
-                return CallableReference(expression, parent.receiverExpression)
+                return CallableReference(parent.receiverExpression)
             }
 
             val receiverExpression = expression.getReceiverExpression()
 
             if (parent != null) {
                 if (expression.isPartOfImportDirectiveExpression()) {
-                    return ImportDirective(expression, receiverExpression)
+                    return ImportDirective(receiverExpression)
                 }
 
                 if (expression.isPartOfPackageDirectiveExpression()) {
-                    return PackageDirective(expression, receiverExpression)
+                    return PackageDirective(receiverExpression)
                 }
                 if (parent is KtUserType) {
                     val constructorCallee = (parent.parent as? KtTypeReference)?.parent as? KtConstructorCalleeExpression
                     if (constructorCallee != null && constructorCallee.parent is KtAnnotationEntry) {
-                        return Annotation(expression, receiverExpression)
+                        return Annotation(receiverExpression)
                     }
 
-                    return TypeReference(expression, receiverExpression)
+                    return TypeReference(receiverExpression)
                 }
             }
 
             when (expression) {
                 is KtOperationReferenceExpression -> {
                     if (receiverExpression == null) {
-                        return Unknown(expression) // incomplete code
+                        return Unknown() // incomplete code
                     }
                     return when (parent) {
                         is KtBinaryExpression -> {
-                            if (parent.operationToken == KtTokens.IDENTIFIER) InfixCall(expression, receiverExpression)
-                            else OperatorCall(expression, receiverExpression)
+                            if (parent.operationToken == KtTokens.IDENTIFIER) InfixCall(receiverExpression)
+                            else OperatorCall(receiverExpression)
                         }
 
-                        is KtUnaryExpression -> OperatorCall(expression, receiverExpression)
+                        is KtUnaryExpression -> OperatorCall(receiverExpression)
 
                         else -> error("Unknown parent for KtOperationReferenceExpression: $parent with text '${parent.text}'")
                     }
@@ -116,32 +115,31 @@ internal sealed class ImportPositionTypeAndReceiver<out TPosition : KtElement, o
 
                 is KtNameReferenceExpression -> {
                     if (receiverExpression == null) {
-                        return DefaultCall(expression)
+                        return DefaultCall()
                     }
 
                     if (receiverExpression is KtSuperExpression) {
-                        return SuperMembers(expression, receiverExpression)
+                        return SuperMembers(receiverExpression)
                     }
 
                     return when (parent) {
                         is KtCallExpression -> {
                             if ((parent.parent as KtQualifiedExpression).operationSign == KtTokens.SAFE_ACCESS) SafeCall(
-                                expression,
                                 receiverExpression
                             )
-                            else DotCall(expression, receiverExpression)
+                            else DotCall(receiverExpression)
                         }
 
                         is KtQualifiedExpression -> {
-                            if (parent.operationSign == KtTokens.SAFE_ACCESS) SafeCall(expression, receiverExpression)
-                            else DotCall(expression, receiverExpression)
+                            if (parent.operationSign == KtTokens.SAFE_ACCESS) SafeCall(receiverExpression)
+                            else DotCall(receiverExpression)
                         }
 
                         else -> error("Unknown parent for KtNameReferenceExpression with receiver: $parent")
                     }
                 }
 
-                else -> return Unknown(expression)
+                else -> return Unknown()
             }
         }
     }
