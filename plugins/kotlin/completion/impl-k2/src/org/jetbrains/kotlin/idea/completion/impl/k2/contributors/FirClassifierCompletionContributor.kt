@@ -1,10 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.SuspendingLookupElementRenderer
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -51,12 +61,17 @@ internal open class FirClassifierCompletionContributor(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
     ) {
+        val factory = when (positionContext) {
+            is KotlinTypeNameReferencePositionContext -> ({ type: String -> psiFactory.createType(type) }).asFactory()
+            else -> (psiFactory::createExpression).asFactory()
+        }
+
         when (val receiver = positionContext.explicitReceiver) {
-            null -> completeWithoutReceiver(positionContext, weighingContext)
+            null -> completeWithoutReceiver(positionContext, factory, weighingContext)
 
             else -> {
                 receiver.reference()?.let {
-                    completeWithReceiver(positionContext, weighingContext, it)
+                    completeWithReceiver(positionContext, factory, weighingContext, it)
                 } ?: emptySequence()
             }
         }.forEach(sink::addElement)
@@ -65,6 +80,7 @@ internal open class FirClassifierCompletionContributor(
     context(KaSession)
     private fun completeWithReceiver(
         positionContext: KotlinNameReferencePositionContext,
+        factory: MethodBasedElementFactory<*>,
         context: WeighingContext,
         reference: KtReference,
     ): Sequence<LookupElementBuilder> = reference
@@ -77,11 +93,7 @@ internal open class FirClassifierCompletionContributor(
                 .filter { filterClassifiers(it) }
                 .filter { visibilityChecker.isVisible(it, positionContext) }
                 .mapNotNull { classifierSymbol ->
-                    createClassifierLookupElement(
-                        classifierSymbol = classifierSymbol,
-                        positionContext = positionContext,
-                        importingStrategy = ImportStrategy.DoNothing,
-                    )?.applyWeighs(
+                    createClassifierLookupElement(classifierSymbol, factory)?.applyWeighs(
                         context = context,
                         symbolWithOrigin = KtSymbolWithOrigin(classifierSymbol, CompletionSymbolOrigin.Scope(scopeWithKind.kind))
                     )
@@ -91,6 +103,7 @@ internal open class FirClassifierCompletionContributor(
     context(KaSession)
     private fun completeWithoutReceiver(
         positionContext: KotlinNameReferencePositionContext,
+        factory: MethodBasedElementFactory<*>,
         context: WeighingContext,
     ): Sequence<LookupElementBuilder> {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
@@ -105,7 +118,7 @@ internal open class FirClassifierCompletionContributor(
 
                 createClassifierLookupElement(
                     classifierSymbol = classifierSymbol,
-                    positionContext = positionContext,
+                    factory = factory,
                     importingStrategy = getImportingStrategy(classifierSymbol),
                 )?.applyWeighs(
                     context = context,
@@ -124,7 +137,7 @@ internal open class FirClassifierCompletionContributor(
                 .mapNotNull { classifierSymbol ->
                     createClassifierLookupElement(
                         classifierSymbol = classifierSymbol,
-                        positionContext = positionContext,
+                        factory = factory,
                         importingStrategy = getImportingStrategy(classifierSymbol),
                     )?.applyWeighs(
                         context = context,
@@ -142,54 +155,16 @@ internal open class FirClassifierCompletionContributor(
     context(KaSession)
     private fun createClassifierLookupElement(
         classifierSymbol: KaClassifierSymbol,
-        positionContext: KotlinNameReferencePositionContext,
-        importingStrategy: ImportStrategy,
+        factory: MethodBasedElementFactory<*>,
+        importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
     ): LookupElementBuilder? {
         val builder = KotlinFirLookupElementFactory.createClassifierLookupElement(classifierSymbol, importingStrategy)
             ?: return null
 
         return when (importingStrategy) {
-            is ImportStrategy.InsertFqNameAndShorten -> builder.withExpensiveRenderer(object : LookupElementRenderer<LookupElement>() {
-
-                /**
-                 * @see [com.intellij.codeInsight.lookup.impl.AsyncRendering.scheduleRendering]
-                 * todo investigate refactoring to [SuspendingLookupElementRenderer]
-                 */
-                override fun renderElement(
-                    lookupElement: LookupElement,
-                    presentation: LookupElementPresentation,
-                ) {
-                    lookupElement.renderElement(presentation)
-
-                    // avoiding PsiInvalidElementAccessException in completionFile
-                    if (!parameters.position.isValid) return
-                    val file = parameters.completionFile
-                        .copy() as KtFile
-                    val element = file.findElementAt(parameters.offset)
-                        ?: return
-
-                    val factory = when (positionContext) {
-                        is KotlinTypeNameReferencePositionContext -> ({ type: String -> psiFactory.createType(type) }).asFactory()
-                        else -> (psiFactory::createExpression).asFactory()
-                    }
-
-                    val parent = PsiTreeUtil.getParentOfType(
-                        /* element = */ element,
-                        /* aClass = */ factory.parentClass.java,
-                        /* strict = */ true,
-                    ) ?: return
-
-                    val useSiteElement = factory(fqName = importingStrategy.fqName)
-                        .let { parent.replaced<KtElement>(it) }
-
-                    lookupElement.shortenCommand = analyze(useSiteElement) {
-                        collectPossibleReferenceShortenings(
-                            file = file,
-                            selection = useSiteElement.textRange,
-                        )
-                    }
-                }
-            })
+            is ImportStrategy.InsertFqNameAndShorten -> builder.withExpensiveRenderer(
+                ClassifierLookupElementRenderer(parameters, importingStrategy, factory),
+            )
 
             else -> builder
         }
@@ -233,6 +208,71 @@ internal class FirClassifierReferenceCompletionContributor(
         is KaTypeParameterSymbol -> ImportStrategy.DoNothing
         is KaClassLikeSymbol -> {
             classifierSymbol.classId?.let { ImportStrategy.AddImport(it.asSingleFqName()) } ?: ImportStrategy.DoNothing
+        }
+    }
+}
+
+private class ClassifierLookupElementRenderer<R : KtElement>(
+    private val position: SmartPsiElementPointer<*>,
+    private val offset: Int,
+    private val fqName: FqName,
+    private val factory: MethodBasedElementFactory<R>,
+) : SuspendingLookupElementRenderer<LookupElement>() {
+
+    constructor(
+        parameters: KotlinFirCompletionParameters,
+        importingStrategy: ImportStrategy.InsertFqNameAndShorten,
+        factory: MethodBasedElementFactory<R>,
+    ) : this(
+        position = parameters.position.createSmartPointer(),
+        offset = parameters.offset,
+        fqName = importingStrategy.fqName,
+        factory = factory,
+    )
+
+    /**
+     * @see [com.intellij.codeInsight.lookup.impl.AsyncRendering.scheduleRendering]
+     */
+    override suspend fun renderElementSuspending(
+        element: LookupElement,
+        presentation: LookupElementPresentation,
+    ) {
+        element.renderElement(presentation)
+
+        element.shortenCommand = readAction {
+            // avoiding PsiInvalidElementAccessException in completionFile
+            val file = position.element
+                ?.containingFile
+                ?.copy() as? KtFile
+                ?: return@readAction null
+
+            collectPossibleReferenceShortenings(file)
+        }?.also {
+            logger<FirClassifierCompletionContributor>().debug {
+                "Shortened command: $it"
+            }
+        }
+    }
+
+    @RequiresReadLock
+    private fun collectPossibleReferenceShortenings(file: KtFile): ShortenCommand? {
+        val element = file.findElementAt(offset)
+            ?: return null
+
+        val parent = PsiTreeUtil.getParentOfType(
+            /* element = */ element,
+            /* aClass = */ factory.parentClass.java,
+            /* strict = */ true,
+        ) ?: return null
+
+        val useSiteElement = factory(fqName)
+            .let { parent.replaced<KtElement>(it) }
+
+        return analyze(useSiteElement) {
+            collectPossibleReferenceShortenings(
+                file = file,
+                selection = useSiteElement.textRange,
+            )
         }
     }
 }
