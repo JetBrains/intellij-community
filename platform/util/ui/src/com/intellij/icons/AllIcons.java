@@ -504,7 +504,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ChevronRight = load("expui/general/chevronRight.svg", "general/chevron-right.svg", 1620488986, 0);
     /** 16x16 */ public static final @NotNull Icon ChevronUp = load("expui/general/chevronUp.svg", "general/chevron-up.svg", -1865839854, 0);
     /** 16x16 */ public static final @NotNull Icon ChevronDownLargeWhite = load("expui/general/chevronDownLargeWhite.svg", -508498087, 0);
-    /** 16x16 */ public static final @NotNull Icon Close = load("expui/general/close.svg", 569359840, 2);
+    /** 16x16 */ public static final @NotNull Icon Close = load("expui/general/close.svg", -540869824, 2);
     /** 16x16 */ public static final @NotNull Icon CloseSmall = load("expui/general/closeSmall.svg", 1113795489, 2);
     /** 16x16 */ public static final @NotNull Icon CloseSmallHovered = load("expui/general/closeSmallHovered.svg", -1502078120, 2);
     /** 16x16 */ public static final @NotNull Icon CollapseComponent = load("expui/inline/collapse.svg", "general/collapseComponent.svg", -223599744, 0);
