@@ -56,7 +56,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
       panel {
         row {
-          val values = if (TerminalUtil.getGenOneTerminalVisibilityValue() == true
+          val values = if (TerminalUtil.isGenOneTerminalOptionVisible()
                            // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
                            // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
                            // show this option as well to avoid the errors.

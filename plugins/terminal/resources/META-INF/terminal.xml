@@ -44,6 +44,8 @@
     <registryKey key="terminal.new.ui.reworked" defaultValue="true"
                  description="No-op, use Terminal Engine option in Terminal settings instead"/>
 
+    <registryKey key="terminal.new.ui.option.visible" defaultValue="false"
+                 description="Whether Experimental 2024 terminal engine option visible in the settings"/>
     <registryKey key="terminal.new.ui.fish" defaultValue="false"
                  description="Enable new terminal for Fish"/>
     <registryKey key="terminal.new.ui.powershell.win11" defaultValue="true"

@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteSshProcess;
 import com.intellij.ui.ExperimentalUI;
@@ -139,7 +140,8 @@ public final class TerminalUtil {
    */
   @ApiStatus.Internal
   public static boolean isGenOneTerminalOptionVisible() {
-    return ExperimentalUI.isNewUI() && getGenOneTerminalVisibilityValue() == Boolean.TRUE;
+    return ExperimentalUI.isNewUI() && getGenOneTerminalVisibilityValue() == Boolean.TRUE
+           || Registry.is("terminal.new.ui.option.visible", false);
   }
 
   /**
