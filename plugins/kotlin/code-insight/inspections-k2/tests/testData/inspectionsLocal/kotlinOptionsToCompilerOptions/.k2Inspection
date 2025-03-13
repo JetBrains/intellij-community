@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.inspections.scripts.KotlinOptionsToCompilerOptionsInspection
+org.jetbrains.kotlin.idea.gradleJava.k2.inspections.KotlinOptionsToCompilerOptionsInspection

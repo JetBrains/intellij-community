@@ -1,27 +1,33 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.scripts
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.gradleJava.k2.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.Replacement
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.containsNonReplaceableOperation
-import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getReplacementForOldKotlinOptionIfNeeded
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.AbstractKotlinGradleBuildScriptInspection
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -30,6 +36,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 
@@ -40,11 +47,12 @@ private val kotlinCompileTasksNames = setOf(
     "org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile"
 )
 
-internal class KotlinOptionsToCompilerOptionsInspection : AbstractKotlinGradleBuildScriptInspection() {
+internal class KotlinOptionsToCompilerOptionsInspection : AbstractKotlinInspection() {
 
     override fun isAvailableForFile(file: PsiFile): Boolean {
-        return super.isAvailableForFile(file) &&
-                (isUnitTestMode() || kotlinVersionIsEqualOrHigher(major = 2, minor = 0, patch = 0, file))
+        if (file.virtualFile.name == "settings.gradle.kts") return false
+        return file.virtualFile.name.endsWith(".gradle.kts") &&
+                (ApplicationManager.getApplication().isUnitTestMode() || kotlinVersionIsEqualOrHigher(major = 2, minor = 0, patch = 0, file))
         // Inspection tests don't treat tested build script files properly, and thus they ignore Kotlin versions used in scripts
     }
 
@@ -95,9 +103,10 @@ internal class KotlinOptionsToCompilerOptionsInspection : AbstractKotlinGradleBu
         if (referencedName != "kotlinOptions") return false
 
         // ATM, we don't have proper dependencies for tests to perform `analyze` in Gradle build scripts
-        return isUnitTestMode() || kotlinOptionsAreOfNeededType(referenceExpression)
+        return ApplicationManager.getApplication().isUnitTestMode() || kotlinOptionsAreOfNeededType(referenceExpression)
     }
 
+    @OptIn(KaIdeApi::class)
     private fun kotlinOptionsAreOfNeededType(referenceExpression: KtReferenceExpression): Boolean {
         val jvmClassForKotlinCompileTask = analyze(referenceExpression) {
             val symbol = referenceExpression.resolveToCall()
@@ -108,6 +117,15 @@ internal class KotlinOptionsToCompilerOptionsInspection : AbstractKotlinGradleBu
             containingDeclarationOrSymbol?.importableFqName?.toString()
         }
         return jvmClassForKotlinCompileTask in kotlinCompileTasksNames
+    }
+
+    //copy paste, no need to repeat in master
+    context (KaSession)
+    private fun KtExpression.resolveExpression(): KaSymbol? {
+        val reference = mainReference?:(this as? KtThisExpression)?.instanceReference?.mainReference
+        reference?.resolveToSymbol()?.let { return it }
+        val call = resolveToCall()?.calls?.singleOrNull() ?: return null
+        return if (call is KaCallableMemberCall<*, *>) call.symbol else null
     }
 
     private fun elementCantBeProcessed(psiElement: PsiElement): Boolean = when (psiElement) {
@@ -188,4 +206,3 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
         }
     }
 }
-
