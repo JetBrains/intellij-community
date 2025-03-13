@@ -11,6 +11,11 @@ import com.intellij.psi.ParsingDiagnostics.ParserDiagnosticsHandler
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+fun registerParse(builder: PsiSyntaxBuilder, language: Language, parsingTimeNs: Long) {
+  registerParse(builder.getSyntaxTreeBuilder(), language, parsingTimeNs)
+}
+
+@ApiStatus.Experimental
 fun registerParse(builder: SyntaxTreeBuilder, language: Language, parsingTimeNs: Long) {
   val handler = ApplicationManager.getApplication().getService(ParserDiagnosticsHandler::class.java)
   if (handler is ParsingDiagnosticsHandler) {
