@@ -445,7 +445,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
     private val toolbar: LayoutActionsFloatingToolbar,
     parentDisposable: Disposable,
   ) : AWTEventListener {
-    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
+    private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable)
 
     override fun eventDispatched(event: AWTEvent) {
       val isMouseInsideComponent = component.mousePosition != null
