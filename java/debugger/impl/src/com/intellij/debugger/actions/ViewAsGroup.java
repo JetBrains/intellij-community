@@ -47,13 +47,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     RendererAction(NodeRenderer nodeRenderer) {
       super(nodeRenderer.getName());
       myNodeRenderer = nodeRenderer;
-    }
-
-    @Override
-    public @NotNull Presentation createTemplatePresentation() {
-      Presentation presentation = super.createTemplatePresentation();
-      presentation.setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
-      return presentation;
+      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
     }
 
     @Override
