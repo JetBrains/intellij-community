@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -53,6 +54,8 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     resultSet: CompletionResultSet,
   ) {
     if (!commandCompletionEnabled()) return
+    if (parameters.completionType != CompletionType.BASIC) return
+    if (parameters.position is PsiComment) return
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
     }
@@ -79,7 +82,6 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         return
       }
     }
-    if (parameters.completionType != CompletionType.BASIC) return
     val commandCompletionService = project.getService(CommandCompletionService::class.java)
     if (commandCompletionService == null) return
     val dumbService = DumbService.getInstance(project)
@@ -134,7 +136,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
         val lookupElement = createLookupElement(command, adjustedParameters, commandCompletionFactory, prefix)
         val customPrefixMatcher = command.customPrefixMatcher(prefix)
-        if (customPrefixMatcher!=null) {
+        if (customPrefixMatcher != null) {
           val alwaysShowMatcher = resultSet.withPrefixMatcher(customPrefixMatcher)
             .withRelevanceSorter(sorter)
           alwaysShowMatcher.addElement(lookupElement)
@@ -151,7 +153,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     command: CompletionCommand,
     adjustedParameters: AdjustedCompletionParameters,
     commandCompletionFactory: CommandCompletionFactory,
-    prefix: String
+    prefix: String,
   ): LookupElement {
     val i18nName = command.i18nName.replace("_", "").replace("...", "").replace("…", "")
     val additionalInfo = command.additionalInfo ?: ""
@@ -305,7 +307,7 @@ internal class CommandCompletionUnsupportedOperationException
   : UnsupportedOperationException("It's unexpected to invoke this method on a command completion calculating.")
 
 internal class MyEditor(psiFileCopy: PsiFile, private val settings: EditorSettings) : ImaginaryEditor(psiFileCopy.project,
-                                                                                                     psiFileCopy.viewProvider.document!!) {
+                                                                                                      psiFileCopy.viewProvider.document!!) {
   override fun notImplemented(): RuntimeException = throw CommandCompletionUnsupportedOperationException()
 
   override fun isViewer(): Boolean = false
