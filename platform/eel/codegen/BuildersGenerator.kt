@@ -27,10 +27,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.readText
-import com.intellij.openapi.vfs.writeText
+import com.intellij.openapi.vfs.*
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.*
@@ -38,11 +35,11 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.findParentOfType
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.registerExtension
 import com.intellij.util.io.copyRecursively
+import com.intellij.util.io.createDirectories
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightAction
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +65,11 @@ import java.nio.file.Path
 import java.util.Optional
 import kotlin.collections.ArrayDeque
 import kotlin.collections.addAll
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.exists
 import kotlin.io.path.pathString
+import kotlin.io.path.readText
+import kotlin.io.path.walk
 import kotlin.jvm.optionals.getOrNull
 
 /**
@@ -77,6 +78,9 @@ import kotlin.jvm.optionals.getOrNull
  * If you want to regenerate some builders, run the test.
  * No specific arguments or prerequisites are required.
  * Remember to commit new builders.
+ *
+ * TODO The test fails with `Outdated stub in index` when it runs several times in a row.
+ *   Remove the `system/test` directory in the monorepository.
  */
 @TestApplication
 class BuildersGenerator {
@@ -126,54 +130,98 @@ class BuildersGenerator {
 
       synchronizeVariousCaches(tempProject)
 
-      // The value is the content before any change.
-      val initialFileContent: Map<VirtualFile, Optional<String>> = fillRequests(tempProject, newEelModule, genSrcDirName)
+      // The value is the pair of the old and the new content.
+      val filesContent: Map<Path, Pair<Optional<String>, Optional<String>>> = fillRequests(tempProject, newEelModule, genSrcDirName)
 
-      for (virtualFile in initialFileContent.keys) {
-        prettifyFile(tempProject, virtualFile)
-      }
-
-      synchronizeVariousCaches(tempProject)
-
-      // Restoring and reformatting files to check for changes not using git.
-      val newContent: Map<VirtualFile, String> = readAction {
-        initialFileContent.mapValues { (virtualFile, _) ->
-          virtualFile.readText()
-        }
-      }
-
-      for ((virtualFile, initialContent) in initialFileContent) {
-        if (initialContent.isPresent) {
-          writeAction {
-            virtualFile.writeText(initialContent.get())
-          }
+      for ((path, contentPair) in filesContent) {
+        if (contentPair.first.isPresent) {
+          val virtualFile = VfsUtil.findFile(path, true)!!
           prettifyFile(tempProject, virtualFile)
         }
       }
 
       synchronizeVariousCaches(tempProject)
 
-      val initialPrettifiedContent: Map<VirtualFile, Optional<String>> = initialFileContent.mapValues { (virtualFile, initialContent) ->
-        if (initialContent.isEmpty) {
-          Optional.empty()
+      val oldPrettifiedFiles = mutableMapOf<Path, String>()
+
+      val unimportantChanges = filesContent.mapNotNull { (path, contentPair) ->
+        val oldContent = contentPair.first.getOrNull()
+        val newContent =
+          if (contentPair.first.isPresent) {
+            VfsUtil.findFile(path, true)?.run { readAction { readText() } }
+          }
+          else {
+            null
+          }
+        if (newContent != null) {
+          oldPrettifiedFiles[path] = newContent
         }
-        else {
-          Optional.of(readAction { virtualFile.readText() })
-        }
+        if (oldContent != newContent)
+          "changed: ${thisProject.relativize(path)}"
+        else
+          null
       }
 
-      for ((virtualFile, content) in newContent.entries) {
+      for ((path, contentPair) in filesContent) {
+        path.parent.createDirectories()
+        if (!path.exists()) Files.createFile(path)
+        val virtualFile = VfsUtil.findFile(path, true)!!
+        val (_, newContent) = contentPair
         writeAction {
-          virtualFile.writeText(content)
+          if (newContent.isPresent) {
+            virtualFile.writeText(newContent.get())
+          }
+          else {
+            virtualFile.delete(this)
+          }
         }
       }
 
-      checkImportantChanges(thisProject, initialPrettifiedContent, newContent)
+      for ((path, contentPair) in filesContent) {
+        val virtualFile = VfsUtil.findFile(path, true)!!
+        val (_, newContent) = contentPair
+        if (newContent.isPresent) {
+          prettifyFile(tempProject, virtualFile)
+        }
+      }
 
-      checkUnimportantChanges(thisProject, initialFileContent, newContent)
+      synchronizeVariousCaches(tempProject)
+
+      val importantChanges = filesContent.keys
+        .mapNotNull { path ->
+          val oldPrettifiedContent = oldPrettifiedFiles[path]
+          val newContent = VfsUtil.findFile(path, true)?.run { readAction { readText() } }
+          when {
+            oldPrettifiedContent == newContent -> null
+            oldPrettifiedContent == null -> "added: ${thisProject.relativize(path)}"
+            newContent == null -> "deleted: ${thisProject.relativize(path)}"
+            else -> "changed: ${thisProject.relativize(path)}"
+          }
+        }
+
+      if (importantChanges.isNotEmpty()) {
+        throw AssertionError("""
+          |Some builder interfaces changed, but no new builders were generated.
+          |Changes have been written to the disk, don't forget to commit them.
+          |
+          |${importantChanges.joinToString("\n")}
+        """.trimMargin())
+      }
+
+      if (unimportantChanges.isNotEmpty()) {
+        logger<BuildersGenerator>().warn(
+          """
+        |Some styling options in the project has changed. It is recommended to commit new generated builders.
+        |
+        |${unimportantChanges.joinToString("\n")}
+        """.trimMargin()
+        )
+      }
     }
     finally {
-      tempProject.closeProjectAsync(save = false)
+      withContext(Dispatchers.EDT) {
+        ProjectManagerEx.getInstanceEx().forceCloseProject(tempProject, true)
+      }
     }
   }
 
@@ -186,60 +234,11 @@ class BuildersGenerator {
     IndexingTestUtil.suspendUntilIndexesAreReady(tempProject)
   }
 
-  private fun checkImportantChanges(
-    thisProject: Path,
-    initialPrettifiedContent: Map<VirtualFile, Optional<String>>,
-    newContent: Map<VirtualFile, String>,
-  ) {
-    val importantChanges = initialPrettifiedContent.keys
-      .plus(newContent.keys)
-      .mapNotNull { virtualFile ->
-        val oldPrettifiedContent = initialPrettifiedContent[virtualFile]?.getOrNull()
-        val newContent = newContent[virtualFile]
-        when {
-          oldPrettifiedContent == newContent -> null
-          oldPrettifiedContent == null -> "added: ${thisProject.relativize(virtualFile.toNioPath())}"
-          newContent == null -> "deleted: ${thisProject.relativize(virtualFile.toNioPath())}"
-          else -> "changed: ${thisProject.relativize(virtualFile.toNioPath())}"
-        }
-      }
-
-    if (importantChanges.isNotEmpty()) {
-      throw AssertionError("""
-        |Some builder interfaces changed, but no new builders were generated.
-        |Changes have been written to the disk, don't forget to commit them.
-        |
-        |${importantChanges.joinToString("\n")}
-      """.trimMargin())
-    }
-  }
-
-  private fun checkUnimportantChanges(
-    thisProject: Path,
-    initialContent: Map<VirtualFile, Optional<String>>,
-    newContent: Map<VirtualFile, String>,
-  ) {
-    val unimportantChanges = initialContent.mapNotNull { (virtualFile, oldContent) ->
-      val oldContent = oldContent.get()
-      val newContent = newContent[virtualFile]!!
-      if (oldContent != newContent)
-        "changed: ${thisProject.relativize(virtualFile.toNioPath())}"
-      else
-        null
-    }
-
-    if (unimportantChanges.isNotEmpty()) {
-      logger<BuildersGenerator>().warn(
-        """
-        |Some styling options in the project has changed. It is recommended to commit new generated builders.
-        |
-        |${unimportantChanges.joinToString("\n")}
-        """.trimMargin()
-      )
-    }
-  }
-
   private suspend fun prettifyFile(tempProject: Project, virtualFile: VirtualFile) {
+    withContext(Dispatchers.EDT) {
+      FileDocumentManager.getInstance().reloadFiles(virtualFile)
+    }
+
     val inspectionManager = InspectionManager.getInstance(tempProject)
     val globalContext = inspectionManager.createNewGlobalContext() as GlobalInspectionContextBase
     val scope = AnalysisScope(readAction {
@@ -267,6 +266,9 @@ class BuildersGenerator {
 
       ProgressManager.getInstance().run(
         UpdateCopyrightAction.UpdateCopyrightTask(tempProject, AnalysisScope(psiFile), true, PerformInBackgroundOption.DEAF))
+
+      FileDocumentManager.getInstance().saveAllDocuments()
+      virtualFile.writeText(virtualFile.readText().trimEnd())
     }
   }
 
@@ -357,7 +359,7 @@ private suspend fun fillRequests(
   tempProject: Project,
   newEelModule: Module,
   genSrcDirName: Path,
-): Map<VirtualFile, Optional<String>> {
+): LinkedHashMap<Path, Pair<Optional<String>, Optional<String>>> {
   val methods = mutableListOf<BuilderRequest>()
 
   val queue = ArrayDeque<VirtualFile>()
@@ -426,12 +428,16 @@ private fun findBuilders(psiFile: PsiFile, methods: MutableList<BuilderRequest>)
   })
 }
 
+@OptIn(ExperimentalPathApi::class)
 private suspend fun writeBuilderFiles(
   methods: MutableList<BuilderRequest>,
   tempProject: Project,
   genSrcDirName: Path,
-): LinkedHashMap<VirtualFile, Optional<String>> {
-  val createdVirtualFiles = linkedMapOf<VirtualFile, Optional<String>>()
+): LinkedHashMap<Path, Pair<Optional<String>, Optional<String>>> {
+  val filesContent: LinkedHashMap<Path, Pair<Optional<String>, Optional<String>>> =
+    genSrcDirName.walk().associateWithTo(linkedMapOf()) { path ->
+      Optional.of(path.readText()) to Optional.empty()
+    }
 
   methods.sortBy { listOf(it.argsInterfaceFqn, it.clsFqn, it.methodName).joinToString() }
   val imports = methods
@@ -439,60 +445,84 @@ private suspend fun writeBuilderFiles(
     .plus(methods.flatMapTo(sortedSetOf()) { request -> request.imports.map { import -> import.removePrefix("import ") } })
     .toHashSet()
 
-  for ((argsInterfaceFqn, builderRequests) in methods.groupByTo(linkedMapOf()) { it.argsInterfaceFqn }) {
-    lateinit var packageFqn: String
-    lateinit var fileName: String
+  val filesToWrite = mutableMapOf<Path, String>()
 
-    val builderRequests = builderRequests.distinctBy { listOf(it.clsFqn, it.methodName, it.argsInterfaceFqn) }
+  for ((clsFqn, clsBuilderRequests) in methods.groupByTo(linkedMapOf()) { it.clsFqn }) {
+    lateinit var sourcePackage: String
 
     @Language("kotlin")
     var text = ""
 
     readAction {
-      val argsInterface = getKtClassFromKtLightClass(
-        JavaPsiFacade.getInstance(tempProject).findClass(argsInterfaceFqn, GlobalSearchScope.projectScope(tempProject)))
-      check(argsInterface != null) { "PsiClass for $argsInterfaceFqn not found" }
-      val argsInterfaceParentCls =
-        argsInterface.findParentOfType<KtClass>()
-        ?: error("${argsInterface.name} is not a nested class")
+      val cls = getKtClassFromKtLightClass(
+        JavaPsiFacade.getInstance(tempProject).findClass(clsFqn, GlobalSearchScope.projectScope(tempProject)))
+      check(cls != null) { "PsiClass for ${clsFqn} not found" }
+      check(cls.findParentOfType<KtClass>() == null) { "Nested classes are not supported: ${clsFqn}" }
 
-      packageFqn = argsInterfaceParentCls.fqName!!.toString().substringBeforeLast('.')
+      sourcePackage = clsFqn.substringBeforeLast('.')
 
-      fileName = "${argsInterface.name}Builder.kt"
+      val argsInterfacesByFqn: Map<String, ArgInterfaceInfo> = clsBuilderRequests.associate { builderRequest ->
+        val argsInterface = getKtClassFromKtLightClass(
+          JavaPsiFacade.getInstance(tempProject).findClass(builderRequest.argsInterfaceFqn, GlobalSearchScope.projectScope(tempProject)))
+        check(argsInterface != null) { "PsiClass for ${builderRequest.argsInterfaceFqn} not found" }
 
-      val requiredArguments: List<RequiredArgument> = argsInterface.getProperties()
-        .filter { property -> !property.hasBody() }
-        .map { property ->
-          RequiredArgument(
-            name = property.name!!,
-            typeFqn = property.typeReference!!.getFqn()!!,
-            kdoc = property.docComment?.extractText() ?: "",
-          )
+        val requiredArguments: List<RequiredArgument> = argsInterface.getProperties()
+          .filter { property -> !property.hasBody() }
+          .map { property ->
+            RequiredArgument(
+              name = property.name!!,
+              typeFqn = property.typeReference!!.getFqn()!!,
+              kdoc = property.docComment?.extractText() ?: "",
+            )
+          }
+          .sortedBy { it.name }
+
+        val optionalArguments: List<OptionalArgument> = argsInterface.getProperties()
+          .filter { property -> property.hasBody() }
+          .map { property ->
+            OptionalArgument(
+              name = property.name!!,
+              typeFqn = property.typeReference!!.getFqn()!!,
+              body = property.getter!!.bodyExpression!!.renderWithFqnTypes(),
+              kdoc = property.docComment?.extractText() ?: "",
+            )
+          }
+          .sortedBy { it.name }
+
+        val propertyNames = argsInterface.getProperties().map { property -> property.name!! }.sortedBy { it }
+
+        for (fullTypeFqn in requiredArguments.map { it.typeFqn } + optionalArguments.map { it.typeFqn }) {
+          for (singleTypeFqn in fullTypeFqn.split(Regex("[<>,?]"))) {
+            imports += singleTypeFqn.trim()
+          }
         }
-        .sortedBy { it.name }
 
-      val optionalArguments: List<OptionalArgument> = argsInterface.getProperties()
-        .filter { property -> property.hasBody() }
-        .map { property ->
-          OptionalArgument(
-            name = property.name!!,
-            typeFqn = property.typeReference!!.getFqn()!!,
-            body = property.getter!!.bodyExpression!!.renderWithFqnTypes(),
-            kdoc = property.docComment?.extractText() ?: "",
-          )
-        }
-        .sortedBy { it.name }
-
-      for (fullTypeFqn in requiredArguments.map { it.typeFqn } + optionalArguments.map { it.typeFqn }) {
-        for (singleTypeFqn in fullTypeFqn.split(Regex("[<>,?]"))) {
-          imports += singleTypeFqn.trim()
-        }
+        builderRequest.argsInterfaceFqn to ArgInterfaceInfo(
+          name = argsInterface.name!!,
+          requiredArguments = requiredArguments,
+          optionalArguments = optionalArguments,
+          propertyNames = propertyNames,
+        )
       }
 
-      val propertyNames = argsInterface.getProperties().map { property -> property.name!! }.sortedBy { it }
+      val fileHeader = """
+      /**
+       * This file is generated by [${BuildersGenerator::class.java.name}].
+       */
+      package $sourcePackage
+      
+      ${imports.joinToString("\n") { "import $it" }}
+      
+      """
 
-      for (builderRequest in builderRequests) {
-        val ownedBuilderName = "${builderRequest.clsFqn.replace('.', '_')}_${builderRequest.methodName}_OwnedBuilder"
+      for (builderRequest in clsBuilderRequests) {
+        val ownedBuilderFqn = listOf(
+          sourcePackage,
+          builderRequest.clsFqn.removePrefix("$sourcePackage.") + "Helpers",
+          builderRequest.methodName.replaceFirstChar(Char::uppercaseChar),
+        ).joinToString(".")
+
+        val requiredArguments = argsInterfacesByFqn[builderRequest.argsInterfaceFqn]!!.requiredArguments
 
         val kdoc = buildString {
           append(builderRequest.methodKDoc)
@@ -509,27 +539,44 @@ private suspend fun writeBuilderFiles(
           requiredArguments.joinToString("") { prop ->
             "\n${prop.name}: ${prop.typeFqn},"
           }.surroundWithNewlinesIfNotBlank()
-        }): $ownedBuilderName =
-          $ownedBuilderName(
+        }): $ownedBuilderFqn =
+          $ownedBuilderFqn(
             owner = this,${requiredArguments.joinToString("") { prop -> "\n${prop.name} = ${prop.name}," }}
           )
+        """
+      }
 
+      text += "object ${clsFqn.removePrefix("$sourcePackage.").split('.').first()}Helpers {"
+
+      for (builderRequest in clsBuilderRequests) {
+        val argsInterfaceInfo = argsInterfacesByFqn[builderRequest.argsInterfaceFqn]!!
+
+        text += """
+        /**
+         * Create it via [${builderRequest.clsFqn}.${builderRequest.methodName}]. 
+         */
         @GeneratedBuilder.Result
-        class $ownedBuilderName(
+        class ${builderRequest.methodName.replaceFirstChar(Char::uppercaseChar)}(
           private val owner: ${builderRequest.clsFqn}, ${
-          requiredArguments.joinToString("") { prop ->
+          argsInterfaceInfo.requiredArguments.joinToString("") { prop ->
             "\nprivate var ${prop.name}: ${prop.typeFqn},"
           }
         }
         ) : com.intellij.platform.eel.OwnedBuilder<${builderRequest.returnTypeFqn}> {
         ${
-          optionalArguments.joinToString("\n\n") { prop ->
+          argsInterfaceInfo.optionalArguments.joinToString("\n\n") { prop ->
             "private var ${prop.name}: ${prop.typeFqn} = ${prop.body}"
           }
         }
         ${
-          propertyNames.joinToString("\n") { name ->
-            renderPropertyInBuilder(tempProject, name, ownedBuilderName, requiredArguments, optionalArguments)
+          argsInterfaceInfo.propertyNames.joinToString("\n") { name ->
+            renderPropertyInBuilder(
+              tempProject,
+              name,
+              builderRequest.methodName.replaceFirstChar(Char::uppercaseChar),
+              argsInterfaceInfo.requiredArguments,
+              argsInterfaceInfo.optionalArguments,
+            )
           }
         }
 
@@ -539,93 +586,75 @@ private suspend fun writeBuilderFiles(
           */
           @org.jetbrains.annotations.CheckReturnValue
           override suspend fun eelIt(): ${builderRequest.returnTypeFqn} =
-            owner.${builderRequest.methodName}(${argsInterface.name}Impl(
-            ${propertyNames.joinToString("\n") { name -> "$name = $name," }}
+            owner.${builderRequest.methodName}(${argsInterfaceInfo.name}Impl(
+            ${argsInterfaceInfo.propertyNames.joinToString("\n") { name -> "$name = $name," }}
             ))
         }
         """
       }
 
-      text += """
-      @GeneratedBuilder.Result
-      class ${argsInterface.name}Builder(
-      ${
-        requiredArguments.joinToString("\n") { prop ->
-          "${prop.kdoc.renderKdoc()}private var ${prop.name}: ${prop.typeFqn},"
-        }
-      }
-      ) {
-      ${
-        optionalArguments.joinToString("\n\n") { prop ->
-          "private var ${prop.name}: ${prop.typeFqn} = ${prop.body}"
-        }
-      }
-      ${
-        propertyNames.joinToString("\n") { name ->
-          renderPropertyInBuilder(tempProject, name, "${argsInterface.name}Builder", requiredArguments, optionalArguments)
-        }
-      }
+      text += "}"
 
-        fun build(): ${argsInterface.name} =
-          ${argsInterface.name}Impl(
-          ${propertyNames.joinToString("\n") { name -> "$name = $name," }}
-          )
-      }
+      filesToWrite[Path.of(genSrcDirName.toString(), sourcePackage.replace('.', '/'), "${cls.name}Helpers.kt")] = fileHeader + text
 
-      @GeneratedBuilder.Result
-      private class ${argsInterface.name}Impl(
-      ${
-        propertyNames.joinToString("\n") { name ->
-          val typeFqn =
-            requiredArguments.firstOrNull { it.name == name }?.typeFqn ?: optionalArguments.first { it.name == name }.typeFqn
-          "override val $name: $typeFqn,"
+      for ((argsInterfaceFqn, argsInterfaceInfo) in argsInterfacesByFqn) {
+        text = """
+        @GeneratedBuilder.Result
+        class ${argsInterfaceInfo.name}Builder(
+        ${
+          argsInterfaceInfo.requiredArguments.joinToString("\n") { prop ->
+            "${prop.kdoc.renderKdoc()}private var ${prop.name}: ${prop.typeFqn},"
+          }
         }
+        ) {
+        ${
+          argsInterfaceInfo.optionalArguments.joinToString("\n\n") { prop ->
+            "private var ${prop.name}: ${prop.typeFqn} = ${prop.body}"
+          }
+        }
+        ${
+          argsInterfaceInfo.propertyNames.joinToString("\n") { name ->
+            renderPropertyInBuilder(
+              tempProject,
+              name,
+              "${argsInterfaceInfo.name}Builder",
+              argsInterfaceInfo.requiredArguments,
+              argsInterfaceInfo.optionalArguments,
+            )
+          }
+        }
+    
+          fun build(): ${argsInterfaceInfo.name} =
+            ${argsInterfaceInfo.name}Impl(
+            ${argsInterfaceInfo.propertyNames.joinToString("\n") { name -> "$name = $name," }}
+            )
+        }
+    
+        @GeneratedBuilder.Result
+        internal class ${argsInterfaceInfo.name}Impl(
+        ${
+          argsInterfaceInfo.propertyNames.joinToString("\n") { name ->
+            val typeFqn =
+              argsInterfaceInfo.requiredArguments.firstOrNull { it.name == name }?.typeFqn
+              ?: argsInterfaceInfo.optionalArguments.first { it.name == name }.typeFqn
+            "override val $name: $typeFqn,"
+          }
+        }
+        ) : $argsInterfaceFqn"""
+
+        filesToWrite[Path.of(genSrcDirName.toString(), sourcePackage.replace('.', '/'), "${argsInterfaceInfo.name}Builder.kt")] =
+          fileHeader + text
       }
-      ) : $argsInterfaceFqn
-      """
     }
 
-    text = """
-      /**
-       * This file is generated by [${BuildersGenerator::class.java.name}].
-       */
-      package $packageFqn
-      
-      ${imports.joinToString("\n") { "import $it" }}
-      
-      """.trimIndent() + text
-
-    writeAction {
-      var virtualDir = VirtualFileManager.getInstance().findFileByNioPath(genSrcDirName)!!
-      for (dirName in packageFqn.split('.')) {
-        var child = virtualDir.findChild(dirName)
-        if (child != null && !child.isDirectory) {
-          child.delete(null)
-          child = null
-        }
-        if (child == null) {
-          child = virtualDir.createChildDirectory(null, dirName)
-        }
-        virtualDir = child
+    for ((filePath, text) in filesToWrite) {
+      filesContent.compute(filePath) { _, old ->
+        (old?.first ?: Optional.empty()) to Optional.of(text)
       }
-      var virtualFile = virtualDir.findChild(fileName)
-      val initialText: Optional<String> =
-        if (virtualFile != null) {
-          Optional.of(virtualFile.readText())
-        }
-        else {
-          virtualFile = virtualDir.createChildData(null, fileName)
-          Optional.empty()
-        }
-
-      // TODO Don't rewrite files.
-      virtualFile.writeText(text)
-
-      createdVirtualFiles[virtualFile] = initialText
     }
   }
 
-  return createdVirtualFiles
+  return filesContent
 }
 
 private fun renderPropertyInBuilder(
@@ -739,3 +768,9 @@ private fun String.javaToKotlinTypes(): String =
 
 private class RequiredArgument(val name: String, val typeFqn: String, val kdoc: String)
 private class OptionalArgument(val name: String, val typeFqn: String, val kdoc: String, val body: String)
+private class ArgInterfaceInfo(
+  val name: String,
+  val requiredArguments: List<RequiredArgument>,
+  val optionalArguments: List<OptionalArgument>,
+  val propertyNames: List<String>,
+)

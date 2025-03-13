@@ -159,7 +159,7 @@ suspend inline fun EelExecApi.execute(exe: String, setup: (EelExecApi.ExecutePro
   return execute(builder)
 }
 
-fun EelExecApi.execute(exe: String, vararg args: String): com_intellij_platform_eel_EelExecApi_execute_OwnedBuilder =
+fun EelExecApi.execute(exe: String, vararg args: String): EelExecApiHelpers.Execute =
   execute(exe).args(*args)
 
 /** Docs: [EelExecApi.executeProcessBuilder] */

@@ -9,59 +9,7 @@ import com.intellij.platform.eel.fs.EelFileInfo.Permissions
 import com.intellij.platform.eel.fs.EelFileSystemApi.ChangeAttributesOptions
 import com.intellij.platform.eel.fs.EelFileSystemApi.TimeSinceEpoch
 import com.intellij.platform.eel.path.EelPath
-import org.jetbrains.annotations.CheckReturnValue
 
-@GeneratedBuilder.Result
-fun EelFileSystemApi.changeAttributes(
-  path: EelPath,
-): com_intellij_platform_eel_fs_EelFileSystemApi_changeAttributes_OwnedBuilder =
-  com_intellij_platform_eel_fs_EelFileSystemApi_changeAttributes_OwnedBuilder(
-    owner = this,
-    path = path,
-  )
-
-@GeneratedBuilder.Result
-class com_intellij_platform_eel_fs_EelFileSystemApi_changeAttributes_OwnedBuilder(
-  private val owner: EelFileSystemApi,
-  private var path: EelPath,
-) : OwnedBuilder<EelResult<Unit, EelFileSystemApi.ChangeAttributesError>> {
-  private var accessTime: TimeSinceEpoch? = null
-
-  private var modificationTime: TimeSinceEpoch? = null
-
-  private var permissions: Permissions? = null
-
-  fun accessTime(arg: TimeSinceEpoch?): com_intellij_platform_eel_fs_EelFileSystemApi_changeAttributes_OwnedBuilder = apply {
-    this.accessTime = arg
-  }
-
-  fun modificationTime(arg: TimeSinceEpoch?): com_intellij_platform_eel_fs_EelFileSystemApi_changeAttributes_OwnedBuilder = apply {
-    this.modificationTime = arg
-  }
-
-  fun path(arg: EelPath): com_intellij_platform_eel_fs_EelFileSystemApi_changeAttributes_OwnedBuilder = apply {
-    this.path = arg
-  }
-
-  fun permissions(arg: Permissions?): com_intellij_platform_eel_fs_EelFileSystemApi_changeAttributes_OwnedBuilder = apply {
-    this.permissions = arg
-  }
-
-  /**
-   * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.changeAttributes]
-   * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.ChangeAttributesOptions].
-   */
-  @org.jetbrains.annotations.CheckReturnValue
-  override suspend fun eelIt(): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> =
-    owner.changeAttributes(
-      ChangeAttributesOptionsImpl(
-        accessTime = accessTime,
-        modificationTime = modificationTime,
-        path = path,
-        permissions = permissions,
-      )
-    )
-}
 
 @GeneratedBuilder.Result
 class ChangeAttributesOptionsBuilder(
@@ -99,10 +47,9 @@ class ChangeAttributesOptionsBuilder(
 }
 
 @GeneratedBuilder.Result
-private class ChangeAttributesOptionsImpl(
+internal class ChangeAttributesOptionsImpl(
   override val accessTime: TimeSinceEpoch?,
   override val modificationTime: TimeSinceEpoch?,
   override val path: EelPath,
   override val permissions: Permissions?,
 ) : ChangeAttributesOptions
-      

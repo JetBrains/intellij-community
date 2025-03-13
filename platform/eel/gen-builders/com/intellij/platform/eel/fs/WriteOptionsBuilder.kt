@@ -8,133 +8,7 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
 import com.intellij.platform.eel.fs.EelFileSystemApi.WriteOptions
 import com.intellij.platform.eel.path.EelPath
-import org.jetbrains.annotations.CheckReturnValue
 
-@GeneratedBuilder.Result
-fun EelFileSystemApi.openForReadingAndWriting(
-  path: EelPath,
-): com_intellij_platform_eel_fs_EelFileSystemApi_openForReadingAndWriting_OwnedBuilder =
-  com_intellij_platform_eel_fs_EelFileSystemApi_openForReadingAndWriting_OwnedBuilder(
-    owner = this,
-    path = path,
-  )
-
-@GeneratedBuilder.Result
-class com_intellij_platform_eel_fs_EelFileSystemApi_openForReadingAndWriting_OwnedBuilder(
-  private val owner: EelFileSystemApi,
-  private var path: EelPath,
-) : OwnedBuilder<EelResult<EelOpenedFile.ReaderWriter, EelFileSystemApi.FileWriterError>> {
-  private var append: Boolean = false
-
-  private var creationMode: FileWriterCreationMode = FileWriterCreationMode.ALLOW_CREATE
-
-  private var truncateExisting: Boolean = true
-
-  fun append(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_openForReadingAndWriting_OwnedBuilder = apply {
-    this.append = arg
-  }
-
-  fun creationMode(arg: FileWriterCreationMode): com_intellij_platform_eel_fs_EelFileSystemApi_openForReadingAndWriting_OwnedBuilder =
-    apply {
-      this.creationMode = arg
-    }
-
-  fun allowCreate(): com_intellij_platform_eel_fs_EelFileSystemApi_openForReadingAndWriting_OwnedBuilder =
-    creationMode(FileWriterCreationMode.ALLOW_CREATE)
-
-  fun onlyCreate(): com_intellij_platform_eel_fs_EelFileSystemApi_openForReadingAndWriting_OwnedBuilder =
-    creationMode(FileWriterCreationMode.ONLY_CREATE)
-
-  fun onlyOpenExisting(): com_intellij_platform_eel_fs_EelFileSystemApi_openForReadingAndWriting_OwnedBuilder =
-    creationMode(FileWriterCreationMode.ONLY_OPEN_EXISTING)
-
-  fun path(arg: EelPath): com_intellij_platform_eel_fs_EelFileSystemApi_openForReadingAndWriting_OwnedBuilder = apply {
-    this.path = arg
-  }
-
-  fun truncateExisting(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_openForReadingAndWriting_OwnedBuilder = apply {
-    this.truncateExisting = arg
-  }
-
-  /**
-   * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.openForReadingAndWriting]
-   * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.WriteOptions].
-   */
-  @org.jetbrains.annotations.CheckReturnValue
-  override suspend fun eelIt(): EelResult<EelOpenedFile.ReaderWriter, EelFileSystemApi.FileWriterError> =
-    owner.openForReadingAndWriting(
-      WriteOptionsImpl(
-        append = append,
-        creationMode = creationMode,
-        path = path,
-        truncateExisting = truncateExisting,
-      )
-    )
-}
-
-/**
- * Opens the file only for writing
- */
-@GeneratedBuilder.Result
-fun EelFileSystemApi.openForWriting(
-  path: EelPath,
-): com_intellij_platform_eel_fs_EelFileSystemApi_openForWriting_OwnedBuilder =
-  com_intellij_platform_eel_fs_EelFileSystemApi_openForWriting_OwnedBuilder(
-    owner = this,
-    path = path,
-  )
-
-@GeneratedBuilder.Result
-class com_intellij_platform_eel_fs_EelFileSystemApi_openForWriting_OwnedBuilder(
-  private val owner: EelFileSystemApi,
-  private var path: EelPath,
-) : OwnedBuilder<EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError>> {
-  private var append: Boolean = false
-
-  private var creationMode: FileWriterCreationMode = FileWriterCreationMode.ALLOW_CREATE
-
-  private var truncateExisting: Boolean = true
-
-  fun append(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_openForWriting_OwnedBuilder = apply {
-    this.append = arg
-  }
-
-  fun creationMode(arg: FileWriterCreationMode): com_intellij_platform_eel_fs_EelFileSystemApi_openForWriting_OwnedBuilder = apply {
-    this.creationMode = arg
-  }
-
-  fun allowCreate(): com_intellij_platform_eel_fs_EelFileSystemApi_openForWriting_OwnedBuilder =
-    creationMode(FileWriterCreationMode.ALLOW_CREATE)
-
-  fun onlyCreate(): com_intellij_platform_eel_fs_EelFileSystemApi_openForWriting_OwnedBuilder =
-    creationMode(FileWriterCreationMode.ONLY_CREATE)
-
-  fun onlyOpenExisting(): com_intellij_platform_eel_fs_EelFileSystemApi_openForWriting_OwnedBuilder =
-    creationMode(FileWriterCreationMode.ONLY_OPEN_EXISTING)
-
-  fun path(arg: EelPath): com_intellij_platform_eel_fs_EelFileSystemApi_openForWriting_OwnedBuilder = apply {
-    this.path = arg
-  }
-
-  fun truncateExisting(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_openForWriting_OwnedBuilder = apply {
-    this.truncateExisting = arg
-  }
-
-  /**
-   * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.openForWriting]
-   * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.WriteOptions].
-   */
-  @org.jetbrains.annotations.CheckReturnValue
-  override suspend fun eelIt(): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> =
-    owner.openForWriting(
-      WriteOptionsImpl(
-        append = append,
-        creationMode = creationMode,
-        path = path,
-        truncateExisting = truncateExisting,
-      )
-    )
-}
 
 @GeneratedBuilder.Result
 class WriteOptionsBuilder(
@@ -181,10 +55,9 @@ class WriteOptionsBuilder(
 }
 
 @GeneratedBuilder.Result
-private class WriteOptionsImpl(
+internal class WriteOptionsImpl(
   override val append: Boolean,
   override val creationMode: FileWriterCreationMode,
   override val path: EelPath,
   override val truncateExisting: Boolean,
 ) : WriteOptions
-      
