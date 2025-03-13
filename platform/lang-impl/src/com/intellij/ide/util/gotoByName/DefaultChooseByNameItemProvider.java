@@ -13,10 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -26,7 +23,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
-import org.apache.lucene.search.spell.LevenshteinDistance;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -327,7 +323,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       LevenshteinCalculator levenshteinMatcher = new LevenshteinCalculator(fullMatcher.getPattern());
       float distance = levenshteinMatcher.distanceToStringPath(fullName);
       result = distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE
-             ? new MatchResult(fullName, LevenshteinCalculator.weightFromDistance(distance), false) : null;
+               ? new MatchResult(fullName, LevenshteinCalculator.weightFromDistance(distance), false) : null;
     }
     return result;
   }
@@ -452,7 +448,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   protected static final class LevenshteinCalculator {
     private final List<String> patternComponents;
     private final @Nullable List<String> invertedPatternComponents;
-    private static final LevenshteinDistance distanceCalculator = new LevenshteinDistance();
     public static final float MIN_ACCEPTABLE_DISTANCE = 0.5f;
     private static final String SEPARATOR_CHARACTERS = "[ /*\u0000]+";
 
@@ -460,8 +455,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     private static final int MAX_WEIGHT = 5000;
 
     public LevenshteinCalculator(@NotNull String pattern) {
-      patternComponents =
-        Arrays.asList(pattern.replaceAll("^" + SEPARATOR_CHARACTERS, "").split(SEPARATOR_CHARACTERS));
+      patternComponents = normalizeString(pattern);
       invertedPatternComponents = patternComponents.size() == 2 ? List.of(patternComponents.get(1), patternComponents.get(0)) : null;
     }
 
@@ -496,9 +490,18 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
      * @return the distance as the average distance of all the matches
      */
     public float distanceToStringPath(String path) {
-      List<String> pathComponents = Arrays.asList(path.split(SEPARATOR_CHARACTERS));
+      List<String> pathComponents = normalizeString(path);
       return Math.max(distanceBetweenComponents(patternComponents, pathComponents),
                       invertedPatternComponents == null ? 0 : distanceBetweenComponents(invertedPatternComponents, pathComponents));
+    }
+
+    public static List<String> normalizeString(String string) {
+      return Arrays.asList(string.replaceAll("^" + SEPARATOR_CHARACTERS, "").split(SEPARATOR_CHARACTERS));
+    }
+
+    public static float distanceBetweenStrings(String string, String other) {
+      int limit = Math.min(string.length(), other.length()) / 2;
+      return normalizedDistance(string.toLowerCase(Locale.ROOT), other.toLowerCase(Locale.ROOT), limit);
     }
 
     private static float distanceBetweenComponents(List<String> patternComponents, List<String> pathComponents) {
@@ -520,8 +523,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       MinusculeMatcher matcher = buildPatternMatcher(lastPatternComp, true);
       if (matcher.matches(lastFileComp) && patternComponents.size() > 1) {
         distance = 1;
-      } else {
-        distance = distanceCalculator.getDistance(lastPatternComp.toLowerCase(Locale.ROOT), lastFileComp.toLowerCase(Locale.ROOT));
+      }
+      else {
+        distance = distanceBetweenStrings(lastPatternComp, lastFileComp);
       }
       if (distance < MIN_ACCEPTABLE_DISTANCE) {
         return 0;
@@ -539,8 +543,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
           matcher = buildPatternMatcher(lowerCasePatternComp, true);
           if (matcher.matches(lowerCasePathComp)) {
             distance = 1;
-          } else {
-            distance = distanceCalculator.getDistance(lowerCasePatternComp, lowerCasePathComp);
+          }
+          else {
+            distance = distanceBetweenStrings(lowerCasePatternComp, lowerCasePathComp);
           }
           if (distance >= MIN_ACCEPTABLE_DISTANCE) {
             avgDistance += distance;
@@ -563,6 +568,77 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
 
     public static int weightFromDistance(double distance) {
       return (int)(MIN_WEIGHT + distance * (MAX_WEIGHT - MIN_WEIGHT));
+    }
+
+    /*
+     * Computes the normalized Levenshtein distance between two strings using
+     * (<a href="https://en.wikipedia.org/wiki/Levenshtein_distance#:~:text=contains%20the%20answer.-,Iterative%20with%20two%20matrix%20rows,-%5Bedit%5D">efficient Levenshtein algorithm</a>).
+     * Uses 3(n+1) memory instead of n*m, where n & m are the lengths of the two strings.
+     * The algorithm is case-sensitive.
+     *
+     * The result is a value in the range [0, 1], where:
+     * - 1.0 indicates a complete match
+     * - 0.0 indicates no similarity
+     *
+     * @param str1 first string to compare
+     * @param str2 second string to compare
+     * @param limit when the distance becomes greater than the limit, further processing stops.
+     *              To save cpu cycles on strings that are too different.
+     * @return the number of edits (number of char insertions+deletions+replacements) difference between the two strings.
+     */
+    public static float normalizedDistance(@NotNull String str1, @NotNull String str2, int limit) {
+      if (str1.length() > str2.length()) {
+        String tmp = str1;
+        str1 = str2;
+        str2 = tmp;
+      }
+      final int length1 = str1.length();
+      final int length2 = str2.length();
+      if (length1 == 0) {
+        return 0;
+      }
+
+      int[] v1 = new int[length1 + 1];
+      int[] v2 = new int[length1 + 1];
+      int[] temp;
+
+      char s2_j;
+
+      int i, j;
+
+      for (i = 1; i <= length1; i++) v1[i] = i;
+      int minCost = limit + 1; // flip to negative on MAX_INT doesn't matter
+
+      int cost;
+      for (j = 0; j < length2; j++) {
+        v2[0] = j + 1;
+        s2_j = str2.charAt(j);
+
+        for (i = 0; i < length1; i++) {
+          cost = str1.charAt(i) == s2_j ? 0 : 1;
+
+          v2[i + 1] = Math.min(Math.min(v2[i] + 1, // insertion
+                                        v1[i + 1] + 1), // deletion
+                               v1[i] + cost); // substitution (replacement)
+
+          final int currentCost = v2[i + 1];
+          if (currentCost < minCost) {
+            minCost = currentCost;
+          }
+        }
+        if (minCost > limit) {
+          return 0;
+        }
+        minCost = limit + 1;
+
+        temp = v1;
+        v1 = v2;
+        v2 = temp; // will be overwritten/reused
+      }
+
+      // our last action in the loop above was to switch arrays,
+      // so v1 has the most recent cost counts
+      return 1.0f - ((float)v1[length1] / length2);
     }
   }
 }
