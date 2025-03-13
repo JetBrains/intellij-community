@@ -1474,6 +1474,58 @@ interface UastResolveApiFixtureTestBase {
         )
     }
 
+    fun checkResolveIntersectionOverriddenJavaField(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                public class Config<T> {
+                  public final T minValue;
+
+                  public T getMinValue() {
+                    return minValue;
+                  }
+               }
+            """
+        )
+
+        myFixture.configureByText(
+            "mian.kt",
+            """
+                data class WrapInt(val p: Int)
+
+                data class WrapFloat(val p: Float)
+
+                fun <T : Any> test(conf: Config<T>, other: Int) {
+                  when (other) {
+                    0 -> {
+                      conf as Config<Int>
+                      WrapInt(conf.minValue ?: Int.MIN_VALUE)
+                    }
+                    else -> {
+                      conf as Config<Float>
+                      WrapFloat(conf.minValue ?: Float.MIN_VALUE)
+                    }
+                  }
+                }
+            """
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+                    if (node.resolvedName != "minValue")
+                        return super.visitSimpleNameReferenceExpression(node)
+
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(resolved)
+                    TestCase.assertTrue(resolved is PsiField)
+
+                    return super.visitSimpleNameReferenceExpression(node)
+                }
+            }
+        )
+    }
+
     fun checkResolveSyntheticJavaPropertyCompoundAccess(myFixture: JavaCodeInsightTestFixture, isK2 : Boolean = true) {
         myFixture.addClass(
             """public class X {
