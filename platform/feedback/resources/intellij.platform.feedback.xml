@@ -46,11 +46,6 @@
     <registryKey key="csat.survey.show.probability" defaultValue="" description="Override probability of survey, double value from 0 to 1"/>
   </extensions>
 
-  <applicationListeners>
-    <listener class="com.intellij.platform.feedback.localization.LocalizationFeedbackStartupListener"
-              topic="com.intellij.ide.AppLifecycleListener"/>
-  </applicationListeners>
-
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
