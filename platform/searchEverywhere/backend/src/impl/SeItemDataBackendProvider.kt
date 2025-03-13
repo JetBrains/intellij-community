@@ -3,7 +3,9 @@ package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.platform.searchEverywhere.*
 import fleet.kernel.DurableRef
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -22,7 +24,7 @@ class SeItemDataBackendProvider(override val id: SeProviderId,
           return coroutineContext.isActive
         }
       })
-    }
+    }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
   }
 
   override suspend fun itemSelected(itemData: SeItemData,

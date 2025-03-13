@@ -12,6 +12,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeItemDataFrontendProvide
 import com.intellij.platform.searchEverywhere.frontend.SeItemDataLocalProvider
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -29,7 +30,7 @@ class SeTabDelegate private constructor(val project: Project,
         val item = accumulator.add(it)
         item
       }
-    }
+    }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
   }
 
   suspend fun itemSelected(itemData: SeItemData, modifiers: Int, searchText: String): Boolean {
