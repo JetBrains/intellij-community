@@ -1985,17 +1985,21 @@ a:com.intellij.ide.actions.CloseEditorsActionBase
 - pa:isFileToClose(com.intellij.openapi.fileEditor.impl.EditorComposite,com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.fileEditor.ex.FileEditorManagerEx):Z
 - p:isFileToCloseInContext(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.fileEditor.impl.EditorComposite,com.intellij.openapi.fileEditor.impl.EditorWindow):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.CloseProjectAction
+c:com.intellij.ide.actions.CloseProjectAction
 - com.intellij.ide.actions.CloseProjectsActionBase
 - <init>():V
+- p:canClose(com.intellij.openapi.project.Project,com.intellij.openapi.project.Project):Z
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:shouldShow(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.ide.actions.CloseProjectsActionBase
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - pa:canClose(com.intellij.openapi.project.Project,com.intellij.openapi.project.Project):Z
+- pf:getProjectEvenIfNotInitialized(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.project.Project
 - pa:shouldShow(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- p:showWelcomeFrameIfNeeded():V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.CopyAction
 - com.intellij.openapi.actionSystem.AnAction
