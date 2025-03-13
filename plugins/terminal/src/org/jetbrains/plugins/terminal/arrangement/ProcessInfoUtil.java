@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.arrangement;
 import com.google.common.util.concurrent.Futures;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.ijent.IjentChildPtyProcessAdapter;
 import com.intellij.execution.process.CapturingProcessRunner;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
@@ -38,6 +39,8 @@ public final class ProcessInfoUtil {
   }
 
   private static @Nullable String doGetCwd(@NotNull Process process) throws Exception {
+    // use shell integration instead
+    if (process instanceof IjentChildPtyProcessAdapter) return null;
     if (SystemInfo.isUnix) {
       int pid = (int)process.pid();
       String result = tryGetCwdFastOnUnix(pid);

@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.*;
+import static org.jetbrains.plugins.terminal.TerminalStartupKt.startProcess;
 import static org.jetbrains.plugins.terminal.util.ShellNameUtil.*;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
@@ -110,21 +111,33 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       TerminalUsageLocalStorage.getInstance().recordBlockTerminalUsed();
     }
 
+    Path workingDirPath = null;
+    try {
+      workingDirPath = Path.of(workingDir);
+    }
+    catch (InvalidPathException ignored) {
+    }
     try {
       long startNano = System.nanoTime();
-      PtyProcess process = (PtyProcess)ProcessService.getInstance().startPtyProcess(
-        command,
-        workingDir,
-        envs,
-        LocalPtyOptions.defaults().builder()
-          .initialColumns(initialTermSize != null ? initialTermSize.getColumns() : -1)
-          .initialRows(initialTermSize != null ? initialTermSize.getRows() : -1)
-          .build(),
-        null,
-        false,
-        false,
-        false
-      );
+      PtyProcess process;
+      if (workingDirPath != null && shouldUseEelApi()) {
+        process = startProcess(List.of(command), envs, workingDirPath, Objects.requireNonNull(initialTermSize));
+      }
+      else {
+        process = (PtyProcess)ProcessService.getInstance().startPtyProcess(
+          command,
+          workingDir,
+          envs,
+          LocalPtyOptions.defaults().builder()
+            .initialColumns(initialTermSize != null ? initialTermSize.getColumns() : -1)
+            .initialRows(initialTermSize != null ? initialTermSize.getRows() : -1)
+            .build(),
+          null,
+          false,
+          false,
+          false
+        );
+      }
       LOG.info("Started " + process.getClass().getName() + " in " + TimeoutUtil.getDurationMillis(startNano) + " ms from "
                + stringifyProcessInfo(command, workingDir, initialTermSize, envs, !LOG.isDebugEnabled()));
       return process;
@@ -266,4 +279,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
            || shellName.equals(FISH_NAME) && Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
   }
 
+  private static boolean shouldUseEelApi() {
+    return Registry.is("terminal.use.EelApi", false);
+  }
 }
