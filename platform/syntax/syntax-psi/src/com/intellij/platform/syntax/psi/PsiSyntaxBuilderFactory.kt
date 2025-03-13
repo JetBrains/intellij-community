@@ -11,16 +11,16 @@ import com.intellij.platform.syntax.psi.impl.PsiSyntaxBuilderFactoryImpl
 interface PsiSyntaxBuilderFactory {
   fun createBuilder(
     chameleon: ASTNode,
-    lexer: Lexer?,
-    lang: Language,
-    text: CharSequence,
+    lexer: Lexer? = null,
+    lang: Language = chameleon.elementType.language,
+    text: CharSequence = chameleon.chars,
   ): PsiSyntaxBuilder
 
   fun createBuilder(
     chameleon: LighterLazyParseableNode,
-    lexer: Lexer?,
-    lang: Language,
-    text: CharSequence,
+    lexer: Lexer? = null,
+    lang: Language = chameleon.tokenType.language,
+    text: CharSequence = chameleon.text,
   ): PsiSyntaxBuilder
 
   companion object {
