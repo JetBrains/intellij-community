@@ -85,7 +85,7 @@ java_library(
     "//platform/starter",
     "//plugins/tasks/tasks-core/jira:tasks-jira",
     "//plugins/settings-repository:settingsRepository",
-    "//plugins/properties",
+    "//plugins/properties:properties-backend",
     "//plugins/markdown/core:markdown",
     "//plugins/markdown/plugin:plugin-main",
     "//plugins/configuration-script:configurationScript",

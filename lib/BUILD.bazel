@@ -2576,8 +2576,8 @@ java_import(
 
 kt_jvm_import(
   name = "jetbrains-intellij-deps-rwmutex-idea",
-  jar = "@rwmutex-idea-0_0_7_http//file",
-  srcjar = "@rwmutex-idea-0_0_7-sources_http//file",
+  jar = "@rwmutex-idea-0_0_8_http//file",
+  srcjar = "@rwmutex-idea-0_0_8-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3981,8 +3981,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinx-coroutines-core",
-  jar = "@kotlinx-coroutines-core-jvm-1_8_0-intellij-13_http//file",
-  srcjar = "@kotlinx-coroutines-core-jvm-1_8_0-intellij-13-sources_http//file",
+  jar = "@kotlinx-coroutines-core-jvm-1_10_1-intellij-3_http//file",
+  srcjar = "@kotlinx-coroutines-core-jvm-1_10_1-intellij-3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3995,22 +3995,22 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinx-coroutines-debug",
-  jar = "@kotlinx-coroutines-debug-1_8_0-intellij-13_http//file",
-  srcjar = "@kotlinx-coroutines-debug-1_8_0-intellij-13-sources_http//file",
+  jar = "@kotlinx-coroutines-debug-1_10_1-intellij-3_http//file",
+  srcjar = "@kotlinx-coroutines-debug-1_10_1-intellij-3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinx-coroutines-guava",
-  jar = "@kotlinx-coroutines-guava-1_8_0-intellij-13_http//file",
-  srcjar = "@kotlinx-coroutines-guava-1_8_0-intellij-13-sources_http//file",
+  jar = "@kotlinx-coroutines-guava-1_10_1-intellij-3_http//file",
+  srcjar = "@kotlinx-coroutines-guava-1_10_1-intellij-3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinx-coroutines-slf4j",
-  jar = "@kotlinx-coroutines-slf4j-1_8_0-intellij-13_http//file",
-  srcjar = "@kotlinx-coroutines-slf4j-1_8_0-intellij-13-sources_http//file",
+  jar = "@kotlinx-coroutines-slf4j-1_10_1-intellij-3_http//file",
+  srcjar = "@kotlinx-coroutines-slf4j-1_10_1-intellij-3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4023,8 +4023,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinx-coroutines-test",
-  jar = "@kotlinx-coroutines-test-jvm-1_8_0-intellij-13_http//file",
-  srcjar = "@kotlinx-coroutines-test-jvm-1_8_0-intellij-13-sources_http//file",
+  jar = "@kotlinx-coroutines-test-jvm-1_10_1-intellij-3_http//file",
+  srcjar = "@kotlinx-coroutines-test-jvm-1_10_1-intellij-3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

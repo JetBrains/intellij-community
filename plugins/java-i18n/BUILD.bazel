@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "//platform/lang-api:lang",
     "//java/openapi:java",
-    "//plugins/properties",
+    "//plugins/properties:properties-backend",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
     "//platform/lang-impl",
@@ -26,7 +26,7 @@ jvm_library(
     "//java/jsp-base-openapi:jsp-base",
     "//java/jsp-openapi:jsp",
     "//plugins/properties/properties-psi-api:psi",
-    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-impl:backend-psi",
     "//jvm/jvm-analysis-api:analysis",
     "@lib//:stream_ex",
     "//platform/core-ui",
@@ -36,7 +36,7 @@ jvm_library(
     "//platform/util/jdom",
   ],
   exports = [
-    "//plugins/properties",
+    "//plugins/properties:properties-backend",
     "//java/java-impl:impl",
   ],
   runtime_deps = [":java-i18n_resources"]
@@ -50,7 +50,7 @@ jvm_library(
   deps = [
     "//platform/lang-api:lang",
     "//java/openapi:java",
-    "//plugins/properties",
+    "//plugins/properties:properties-backend",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
@@ -66,7 +66,7 @@ jvm_library(
     "//java/jsp-openapi:jsp",
     "//java/testFramework",
     "//plugins/properties/properties-psi-api:psi",
-    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-impl:backend-psi",
     "//jvm/jvm-analysis-api:analysis",
     "@lib//:stream_ex",
     "//platform/core-ui",

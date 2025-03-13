@@ -23,7 +23,7 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/java-i18n",
     "//plugins/java-i18n:java-i18n_test_lib",
-    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-impl:backend-psi",
     "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
   ]
 )

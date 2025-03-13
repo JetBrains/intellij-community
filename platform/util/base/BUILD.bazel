@@ -14,6 +14,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-coroutines-debug",
-  ]
+    "//platform/util/base/kmp:util-base-kmp",
+  ],
+  exports = ["//platform/util/base/kmp:util-base-kmp"]
 )
 ### auto-generated section `build intellij.platform.util.base` end

@@ -47,6 +47,8 @@ jvm_library(
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//platform/observable:ide-observable",
+    "//java/openapi:java",
   ],
   runtime_deps = [":kotlin-refactorings-move-k2_resources"]
 )
@@ -69,7 +71,6 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/core-api:core",
-    "//java/openapi:java",
     "//java/java-impl:impl",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
@@ -98,6 +99,8 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//plugins/kotlin/base/indices:kotlin-base-indices",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//platform/observable:ide-observable",
+    "//java/openapi:java",
   ],
   runtime_deps = [":kotlin-refactorings-move-k2_resources"]
 )

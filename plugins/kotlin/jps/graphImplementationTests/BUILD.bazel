@@ -12,6 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/util",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests",
     "@lib//:kotlinc-kotlin-jps-plugin-tests",
     "@lib//:kotlinc-kotlin-compiler-tests",
@@ -30,7 +31,6 @@ jvm_library(
     "//jps/jps-builders:build-tests_test_lib",
     "//jps/model-api:model",
     "//platform/core-api:core",
-    "//platform/util",
     "@lib//:kotlin-reflect",
     "//plugins/kotlin/tests-from-compiler:testsFromCompiler_test_lib",
   ],

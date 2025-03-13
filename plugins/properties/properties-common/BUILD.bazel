@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.properties` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "properties_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "properties",
+  module_name = "intellij.properties",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-api:ide",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/code-style-api:codeStyle",
+    "//plugins/properties/properties-psi-api:psi",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+  ],
+  runtime_deps = [":properties_resources"]
+)
+### auto-generated section `build intellij.properties` end
