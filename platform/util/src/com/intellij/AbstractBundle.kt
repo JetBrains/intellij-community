@@ -82,8 +82,14 @@ open class AbstractBundle {
       }
       catch (_: MissingResourceException) {
         logger<AbstractBundle>().info("Cannot load resource bundle from *.properties file, falling back to slow class loading: $pathToBundle")
-        ResourceBundle.clearCache(loader)
-        return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)
+        try {
+          ResourceBundle.clearCache(loader)
+          return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)
+        }
+        catch (e: MissingResourceException) {
+          logger<AbstractBundle>().error(e)
+          return MissingResourceBundle(pathToBundle)
+        }
       }
     }
   }
@@ -201,5 +207,19 @@ private object IntelliJResourceControl : ResourceBundle.Control() {
     return stream.use {
       IntelliJResourceBundle(reader = InputStreamReader(it, StandardCharsets.UTF_8))
     }
+  }
+}
+
+private class MissingResourceBundle(val baseName: String) : ResourceBundle() {
+  override fun handleGetObject(key: String?): Any? {
+    return null
+  }
+
+  override fun getKeys(): Enumeration<String> {
+    return Collections.emptyEnumeration()
+  }
+
+  override fun getBaseBundleName(): String? {
+    return baseName
   }
 }

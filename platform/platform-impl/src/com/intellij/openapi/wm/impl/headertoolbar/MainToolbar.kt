@@ -110,7 +110,7 @@ class MainToolbar(
 ) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
   private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
-  private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
+  private val cachedWidths by lazy { ConcurrentHashMap<String?, Int>() }
 
   init {
     this.background = background
