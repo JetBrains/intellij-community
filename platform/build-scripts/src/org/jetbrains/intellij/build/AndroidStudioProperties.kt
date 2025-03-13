@@ -35,8 +35,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     private val INHERITED_PLUGINS = IDEA_BUNDLED_PLUGINS
 
     private val EXTRA_PLUGINS = listOf(
-      // We bundle DevKit for ASwB development purposes (b/308477340).
-      "intellij.devkit",
       // Bundle the GitHub and GitLab plugins, just like IdeaCommunityProperties does.
       "intellij.vcs.github.community",
       "intellij.vcs.gitlab.community",
@@ -219,10 +217,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         spec.withModule("intellij.cidr.clangFormat.lang")
       },
     ))
-
-    // IntelliJ normally excludes the DevKit plugin from public builds, but we need it for ASwB development purposes (b/308477340).
-    val devkitPluginLayout = productLayout.pluginLayouts.first { it.mainModule == "intellij.devkit" }
-    devkitPluginLayout.bundlingRestrictions.includeInDistribution = PluginDistribution.ALL
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
