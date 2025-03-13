@@ -80,7 +80,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey GroupByPrefix = new IntelliJIconKey("actions/GroupByPrefix.svg", "actions/GroupByPrefix.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey GroupByTestProduction = new IntelliJIconKey("actions/groupByTestProduction.svg", "expui/actions/groupByTestProduction.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Help = new IntelliJIconKey("actions/help.svg", "expui/general/help.svg", AllIconsKeys.class);
-    /** 16x16 */ public static final @NotNull IntelliJIconKey Highlighting = new IntelliJIconKey("actions/highlighting.svg", "expui/actions/highlighting.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey Highlighting = new IntelliJIconKey("actions/highlighting.svg", "actions/highlighting.svg", AllIconsKeys.class);
     /** 9x5 */ public static final @NotNull IntelliJIconKey InlayDropTriangle = new IntelliJIconKey("actions/inlayDropTriangle.svg", "actions/inlayDropTriangle.svg", AllIconsKeys.class);
     /** 12x12 */ public static final @NotNull IntelliJIconKey InlayGear = new IntelliJIconKey("actions/inlayGear.svg", "expui/codeInsight/inlaySettings.svg", AllIconsKeys.class);
     /** 12x12 */ public static final @NotNull IntelliJIconKey InlayGlobe = new IntelliJIconKey("actions/inlayGlobe.svg", "expui/codeInsight/inlayGlobe.svg", AllIconsKeys.class);
@@ -1167,6 +1167,10 @@ public final class AllIconsKeys {
     /** 9x9 */ public static final @NotNull IntelliJIconKey CollapseNode = new IntelliJIconKey("profiler/collapseNode.svg", "expui/profiler/collapseNode.svg", AllIconsKeys.class);
     /** 9x9 */ public static final @NotNull IntelliJIconKey ExpandNode = new IntelliJIconKey("profiler/expandNode.svg", "expui/profiler/expandNode.svg", AllIconsKeys.class);
     /** 12x12 */ public static final @NotNull IntelliJIconKey Rec = new IntelliJIconKey("profiler/rec.svg", "expui/profiler/rec.svg", AllIconsKeys.class);
+  }
+
+  public static final class Promo {
+    /** 14x14 */ public static final @NotNull IntelliJIconKey JavaDuke = new IntelliJIconKey("promo/javaDuke.svg", "promo/javaDuke.svg", AllIconsKeys.class);
   }
 
   public static final class Providers {

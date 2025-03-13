@@ -73,6 +73,10 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$Dropdowns
 - f:getLambda-7$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
 - f:getLambda-8$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
 - f:getLambda-9$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
+f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ScrollbarsKt
+- sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ScrollbarsKt
+- <init>():V
+- f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function3
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$SplitLayoutsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$SplitLayoutsKt
 - <init>():V
@@ -94,11 +98,11 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextAreas
 - f:getLambda-2$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-3$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-4$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-- f:getLambda-5$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
+- f:getLambda-5$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function3
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextFieldsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextFieldsKt
 - <init>():V
-- f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
+- f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function3
 - f:getLambda-2$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-3$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-4$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
