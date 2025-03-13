@@ -49,7 +49,7 @@ class PluginDescriptorTest {
   fun `descriptor with depends-optional loads`() {
     val descriptor = loadDescriptorFromTestDataDir("dependsOptional")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginDependencies)
+    assertThat(descriptor.dependencies)
       .singleElement()
       .extracting { it.isOptional }.isEqualTo(true)
   }
@@ -58,7 +58,7 @@ class PluginDescriptorTest {
   fun `descriptor with multiple depends-optional loads`() {
     val descriptor = loadDescriptorFromTestDataDir("multipleDependsOptional")
     assertThat(descriptor).isNotNull()
-    val pluginDependencies = descriptor.pluginDependencies
+    val pluginDependencies = descriptor.dependencies
     assertThat(pluginDependencies).hasSize(2)
     assertThat(pluginDependencies.map { it.isOptional }).allMatch { it == true }
     assertThat(pluginDependencies.map { it.pluginId.idString }).containsExactly("dep2", "dep1")
@@ -107,8 +107,8 @@ class PluginDescriptorTest {
     val descriptor = loadDescriptorFromTestDataDir("duplicateDepends-strict")
     assertThat(descriptor).isNotNull()
     // fixme what is that result o_O
-    assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
-    assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(false, true))
+    assertThat(descriptor.dependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
+    assertThat(descriptor.dependencies.map { it.isOptional }).isEqualTo(listOf(false, true))
     //assertThat(descriptor.pluginDependencies.map { it.pluginId }).isEqualTo(listOf("foo", "foo", "foo"))
     //assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(false, false, false))
   }
@@ -117,8 +117,8 @@ class PluginDescriptorTest {
   fun `multiple optional depends on the same plugin is allowed`() {
     val descriptor = loadDescriptorFromTestDataDir("duplicateDepends-optional")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
-    assertThat(descriptor.pluginDependencies.map { it.isOptional }).isEqualTo(listOf(true, true))
+    assertThat(descriptor.dependencies.map { it.pluginId.idString }).isEqualTo(listOf("foo", "foo"))
+    assertThat(descriptor.dependencies.map { it.isOptional }).isEqualTo(listOf(true, true))
   }
 
   @Test
@@ -345,7 +345,7 @@ class PluginDescriptorTest {
     )
     assertFalse(descriptor.isEnabled)
     assertEquals("This is a disabled plugin", descriptor.description)
-    assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).containsExactly("com.intellij.modules.lang")
+    assertThat(descriptor.dependencies.map { it.pluginId.idString }).containsExactly("com.intellij.modules.lang")
   }
 
   companion object {

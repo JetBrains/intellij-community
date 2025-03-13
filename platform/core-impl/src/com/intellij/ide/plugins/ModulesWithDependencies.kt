@@ -141,7 +141,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
 
 // alias in most cases points to Core plugin, so, we cannot use computed dependencies to check
 private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress("SameParameterValue") aliasId: PluginId): Boolean {
-  return plugin.pluginDependencies.any { it.pluginId == aliasId } || plugin.dependenciesV2.plugins.any { it.id == aliasId }
+  return plugin.dependencies.any { it.pluginId == aliasId } || plugin.dependenciesV2.plugins.any { it.id == aliasId }
 }
 
 internal fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {

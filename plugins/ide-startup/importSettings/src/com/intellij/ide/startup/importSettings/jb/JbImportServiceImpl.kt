@@ -137,7 +137,7 @@ internal data class JbProductInfo(
     }
 
     // check for missing dependencies
-    for (dependency in descriptor.pluginDependencies) {
+    for (dependency in descriptor.dependencies) {
       if (dependency.isOptional)
         continue
       if (!(PluginManagerCore.getPluginSet().isPluginEnabled(dependency.pluginId) || descriptorsMap.containsKey(dependency.pluginId))) {

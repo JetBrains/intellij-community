@@ -168,7 +168,7 @@ internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescrip
 }
 
 private fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
-  for (dependency in descriptor.pluginDependencies) {
+  for (dependency in descriptor.dependencies) {
     val dependencyPluginId = dependency.pluginId
     if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||
         PluginManagerCore.JAVA_MODULE_ID == dependencyPluginId ||

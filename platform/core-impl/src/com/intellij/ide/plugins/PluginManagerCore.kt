@@ -974,7 +974,7 @@ object PluginManagerCore {
   @Internal
   fun getNonOptionalDependenciesIds(descriptor: IdeaPluginDescriptorImpl): Set<PluginId> {
     val dependencies = LinkedHashSet<PluginId>()
-    for (dependency in descriptor.pluginDependencies) {
+    for (dependency in descriptor.dependencies) {
       if (!dependency.isOptional) {
         dependencies.add(dependency.pluginId)
       }

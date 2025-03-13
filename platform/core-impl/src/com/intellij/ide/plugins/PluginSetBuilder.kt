@@ -386,7 +386,7 @@ private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String
 }
 
 private fun getAllPluginDependencies(ideaPluginDescriptorImpl: IdeaPluginDescriptorImpl): Sequence<PluginId> {
-  return ideaPluginDescriptorImpl.pluginDependencies.asSequence()
+  return ideaPluginDescriptorImpl.dependencies.asSequence()
            .filterNot { it.isOptional }
            .map { it.pluginId } +
          ideaPluginDescriptorImpl.dependenciesV2.plugins.asSequence()

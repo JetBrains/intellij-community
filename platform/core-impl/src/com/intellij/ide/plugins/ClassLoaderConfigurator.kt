@@ -101,7 +101,7 @@ class ClassLoaderConfigurator(
         throw PluginException("Package is not specified (module=$module)", module.pluginId)
       }
 
-      assert(module.pluginDependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.pluginDependencies}" }
+      assert(module.dependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.dependencies}" }
       val dependencies = getSortedDependencies(module)
       // if the module depends on an unavailable plugin, it will not be loaded
       if (dependencies.any { it.pluginClassLoader == null }) {

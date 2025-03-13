@@ -961,7 +961,7 @@ object DynamicPlugins {
     if (checkImplementationDetailDependencies) {
       var implementationDetailsLoadedWithoutRestart = true
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor, pluginSet) { dependentDescriptor ->
-        val dependencies = dependentDescriptor.pluginDependencies
+        val dependencies = dependentDescriptor.dependencies
         if (dependencies.all { it.isOptional || PluginManagerCore.getPlugin(it.pluginId) != null }) {
           if (!loadPluginWithoutProgress(dependentDescriptor, checkImplementationDetailDependencies = false)) {
             implementationDetailsLoadedWithoutRestart = false

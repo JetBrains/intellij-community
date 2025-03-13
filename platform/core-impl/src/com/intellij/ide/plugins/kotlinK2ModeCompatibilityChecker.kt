@@ -102,7 +102,7 @@ fun isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(plugin: 
 }
 
 private fun nonOptionallyDependsOnKotlinPlugin(plugin: IdeaPluginDescriptorImpl): Boolean {
-  return plugin.pluginDependencies.any { (isKotlinPlugin(it.pluginId)) && !it.isOptional } ||
+  return plugin.dependencies.any { (isKotlinPlugin(it.pluginId)) && !it.isOptional } ||
          plugin.dependenciesV2.plugins.any { isKotlinPlugin(it.id) }
 }
 
