@@ -1,5 +1,4 @@
-// "Make 'Op' 'abstract'" "true"
-// DIALOG_OPTION: OK
+// "Make 'Op' 'abstract'|->Continue" "true"
 // IGNORE_K2
 
 actual abstract clas<caret>s Op actual constructor() : IFoo

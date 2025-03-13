@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -14,11 +14,11 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 
 internal object MakeSuperTypeOpenFixFactory {
 
-    val makeSuperTypeOpenFixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.FinalSupertype ->
+    val makeSuperTypeOpenFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.FinalSupertype ->
         createQuickFixes(diagnostic)
     }
 
-    val makeUpperBoundOpenFixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.FinalUpperBound ->
+    val makeUpperBoundOpenFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.FinalUpperBound ->
         createQuickFixes(diagnostic)
     }
 

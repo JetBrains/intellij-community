@@ -1,14 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.propertyVisitor
 
 abstract class MayBeConstantInspectionBase : AbstractKotlinInspection() {
     enum class Status {
@@ -34,14 +34,14 @@ abstract class MayBeConstantInspectionBase : AbstractKotlinInspection() {
                         else
                             KotlinBundle.message("might.be.const"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                        IntentionWrapper(createAddConstModifierFix(property))
+                        createAddConstModifierFix(property)
                     )
                 }
             }
         }
     }
 
-    protected abstract fun createAddConstModifierFix(property: KtProperty): IntentionAction
+    protected abstract fun createAddConstModifierFix(property: KtProperty): LocalQuickFix
 
     protected abstract fun KtProperty.getConstantStatus(): Status
 }

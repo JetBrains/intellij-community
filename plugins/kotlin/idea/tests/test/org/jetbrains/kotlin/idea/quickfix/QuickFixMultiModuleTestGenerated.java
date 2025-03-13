@@ -1616,11 +1616,6 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/other/movePropertyToConstructor/");
         }
 
-        @TestMetadata("notMakeAbstractFromActual")
-        public void testNotMakeAbstractFromActual() throws Exception {
-            runTest("testData/multiModuleQuickFix/other/notMakeAbstractFromActual/");
-        }
-
         @TestMetadata("safeDeleteForbiddenFromActual")
         public void testSafeDeleteForbiddenFromActual() throws Exception {
             runTest("testData/multiModuleQuickFix/other/safeDeleteForbiddenFromActual/");

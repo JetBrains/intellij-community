@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
 import org.jetbrains.kotlin.idea.quickfix.MakeFieldPublicFix
 import org.jetbrains.kotlin.idea.quickfix.MakeMemberStaticFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
@@ -222,11 +222,11 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         shouldBePresent: Boolean
     ): List<IntentionAction> {
         val action = if (shouldBePresent) {
-            AddModifierFixFE10.createIfApplicable(modifierListOwners, token)
+            AddModifierFixMpp.createIfApplicable(modifierListOwners, token)
         } else {
-            RemoveModifierFixBase(modifierListOwners, token, false).asIntention()
+            RemoveModifierFixBase(modifierListOwners, token, false)
         }
-        return listOfNotNull(action)
+        return listOfNotNull(action?.asIntention())
     }
 
     override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {

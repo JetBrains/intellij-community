@@ -1,13 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.TestDialog
-import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
@@ -90,15 +87,6 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                     "// SHOULD_FAIL_WITH: "
                 ).joinToString(separator = "\n")
 
-                val dialogOption = when (InTextDirectivesUtils.findStringWithPrefixes(actionFileText, "// DIALOG_OPTION: ")) {
-                    "OK" -> TestDialog.OK
-                    "NO" -> TestDialog.NO
-                    "CANCEL" -> TestDialog { Messages.CANCEL }
-                    else -> TestDialog.DEFAULT
-                }
-
-                val oldDialogOption = TestDialogManager.setTestDialog(dialogOption)
-
                 TypeAccessibilityChecker.testLog = StringBuilder()
                 val log = try {
 
@@ -118,7 +106,6 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
 
                     TypeAccessibilityChecker.testLog.toString()
                 } finally {
-                    TestDialogManager.setTestDialog(oldDialogOption)
                     TypeAccessibilityChecker.testLog = null
                 }
 

@@ -1,47 +1,47 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class MakeTypeParameterReifiedAndFunctionInlineFix(
-    typeReference: KtTypeReference,
-    function: KtNamedFunction,
-    private val typeParameter: KtTypeParameter
-) : KotlinQuickFixAction<KtTypeReference>(typeReference) {
+internal class MakeTypeParameterReifiedAndFunctionInlineFix(
+    element: KtTypeParameter,
+) : PsiUpdateModCommandAction<KtTypeParameter>(element) {
 
-    private val inlineFix = AddInlineToFunctionWithReifiedFix(function)
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("make.type.parameter.reified.and.function.inline")
 
-    override fun getText() = KotlinBundle.message("make.type.parameter.reified.and.function.inline")
-
-    override fun getFamilyName() = text
-
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        inlineFix.invoke(project, editor, file)
-        AddModifierFixFE10(typeParameter, KtTokens.REIFIED_KEYWORD).invoke(project, editor, file)
+    override fun invoke(
+        context: ActionContext,
+        element: KtTypeParameter,
+        updater: ModPsiUpdater,
+    ) {
+        val function = element.getStrictParentOfType<KtNamedFunction>() ?: return
+        function.addModifier(KtTokens.INLINE_KEYWORD)
+        element.addModifier(KtTokens.REIFIED_KEYWORD)
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtTypeReference>? {
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val element = Errors.CANNOT_CHECK_FOR_ERASED.cast(diagnostic)
             val typeReference = element.psiElement as? KtTypeReference ?: return null
             val function = typeReference.getStrictParentOfType<KtNamedFunction>() ?: return null
             val typeParameter = function.typeParameterList?.parameters?.firstOrNull {
                 it.descriptor == element.a.constructor.declarationDescriptor
             } ?: return null
-            return MakeTypeParameterReifiedAndFunctionInlineFix(typeReference, function, typeParameter)
+            return MakeTypeParameterReifiedAndFunctionInlineFix(typeParameter).asIntention()
         }
     }
 
