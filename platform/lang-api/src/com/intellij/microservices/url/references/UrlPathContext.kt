@@ -220,9 +220,14 @@ fun UrlPathContext.applyFromParsed(parsedUrl: UrlPksParser.ParsedPksUrl,
                                    auth: Boolean = true,
                                    path: Boolean = true): UrlPathContext {
   var result = this
-  if (scheme) result = parsedUrl.scheme?.valueIfKnown?.takeIf { it.isNotEmpty() }?.let { result.withSchemes(setOf(it)) } ?: result
-  if (auth) result = parsedUrl.authority?.valueIfKnown?.let { result.withAuthorities(setOf(it)) } ?: result
-  if (path) result = parsedUrl.urlPath.let { result.subContext(it) }
+  val authorityValue = parsedUrl.authority?.valueIfKnown?.takeIf { it.isNotEmpty() }
+  val schemeValue = parsedUrl.scheme?.valueIfKnown?.takeIf { it.isNotEmpty() && it != authorityValue }
+  val urlPath = parsedUrl.urlPath
+
+  if (scheme) result = schemeValue?.let { result.withSchemes(setOf(it)) } ?: result
+  if (auth) result = authorityValue?.let { result.withAuthorities(setOf(it)) } ?: result
+  if (path) result = urlPath.let { result.subContext(it) }
+
   return result
 }
 
