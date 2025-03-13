@@ -91,7 +91,7 @@ open class XDebugSessionTabNewUI(
     toolbar.removeAll()
 
     val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
-    val headerActions = (headerGroup as CustomisedActionGroup).defaultChildrenOrStubs.withReplacedFrontendActions()
+    val headerActions = (headerGroup as CustomisedActionGroup).defaultChildrenOrStubs
     RunContentBuilder.addAvoidingDuplicates(toolbar, headerActions)
 
     val more = RunContentBuilder.createToolbarMoreActionGroup(toolbar)
@@ -124,21 +124,6 @@ open class XDebugSessionTabNewUI(
     more.add(gear, Constraints(Anchor.BEFORE, ""))
     more.add(CreateAction(), Constraints(Anchor.BEFORE, ""))
     toolbar.add(more, Constraints(Anchor.BEFORE, ""))
-  }
-
-  private fun Array<AnAction>.withReplacedFrontendActions(): Array<AnAction> {
-    if (!useFeProxy()) {
-      return this
-    }
-    return this.map { action ->
-      val id = ActionManager.getInstance().getId(action)
-      when (id) {
-        // create frontend based actions for stop and rerun
-        "Stop" -> ActionManager.getInstance().getAction("Stop.Debugger.Frontend")
-        "Rerun" -> ActionManager.getInstance().getAction("Rerun.Debugger.Frontend")
-        else -> action
-      }
-    }.toTypedArray()
   }
 
   open fun isSingleContent() = Registry.`is`("debugger.new.tool.window.layout.single.content", false)

@@ -250,8 +250,6 @@
       <separator/>
       <group id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend"/>
     </group>
-    <action id="Stop.Debugger.Frontend" class="com.intellij.xdebugger.impl.ui.FrontendDebuggerToolbarStopAction" icon="AllIcons.Actions.Suspend"/>
-    <action id="Rerun.Debugger.Frontend" class="com.intellij.xdebugger.impl.ui.FrontendDebuggerToolbarRerunAction" icon="AllIcons.Actions.Restart"/>
   </actions>
 
   <projectListeners>
