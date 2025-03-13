@@ -33,7 +33,7 @@ class SeTabMock(override val name: String,
                        name: String,
                        providerIds: List<SeProviderId>,
                        forceRemote: Boolean = false): SeTabMock {
-      val delegate = SeTabDelegate.create(project, sessionRef, providerIds, DataContext.EMPTY_CONTEXT, forceRemote)
+      val delegate = SeTabDelegate.create(project, sessionRef, name, providerIds, DataContext.EMPTY_CONTEXT, forceRemote)
       return SeTabMock(name, delegate)
     }
   }

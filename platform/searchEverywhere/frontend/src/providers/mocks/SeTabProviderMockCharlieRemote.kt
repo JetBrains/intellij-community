@@ -16,5 +16,6 @@ class SeTabProviderMockCharlieRemote : SeTabProvider {
     SeTabMock.create(project,
                      sessionRef,
                      "Charlie-Remote",
-                     listOf(SeProviderId("SearchEverywhereItemsProviderMock_MockBackend")))
+                     listOf(SeProviderId("SearchEverywhereItemsProviderMock_MockBackend")),
+                     forceRemote = true)
 }

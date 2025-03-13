@@ -5,6 +5,8 @@ import com.intellij.ide.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
+import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +22,7 @@ class SeItemDataFrontendProvider(private val projectId: ProjectId,
   override fun getItems(params: SeParams): Flow<SeItemData> {
     return channelFlow {
       SeRemoteApi.getInstance().getItems(projectId, sessionRef, id, params, dataContextId).collect {
+        SeLog.log(ITEM_EMIT) { "Frontend provider for ${id.value} receives: ${it.presentation.text}" }
         send(it)
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)

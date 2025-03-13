@@ -44,9 +44,12 @@ class SeResultsSorter(private val tab: SeTab) {
 }
 
 @Internal
-sealed interface SeSortedResultEvent
+sealed interface SeSortedResultEvent {
+  val itemData: SeItemData
+  val index: Int
+}
 
 @Internal
-class SeSortedResultAddedEvent(val itemData: SeItemData, val index: Int) : SeSortedResultEvent
+class SeSortedResultAddedEvent(override val itemData: SeItemData, override val index: Int) : SeSortedResultEvent
 @Internal
-class SeSortedResultReplacedEvent(val itemData: SeItemData, val indexToRemove: Int, val index: Int) : SeSortedResultEvent
+class SeSortedResultReplacedEvent(override val itemData: SeItemData, val indexToRemove: Int, override val index: Int) : SeSortedResultEvent

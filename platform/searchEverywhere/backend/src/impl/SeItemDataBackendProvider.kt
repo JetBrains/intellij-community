@@ -2,6 +2,8 @@
 package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +22,7 @@ class SeItemDataBackendProvider(override val id: SeProviderId,
       provider.collectItems(params, object : SeItemsProvider.Collector {
         override suspend fun put(item: SeItem): Boolean {
           val itemData = SeItemData.createItemData(sessionRef, item, id, item.weight(), item.presentation()) ?: return true
+          SeLog.log(ITEM_EMIT) { "Backend provider for ${id.value} sends: ${itemData.presentation.text}" }
           send(itemData)
           return coroutineContext.isActive
         }

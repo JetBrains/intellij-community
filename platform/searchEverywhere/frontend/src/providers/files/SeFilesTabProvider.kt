@@ -16,6 +16,7 @@ class SeFilesTabProvider : SeTabProvider {
   override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab {
     val delegate = SeTabDelegate.create(project,
                                         sessionRef,
+                                        "Files",
                                         listOf(SeProviderId("com.intellij.FileSearchEverywhereItemProvider")),
                                         dataContext,
                                         true)

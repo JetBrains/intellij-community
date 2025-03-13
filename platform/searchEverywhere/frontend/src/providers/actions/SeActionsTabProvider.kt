@@ -16,6 +16,7 @@ class SeActionsTabProvider : SeTabProvider {
   override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab {
     val delegate = SeTabDelegate.create(project,
                                         sessionRef,
+                                        "Actions",
                                         listOf(SeProviderId("com.intellij.ActionsItemsProvider")),
                                         dataContext,
                                         true)

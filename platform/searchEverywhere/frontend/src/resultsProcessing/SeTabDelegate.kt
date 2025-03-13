@@ -10,6 +10,8 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SeItemDataFrontendProvider
 import com.intellij.platform.searchEverywhere.frontend.SeItemDataLocalProvider
+import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @OptIn(ExperimentalCoroutinesApi::class)
 @Internal
 class SeTabDelegate private constructor(val project: Project,
+                                        private val logLabel: String,
                                         private val providers: Map<SeProviderId, SeItemDataProvider>) {
   private val providersAndLimits = providers.values.associate { it.id to Int.MAX_VALUE }
 
@@ -27,8 +30,8 @@ class SeTabDelegate private constructor(val project: Project,
 
     return providers.values.asFlow().flatMapMerge { provider ->
       provider.getItems(params).mapNotNull {
-        val item = accumulator.add(it)
-        item
+        SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} emits: ${it.presentation.text}" }
+        accumulator.add(it)
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
   }
@@ -43,6 +46,7 @@ class SeTabDelegate private constructor(val project: Project,
 
     suspend fun create(project: Project,
                        sessionRef: DurableRef<SeSessionEntity>,
+                       logLabel: String,
                        providerIds: List<SeProviderId>,
                        dataContext: DataContext,
                        forceRemote: Boolean): SeTabDelegate {
@@ -76,7 +80,7 @@ class SeTabDelegate private constructor(val project: Project,
 
       val providers = frontendProviders + localProviders
 
-      return SeTabDelegate(project, providers)
+      return SeTabDelegate(project, logLabel, providers)
     }
   }
 }
