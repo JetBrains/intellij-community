@@ -19,8 +19,8 @@ import kotlin.io.path.writeText
 abstract class CodeExecutionManager {
   companion object {
     val EP_NAME: ExtensionPointName<CodeExecutionManager> = ExtensionPointName.create("com.intellij.cce.codeExecutionManager")
-    fun getForLanguage(language: Language, inDocker: Boolean): CodeExecutionManager? = EP_NAME.findFirstSafe {
-      it.language == language && it.executionMode == if (inDocker) ExecutionMode.DOCKER else ExecutionMode.LOCAL
+    fun getForLanguage(language: Language, executionMode: ExecutionMode): CodeExecutionManager? = EP_NAME.findFirstSafe {
+      it.language == language && it.executionMode == executionMode
     }
   }
 
