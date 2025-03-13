@@ -4,6 +4,7 @@ package fleet.util.logging.slf4j
 import fleet.util.logging.KLogger
 import fleet.util.logging.KLoggerFactory
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import kotlin.reflect.KClass
 
 class Slf4jKLoggerFactory : KLoggerFactory {
@@ -31,5 +32,18 @@ class Slf4jKLoggerFactory : KLoggerFactory {
   private fun defaultLogger(clazz: Class<*>): KLogger {
     val slf4jLogger = LoggerFactory.getLogger(clazz)
     return KLogger(JVMLogger(slf4jLogger))
+  }
+
+  override fun getLoggingContext(): Map<String, String>? {
+    return MDC.getCopyOfContextMap()
+  }
+
+  override fun setLoggingContext(map: Map<String, String>?) {
+    if (map == null) {
+      MDC.clear()
+    }
+    else {
+      MDC.setContextMap(map)
+    }
   }
 }
