@@ -25,10 +25,7 @@ import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.NotNullProducer;
-import com.intellij.util.PathUtil;
+import com.intellij.util.*;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -98,6 +95,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
+    appendPath(cp, BitUtil.class); // intellij.platform.util.kmp
     appendPath(cp, NotNullProducer.class);  // intellij.platform.util
     appendPath(cp, CharArrayCharSequence.class); // intellij.platform.util.base.kmp
     appendPath(cp, Strings.class);  // intellij.platform.util.base
