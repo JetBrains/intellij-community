@@ -17,7 +17,7 @@ internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixF
         when (diagnostic) {
             is KaFirDiagnostic.ComponentFunctionMissing -> {
                 val destructuredExpression = diagnostic.psi as? KtExpression ?: return null
-                ImportContext(destructuredExpression, ImportPositionTypeAndReceiver.Destructuring(destructuredExpression))
+                ImportContext(destructuredExpression, ImportPositionTypeAndReceiver.OperatorCall(destructuredExpression))
             }
 
             else -> null

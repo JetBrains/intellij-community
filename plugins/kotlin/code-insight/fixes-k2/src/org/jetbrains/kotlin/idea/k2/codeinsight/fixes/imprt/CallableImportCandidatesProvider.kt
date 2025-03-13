@@ -27,9 +27,7 @@ internal class CallableImportCandidatesProvider(
                 kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD) && kotlinCallable.isExtensionDeclaration()
             }
 
-            is ImportPositionTypeAndReceiver.OperatorCall,
-            is ImportPositionTypeAndReceiver.Delegate,
-            is ImportPositionTypeAndReceiver.Destructuring -> {
+            is ImportPositionTypeAndReceiver.OperatorCall -> {
                 kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD) && kotlinCallable.isExtensionDeclaration()
             }
 
@@ -42,9 +40,7 @@ internal class CallableImportCandidatesProvider(
     private fun acceptsJavaCallableAtPosition(): Boolean =
         when (importContext.positionTypeAndReceiver) {
             is ImportPositionTypeAndReceiver.InfixCall,
-            is ImportPositionTypeAndReceiver.OperatorCall,
-            is ImportPositionTypeAndReceiver.Delegate,
-            is ImportPositionTypeAndReceiver.Destructuring -> false
+            is ImportPositionTypeAndReceiver.OperatorCall -> false
             else -> true
         }
 
@@ -55,9 +51,7 @@ internal class CallableImportCandidatesProvider(
                 functionSymbol?.isInfix == true && functionSymbol.isExtension
             }
 
-            is ImportPositionTypeAndReceiver.OperatorCall,
-            is ImportPositionTypeAndReceiver.Delegate,
-            is ImportPositionTypeAndReceiver.Destructuring -> {
+            is ImportPositionTypeAndReceiver.OperatorCall -> {
                 val functionSymbol = kotlinCallable.symbol as? KaNamedFunctionSymbol
                 functionSymbol?.isOperator == true && functionSymbol.isExtension
             }
