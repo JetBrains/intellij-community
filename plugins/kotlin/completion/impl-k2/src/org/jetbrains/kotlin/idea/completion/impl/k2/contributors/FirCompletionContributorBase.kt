@@ -130,7 +130,6 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
             file = context.file as KtFile,
             selection = explicitReceiverRange.textRange.grown(newReceiver.length),
         )
-        context.commitDocument()
         context.doPostponedOperationsAndUnblockDocument()
     }
 

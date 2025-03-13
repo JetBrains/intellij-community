@@ -26,12 +26,10 @@ internal fun addImportIfRequired(
     nameToImport: FqName
 ) {
     val targetFile = context.file as KtFile
-    if (!alreadyHasImport(targetFile, nameToImport)) {
-        targetFile.addImport(nameToImport)
+    if (alreadyHasImport(targetFile, nameToImport)) return
 
-        context.commitDocument()
-        context.doPostponedOperationsAndUnblockDocument()
-    }
+    targetFile.addImport(nameToImport)
+    context.doPostponedOperationsAndUnblockDocument()
 }
 
 @OptIn(KaExperimentalApi::class)
