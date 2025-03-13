@@ -2,20 +2,13 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
-import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.sample
-import kotlinx.coroutines.launch
 import java.awt.Point
 
 @OptIn(FlowPreview::class)
@@ -23,27 +16,10 @@ class NotebookVisibleCellsBatchUpdater(
   private val editor: EditorImpl
 ) : Disposable {
 
-  private val coroutineScope = NotebookVisualizationCoroutine.Utils.scope.childScope(this.javaClass.simpleName)
-
-  private val updateFlow = MutableSharedFlow<Unit>(
-    extraBufferCapacity = 1,
-    onBufferOverflow = BufferOverflow.DROP_LATEST
-  )
-
   init {
-    coroutineScope.launch {
-      updateFlow
-        .sample(SAMPLE_INTERVAL_MS)
-        .collect {
-          NotebookVisualizationCoroutine.Utils.launchEdt {
-            bulkUpdateFrames()
-          }
-        }
-    }
-
     JupyterBoundsChangeHandler.get(editor).subscribe(this, object : JupyterBoundsChangeListener {
       override fun boundsChanged() {
-        updateFlow.tryEmit(Unit)
+        bulkUpdateFrames()
       }
     })
   }
@@ -73,12 +49,10 @@ class NotebookVisibleCellsBatchUpdater(
     cell.view?.input?.cellActionsToolbar?.updateToolbarPosition()
   }
   override fun dispose() {
-    coroutineScope.cancel()
+
   }
 
   companion object {
-    private const val SAMPLE_INTERVAL_MS = 50L
-
     private val INSTANCE_KEY = Key.create<NotebookVisibleCellsBatchUpdater>("EDITOR_CELL_FRAME_UPDATER_KEY")
 
     fun install(editor: EditorImpl) {
