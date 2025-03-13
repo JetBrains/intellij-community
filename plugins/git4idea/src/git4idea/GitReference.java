@@ -2,7 +2,6 @@
 package git4idea;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.util.containers.HashingStrategy;
@@ -18,10 +17,7 @@ public abstract class GitReference implements Comparable<GitReference> {
   public static final HashingStrategy<String> BRANCH_NAME_HASHING_STRATEGY =
     SystemInfoRt.isFileSystemCaseSensitive ? HashingStrategy.canonical() : HashingStrategy.caseInsensitive();
 
-  public static final Comparator<@NotNull String> REFS_NAMES_COMPARATOR = (name1, name2) -> {
-    boolean ignoreCase = !SystemInfo.isFileSystemCaseSensitive;
-    return NaturalComparator.naturalCompare(name1, name2, ignoreCase, false);
-  };
+  public static final Comparator<@NotNull String> REFS_NAMES_COMPARATOR = NaturalComparator.INSTANCE;
 
   protected final @NotNull String myName;
 
