@@ -170,7 +170,7 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     CodeStyleGroupProviderFactory groupProviderFactory = new CodeStyleGroupProviderFactory(getModel(), this);
     myPanels = new ArrayList<>();
 

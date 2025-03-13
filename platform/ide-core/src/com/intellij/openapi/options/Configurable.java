@@ -161,7 +161,7 @@ public interface Configurable extends UnnamedConfigurable {
    */
   @FunctionalInterface
   interface Composite {
-    Configurable @NotNull [] getConfigurables();
+    @NotNull Configurable @NotNull [] getConfigurables();
   }
 
   /**

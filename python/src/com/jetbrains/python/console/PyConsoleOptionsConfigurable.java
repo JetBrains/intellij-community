@@ -53,7 +53,7 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     List<Configurable> result = new ArrayList<>();
 
     PyConsoleSpecificOptionsPanel pythonConsoleOptionsPanel = new PyConsoleSpecificOptionsPanel(myProject);

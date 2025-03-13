@@ -306,13 +306,13 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     }
 
     @Override
-    public Configurable @NotNull [] getConfigurables() {
+    public @NotNull Configurable @NotNull [] getConfigurables() {
       if (isInitialized) {
         return myKids;
       }
 
       long time = System.currentTimeMillis();
-      ArrayList<Configurable> list = new ArrayList<>();
+      ArrayList<@NotNull Configurable> list = new ArrayList<>();
       if (super.myEp.dynamic) {
         Composite composite = cast(Composite.class, this);
         if (composite != null) {
