@@ -52,10 +52,11 @@ fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext, pool
 }
 
 @ApiStatus.Internal
-fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl? {
+@JvmOverloads
+fun loadForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = PluginManagerCore.META_INF, id: PluginId? = null): IdeaPluginDescriptorImpl? {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val parentContext = DescriptorListLoadingContext()
-  val relativePath = "${PluginManagerCore.META_INF}${fileName}"
+  val relativePath = "${relativeDir}${fileName}"
   if (Files.isDirectory(pluginRoot)) {
     return loadDescriptorFromDir(
       dir = pluginRoot,
@@ -65,6 +66,7 @@ fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl
       descriptorRelativePath = relativePath,
       isBundled = true,
       isEssential = true,
+      id = id,
     )
   }
   else {
@@ -78,6 +80,7 @@ fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl
         descriptorRelativePath = relativePath,
         isBundled = true,
         isEssential = true,
+        id = id,
       )
     }
   }
@@ -93,6 +96,7 @@ fun loadDescriptorFromDir(
   isEssential: Boolean = false,
   useCoreClassLoader: Boolean = false,
   pluginDir: Path? = null,
+  id: PluginId? = null,
 ): IdeaPluginDescriptorImpl? {
   try {
     val dataLoader = LocalFsDataLoader(dir)
@@ -108,6 +112,7 @@ fun loadDescriptorFromDir(
       useCoreClassLoader = useCoreClassLoader,
       descriptorRelativePath = descriptorRelativePath,
       pool = pool,
+      id = id,
     )
     descriptor.jarFiles = Collections.singletonList(dir)
     return descriptor
@@ -134,6 +139,7 @@ fun loadDescriptorFromJar(
   isEssential: Boolean = false,
   useCoreClassLoader: Boolean = false,
   pluginDir: Path? = null,
+  id: PluginId? = null,
 ): IdeaPluginDescriptorImpl? {
   val resolver = pool.load(file)
   try {
@@ -150,6 +156,7 @@ fun loadDescriptorFromJar(
       useCoreClassLoader = useCoreClassLoader,
       descriptorRelativePath = descriptorRelativePath,
       pool = pool,
+      id = id,
     )
     descriptor.jarFiles = Collections.singletonList(descriptor.pluginPath)
     return descriptor
@@ -177,6 +184,7 @@ private fun loadDescriptorFromStream(
   useCoreClassLoader: Boolean,
   descriptorRelativePath: String,
   pool: ZipEntryResolverPool,
+  id: PluginId? = null,
 ): IdeaPluginDescriptorImpl {
   val raw = PluginDescriptorFromXmlStreamConsumer(context, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(input, fileOrDir.toString())
@@ -186,7 +194,7 @@ private fun loadDescriptorFromStream(
     raw = raw,
     path = pluginDir ?: fileOrDir,
     isBundled = isBundled,
-    id = null,
+    id = id,
     moduleName = null,
     useCoreClassLoader = useCoreClassLoader,
   )
