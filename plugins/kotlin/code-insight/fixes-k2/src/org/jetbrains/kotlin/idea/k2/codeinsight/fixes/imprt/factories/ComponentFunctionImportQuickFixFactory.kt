@@ -7,22 +7,22 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionContext
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAndReceiver
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 
 internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportPositionContext<*, *>? =
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportPositionTypeAndReceiver<*, *>? =
         when (diagnostic) {
             is KaFirDiagnostic.ComponentFunctionMissing -> {
                 val destructuredExpression = diagnostic.psi as? KtExpression ?: return null
-                ImportPositionContext.Destructuring(destructuredExpression)
+                ImportPositionTypeAndReceiver.Destructuring(destructuredExpression)
             }
 
             else -> null
         }
 
-    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionContext: ImportPositionContext<*, *>): Set<Name> {
+    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>): Set<Name> {
         val missingName = when (diagnostic) {
             is KaFirDiagnostic.ComponentFunctionMissing -> diagnostic.missingFunctionName
             else -> null
@@ -33,10 +33,10 @@ internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixF
 
     override fun KaSession.provideImportCandidates(
         unresolvedName: Name,
-        importPositionContext: ImportPositionContext<*, *>,
+        importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>,
         indexProvider: KtSymbolFromIndexProvider
     ): List<ImportCandidate> {
-        val provider = CallableImportCandidatesProvider(importPositionContext)
+        val provider = CallableImportCandidatesProvider(importPositionTypeAndReceiver)
         return provider.collectCandidates(unresolvedName, indexProvider)
     }
 }

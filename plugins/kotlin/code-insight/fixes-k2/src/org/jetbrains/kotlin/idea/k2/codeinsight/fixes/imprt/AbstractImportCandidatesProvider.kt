@@ -17,9 +17,9 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProvider {
-    protected abstract val importPositionContext: ImportPositionContext<*, *>
+    protected abstract val importPositionTypeAndReceiver: ImportPositionTypeAndReceiver<*, *>
 
-    private val file: KtFile get() = importPositionContext.position.containingKtFile
+    private val file: KtFile get() = importPositionTypeAndReceiver.position.containingKtFile
     private val fileImports: List<ImportPath> by lazy { file.importDirectives.mapNotNull { it.importPath } }
 
     context(KaSession)
@@ -49,7 +49,7 @@ internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProv
 
     protected fun PsiMember.canBeImported(): Boolean {
         return when (this) {
-            is PsiClass -> qualifiedName != null && (containingClass == null || hasModifier(JvmModifier.STATIC) || importPositionContext.acceptsInnerClasses())
+            is PsiClass -> qualifiedName != null && (containingClass == null || hasModifier(JvmModifier.STATIC) || importPositionTypeAndReceiver.acceptsInnerClasses())
             is PsiField, is PsiMethod -> hasModifier(JvmModifier.STATIC) && containingClass?.qualifiedName != null
             else -> false
         }
@@ -60,7 +60,7 @@ internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProv
             is KtProperty -> isTopLevel || containingClassOrObject is KtObjectDeclaration
             is KtNamedFunction -> isTopLevel || containingClassOrObject is KtObjectDeclaration
             is KtTypeAlias -> true
-            is KtClassOrObject -> !isLocal && (!isInner || importPositionContext.acceptsInnerClasses())
+            is KtClassOrObject -> !isLocal && (!isInner || importPositionTypeAndReceiver.acceptsInnerClasses())
 
             else -> false
         }
@@ -71,6 +71,6 @@ internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProv
 
     private val KtClassLikeDeclaration.isInner: Boolean get() = hasModifier(KtTokens.INNER_KEYWORD)
 
-    private fun ImportPositionContext<*, *>.acceptsInnerClasses(): Boolean =
-        this is ImportPositionContext.TypeReference || this is ImportPositionContext.KDocNameReference
+    private fun ImportPositionTypeAndReceiver<*, *>.acceptsInnerClasses(): Boolean =
+        this is ImportPositionTypeAndReceiver.TypeReference || this is ImportPositionTypeAndReceiver.KDocNameReference
 }
