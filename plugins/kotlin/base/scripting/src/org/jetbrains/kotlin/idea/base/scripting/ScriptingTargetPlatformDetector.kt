@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
+import org.jetbrains.kotlin.cli.common.arguments.toLanguageVersionSettings
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.JvmTarget

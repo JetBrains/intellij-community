@@ -10,9 +10,11 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.ANNOTATION_OPTION_NAME
 import org.jetbrains.kotlin.assignment.plugin.AssignmentPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArgumentsConfigurator
 import org.jetbrains.kotlin.cli.common.arguments.Freezable
 import org.jetbrains.kotlin.cli.common.arguments.copyCommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
@@ -77,6 +79,10 @@ internal class AssignmentAnnotationNamesCache(project: Project) {
     private fun ScriptDefinition.getSpecialAnnotations(annotationPrefix: String): List<String> {
         class CommonCompilerArgumentsHolder: CommonCompilerArguments() {
             override fun copyOf(): Freezable = copyCommonCompilerArguments(this, CommonCompilerArgumentsHolder())
+
+            @get:Transient
+            @field:kotlin.jvm.Transient
+            override val configurator: CommonCompilerArgumentsConfigurator = CommonCompilerArgumentsConfigurator()
         }
 
         val arguments = CommonCompilerArgumentsHolder()
