@@ -38,6 +38,7 @@ fun CoroutineDispatcher.softLimitedParallelism(parallelism: Int, name: String?):
  * Behaves like [CoroutineDispatcher.limitedParallelism], but adds "#[dispatcherName]" suffix to its string representation
  */
 @ExperimentalCoroutinesApi
+@Deprecated("Use `limitedParallelism` from Kotlin coroutines", ReplaceWith("limitedParallelism(parallelism, dispatcherName)"))
 fun CoroutineDispatcher.limitedParallelism(parallelism: Int, dispatcherName: String): CoroutineDispatcher =
   limitedParallelism(parallelism).withName(dispatcherName)
 
