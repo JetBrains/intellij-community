@@ -106,6 +106,7 @@
     <stubElementRegistryExtension implementation="com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension"/>
 
     <syntax.syntaxDefinition language="JAVA" implementationClass="com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension"/>
+    <syntax.syntaxDefinition language="JShellLanguage" implementationClass="com.intellij.java.frontback.psi.impl.syntax.JShellSyntaxDefinitionExtension"/>
 
     <metaLanguage implementation="com.intellij.lang.jvm.JvmMetaLanguage"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
@@ -136,6 +137,8 @@
     <lang.parserDefinition language="JShellLanguage" implementationClass="com.intellij.lang.java.JShellParserDefinition"/>
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
     <syntax.elementTypeConverter language="JAVA" implementationClass="com.intellij.lang.java.syntax.JavaElementTypeConverterExtension"/>
+    <syntax.elementTypeConverter language="JShellLanguage" implementationClass="com.intellij.lang.java.syntax.JavaElementTypeConverterExtension"/>
+    <syntax.elementTypeConverter language="JShellLanguage" implementationClass="com.intellij.lang.java.syntax.JShellElementTypeConverterExtension"/>
     <lang.ast.factory language="JAVA" implementationClass="com.intellij.psi.impl.source.tree.JavaASTFactory"/>
     <classTypePointerFactory implementation="com.intellij.psi.impl.smartPointers.PsiClassReferenceTypePointerFactory"/>
     <lang.elementManipulator forClass="com.intellij.psi.javadoc.PsiDocTag"

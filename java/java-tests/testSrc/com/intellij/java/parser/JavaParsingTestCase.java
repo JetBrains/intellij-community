@@ -2,11 +2,16 @@
 package com.intellij.java.parser;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.java.JShellLanguage;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
+import com.intellij.platform.syntax.psi.ElementTypeConverters;
+import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.JavaASTFactory;
@@ -29,6 +34,8 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     getProject().registerService(WorkspaceModelTopics.class, new WorkspaceModelTopics());
     getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
+    addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), JavaLanguage.INSTANCE, new JavaSyntaxDefinitionExtension());
+    addExplicitExtension(ElementTypeConverters.getInstance(), JavaLanguage.INSTANCE, new JavaElementTypeConverterExtension());
   }
 
   @Override
