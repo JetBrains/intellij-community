@@ -23,6 +23,7 @@
 - contains(com.intellij.platform.syntax.SyntaxElementType):Z
 - f:contains(java.lang.Object):Z
 - containsAll(java.util.Collection):Z
+- f:containsNullable(com.intellij.platform.syntax.SyntaxElementType):Z
 - getSize():I
 - isEmpty():Z
 - iterator():java.util.Iterator

@@ -36,6 +36,9 @@ class SyntaxElementTypeSet internal constructor(
   private val tokens: Array<SyntaxElementType>,
 ) : Set<SyntaxElementType> {
 
+  @JvmName("containsNullable")
+  fun contains(element: SyntaxElementType?): Boolean = element != null && contains(element)
+
   override fun contains(element: SyntaxElementType): Boolean =
     bitSet.contains(element.index)
 
