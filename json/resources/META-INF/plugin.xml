@@ -18,6 +18,6 @@
   <content>
     <module name="intellij.json.frontend.split"/>
     <module name="intellij.json.split" loading="required"/>
-    <module name="intellij.json" loading="embedded"/>
+    <module name="intellij.json.backend"/>
   </content>  
 </idea-plugin>
