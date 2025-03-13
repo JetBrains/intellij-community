@@ -137,6 +137,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         val arguments = KotlinCommonCompilerArgumentsHolder.getInstance(project).settings
 
         val languageVersion = LanguageVersion.fromVersionString(arguments.languageVersion)
+            ?: DefaultKotlinLanguageVersionProvider.getInstance()?.getDefaultLanguageVersion()
             ?: KotlinPluginLayout.standaloneCompilerVersion.languageVersion
 
         val languageVersionForApiVersion = LanguageVersion.fromVersionString(arguments.apiVersion) ?: languageVersion
@@ -225,6 +226,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
 
             val kotlinVersion = LanguageVersion.fromVersionString(arguments.languageVersion)?.toKotlinVersion()
                 ?: settings.languageLevel?.toKotlinVersion()
+                ?: DefaultKotlinLanguageVersionProvider.getInstance()?.getDefaultLanguageVersion()?.toKotlinVersion()
                 ?: KotlinPluginLayout.standaloneCompilerVersion.kotlinVersion
 
             // TODO definitely wrong implementation, merge state properly
@@ -271,4 +273,17 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
     }
 
     override fun dispose() {}
+}
+
+internal interface DefaultKotlinLanguageVersionProvider {
+    fun getDefaultLanguageVersion(): LanguageVersion
+
+    companion object {
+        fun getInstance(): DefaultKotlinLanguageVersionProvider? =
+            serviceOrNull<DefaultKotlinLanguageVersionProvider>()
+    }
+}
+
+internal class DefaultKotlinLanguageVersionProviderWithLatestVersion : DefaultKotlinLanguageVersionProvider {
+    override fun getDefaultLanguageVersion(): LanguageVersion = LanguageVersion.LATEST_STABLE
 }
