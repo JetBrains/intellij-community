@@ -126,7 +126,9 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     val moduleOutputPatcher = ModuleOutputPatcher()
 
     val platformLayout = async(CoroutineName("create platform layout")) {
-      createPlatformLayout(context)
+      spanBuilder("create platform layout").use {
+        createPlatformLayout(context)
+      }
     }
 
     val searchableOptionSet = getSearchableOptionSet(context)
@@ -156,8 +158,9 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         }
       }
 
+      val platformLayoutAwaited = platformLayout.await()
       val (platformDistributionEntries, classPath) = spanBuilder("layout platform").use {
-        layoutPlatform(runDir, platformLayout.await(), searchableOptionSet, context, moduleOutputPatcher)
+        layoutPlatform(runDir, platformLayoutAwaited, searchableOptionSet, context, moduleOutputPatcher)
       }
 
       if (request.writeCoreClasspath) {
