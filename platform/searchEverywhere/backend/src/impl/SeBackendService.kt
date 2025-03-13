@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.impl
 
-import com.intellij.ide.DataContextId
-import com.intellij.ide.dataContext
+import com.intellij.ide.rpc.DataContextId
+import com.intellij.ide.rpc.dataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

@@ -1,16 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide
+package com.intellij.ide.rpc
 
-import com.intellij.ide.rpc.deserializeFromRpc
-import com.intellij.ide.rpc.serializeToRpc
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.diagnostic.fileLogger
 import fleet.util.openmap.SerializedValue
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-
-private val LOG = fileLogger()
 
 /**
  * Converts an [DataContext] instance into a [DataContextId] which can be used in RPC calls and stored in Rhizome.
