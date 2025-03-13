@@ -263,7 +263,7 @@ class ClassLoaderConfigurator(
         classPath = ClassPath(jarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false),
         parents = deps,
         pluginDescriptor = module,
-        coreLoader = if (module.isDependentOnCoreClassLoader) coreLoader else coreLoader.parent,
+        coreLoader = if (module.isIndependentFromCoreClassLoader) coreLoader.parent else coreLoader,
         resolveScopeManager = null,
         packagePrefix = module.packagePrefix,
         libDirectories = ArrayList(),

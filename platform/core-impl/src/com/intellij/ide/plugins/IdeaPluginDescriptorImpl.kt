@@ -50,7 +50,7 @@ class IdeaPluginDescriptorImpl(
   override val moduleName: String?,
   override val moduleLoadingRule: ModuleLoadingRule? = null,
   override val useCoreClassLoader: Boolean = false,
-  val isDependentOnCoreClassLoader: Boolean = true,
+  val isIndependentFromCoreClassLoader: Boolean = false,
 ) : IdeaPluginDescriptorEx {
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id?.idString ?: raw.id!! // if it throws, it throws on `id` above
@@ -182,7 +182,7 @@ class IdeaPluginDescriptorImpl(
   ): IdeaPluginDescriptorImpl {
     subBuilder.name = name
     val raw = subBuilder.build()
-    val result = IdeaPluginDescriptorImpl(raw, path, isBundled, id, module?.name, module?.loadingRule, useCoreClassLoader, !raw.isIndependentFromCoreClassLoader)
+    val result = IdeaPluginDescriptorImpl(raw, path, isBundled, id, module?.name, module?.loadingRule, useCoreClassLoader, raw.isIndependentFromCoreClassLoader)
     context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
     result.descriptorPath = descriptorPath
     result.vendor = vendor
