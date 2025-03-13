@@ -54,6 +54,12 @@ object ImportQuickFixFactories {
 
     val componentFunctionMissingFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ComponentFunctionMissing> =
         ImportQuickFixProvider.upcast()
+
+    val iteratorMissingFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.IteratorMissing> =
+        ImportQuickFixProvider.upcast()
+
+    val iteratorAmbiguityFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.IteratorAmbiguity> =
+        ImportQuickFixProvider.upcast()
 }
 
 /**

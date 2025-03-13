@@ -8,7 +8,6 @@ package bar
 fun foo() {
     for (date in <caret>10) {}
 }
-// IGNORE_K2
 
 // FILE: second.kt
 package foo
@@ -27,4 +26,3 @@ import foo.iterator
 fun foo() {
     for (date in <caret>10) {}
 }
-// IGNORE_K2
