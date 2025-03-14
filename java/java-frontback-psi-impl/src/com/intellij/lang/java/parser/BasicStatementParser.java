@@ -24,6 +24,11 @@ import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicStatementParser {
   private static final TokenSet YIELD_STMT_INDICATOR_TOKENS = TokenSet.create(
     JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.EXCL, JavaTokenType.TILDE,

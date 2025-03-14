@@ -21,6 +21,11 @@ import java.util.function.Predicate;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicFileParser {
   protected final TokenSet IMPORT_LIST_STOPPER_SET;
   private final BasicJavaParser myParser;

@@ -20,6 +20,11 @@ import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.error;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.semicolon;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicModuleParser {
   private static final Set<String> STATEMENT_KEYWORDS =
     ContainerUtil.newHashSet(PsiKeyword.REQUIRES, PsiKeyword.EXPORTS, PsiKeyword.USES, PsiKeyword.PROVIDES);

@@ -44,20 +44,40 @@ public final class BasicJavaParserUtil {
 
   private BasicJavaParserUtil() { }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void setLanguageLevel(final PsiBuilder builder, final LanguageLevel level) {
     builder.putUserData(LANG_LEVEL_KEY, level);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @NotNull LanguageLevel getLanguageLevel(final PsiBuilder builder) {
     final LanguageLevel level = builder.getUserData(LANG_LEVEL_KEY);
     assert level != null : builder;
     return level;
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void setParseStatementCodeBlocksDeep(final PsiBuilder builder, final boolean deep) {
     builder.putUserData(DEEP_PARSE_BLOCKS_IN_STATEMENTS, deep);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static boolean isParseStatementCodeBlocksDeep(final PsiBuilder builder) {
     return Boolean.TRUE.equals(builder.getUserData(DEEP_PARSE_BLOCKS_IN_STATEMENTS));
   }
@@ -79,6 +99,11 @@ public final class BasicJavaParserUtil {
     marker.setCustomEdgeTokenBinders(left, right);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void done(final @NotNull PsiBuilder.Marker marker,
                           final @NotNull IElementType type,
                           final @NotNull PsiBuilder builder,
@@ -93,15 +118,30 @@ public final class BasicJavaParserUtil {
     marker.setCustomEdgeTokenBinders(left, right);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @Nullable IElementType exprType(final @Nullable PsiBuilder.Marker marker) {
     return marker != null ? marker.getTokenType() : null;
   }
 
   // used instead of PsiBuilder.error() as it keeps all subsequent error messages
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void error(final PsiBuilder builder, @NotNull @NlsContexts.ParsingError String message) {
     builder.mark().error(message);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void error(final PsiBuilder builder,
                            @NotNull @NlsContexts.ParsingError String message,
                            final @Nullable PsiBuilder.Marker before) {
@@ -113,6 +153,11 @@ public final class BasicJavaParserUtil {
     }
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static boolean expectOrError(PsiBuilder builder,
                                       TokenSet expected,
                                       @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
@@ -123,6 +168,11 @@ public final class BasicJavaParserUtil {
     return true;
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static boolean expectOrError(PsiBuilder builder,
                                       IElementType expected,
                                       @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
@@ -133,18 +183,38 @@ public final class BasicJavaParserUtil {
     return true;
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void emptyElement(final PsiBuilder builder, final IElementType type) {
     builder.mark().done(type);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void emptyElement(final PsiBuilder.Marker before, final IElementType type) {
     before.precede().doneBefore(type, before);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void semicolon(final PsiBuilder builder) {
     expectOrError(builder, JavaTokenType.SEMICOLON, "expected.semicolon");
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static PsiBuilder braceMatchingBuilder(final PsiBuilder builder) {
     final PsiBuilder.Marker pos = builder.mark();
 
@@ -165,6 +235,11 @@ public final class BasicJavaParserUtil {
     return stoppingBuilder(builder, stopAt);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final int stopAt) {
     return new PsiBuilderAdapter(builder) {
       @Override
@@ -184,6 +259,11 @@ public final class BasicJavaParserUtil {
     void parse(@NotNull SyntaxTreeBuilder builder, @NotNull LanguageLevel languageLevel);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Predicate<? super Pair<IElementType, String>> condition) {
     return new PsiBuilderAdapter(builder) {
       @Override
@@ -288,6 +368,11 @@ public final class BasicJavaParserUtil {
     return Pair.create(builder, level);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @NotNull PsiBuilder createBuilder(final @NotNull ASTNode chameleon,
                                                   @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
                                                   @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction,
@@ -318,6 +403,11 @@ public final class BasicJavaParserUtil {
     return builder;
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @NotNull PsiBuilder createBuilder(@NotNull LighterLazyParseableNode chameleon,
                                                   @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
                                                   @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {

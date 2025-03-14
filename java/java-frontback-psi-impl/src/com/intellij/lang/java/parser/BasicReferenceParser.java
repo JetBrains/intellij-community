@@ -18,6 +18,11 @@ import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.util.BitUtil.isSet;
 import static com.intellij.util.BitUtil.set;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicReferenceParser {
   public static final int EAT_LAST_DOT = 0x01;
   public static final int ELLIPSIS = 0x02;
