@@ -45,6 +45,10 @@ public final class JavaParserUtil {
         file));
   }
 
+  /**
+   * @deprecated Use {@link #obtainTokens(PsiFile)} instead
+   */
+  @Deprecated
   public static @NotNull com.intellij.lexer.TokenList obtainTokensOutdated(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
@@ -62,12 +66,14 @@ public final class JavaParserUtil {
   @Deprecated
   public static final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER =
     WhiteSpaceAndCommentSetHolder.INSTANCE.getPrecedingCommentBinder(LanguageLevel.HIGHEST);
+
   /**
    * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
    */
   @Deprecated
   public static final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER =
     WhiteSpaceAndCommentSetHolder.INSTANCE.getSpecialPrecedingCommentBinder(LanguageLevel.HIGHEST);
+
   /**
    * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
    */
@@ -78,18 +84,38 @@ public final class JavaParserUtil {
 
   private JavaParserUtil() { }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void setLanguageLevel(final PsiBuilder builder, final LanguageLevel level) {
     BasicJavaParserUtil.setLanguageLevel(builder, level);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @NotNull LanguageLevel getLanguageLevel(final PsiBuilder builder) {
     return BasicJavaParserUtil.getLanguageLevel(builder);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void setParseStatementCodeBlocksDeep(final PsiBuilder builder, final boolean deep) {
     BasicJavaParserUtil.setParseStatementCodeBlocksDeep(builder, deep);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static boolean isParseStatementCodeBlocksDeep(final PsiBuilder builder) {
     return BasicJavaParserUtil.isParseStatementCodeBlocksDeep(builder);
   }
@@ -100,7 +126,11 @@ public final class JavaParserUtil {
                                              (psi) -> obtainTokens(psi));
   }
 
-
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @NotNull PsiBuilder createBuilder(final ASTNode chameleon) {
     return BasicJavaParserUtil.createBuilder(chameleon,
                                              (psi) -> PsiUtil.getLanguageLevel(psi),
@@ -108,6 +138,11 @@ public final class JavaParserUtil {
                                              (psi) -> obtainTokensOutdated(psi));
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @NotNull PsiBuilder createBuilder(final LighterLazyParseableNode chameleon) {
     return BasicJavaParserUtil.createBuilder(chameleon,
                                              (psi) -> PsiUtil.getLanguageLevel(psi),
@@ -115,61 +150,116 @@ public final class JavaParserUtil {
   }
 
   /**
-   * @deprecated use {@link BasicJavaParserUtil#done(PsiBuilder.Marker, IElementType, PsiBuilder, WhiteSpaceAndCommentSetHolder)}
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
    */
   @Deprecated
   public static void done(final PsiBuilder.Marker marker, final IElementType type) {
     BasicJavaParserUtil.done(marker, type, WhiteSpaceAndCommentSetHolder.INSTANCE);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static @Nullable IElementType exprType(final @Nullable PsiBuilder.Marker marker) {
     return BasicJavaParserUtil.exprType(marker);
   }
 
-  // used instead of PsiBuilder.error() as it keeps all subsequent error messages
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void error(final PsiBuilder builder, @NotNull @NlsContexts.ParsingError String message) {
     BasicJavaParserUtil.error(builder, message);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void error(final PsiBuilder builder,
                            @NotNull @NlsContexts.ParsingError String message,
                            final @Nullable PsiBuilder.Marker before) {
     BasicJavaParserUtil.error(builder, message, before);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static boolean expectOrError(PsiBuilder builder,
                                       TokenSet expected,
                                       @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
     return BasicJavaParserUtil.expectOrError(builder, expected, key);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static boolean expectOrError(PsiBuilder builder,
                                       IElementType expected,
                                       @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
     return BasicJavaParserUtil.expectOrError(builder, expected, key);
   }
 
-  @SuppressWarnings("unused") //used in plugins
+
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void emptyElement(final PsiBuilder builder, final IElementType type) {
     BasicJavaParserUtil.emptyElement(builder, type);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void emptyElement(final PsiBuilder.Marker before, final IElementType type) {
     BasicJavaParserUtil.emptyElement(before, type);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static void semicolon(final PsiBuilder builder) {
     BasicJavaParserUtil.semicolon(builder);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static PsiBuilder braceMatchingBuilder(final PsiBuilder builder) {
     return BasicJavaParserUtil.braceMatchingBuilder(builder);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final int stopAt) {
     return BasicJavaParserUtil.stoppingBuilder(builder, stopAt);
   }
 
+  /**
+   * @deprecated Use the new Java syntax library instead.
+   *             See {@link com.intellij.java.syntax.parser.JavaParser}
+   */
+  @Deprecated
   public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Predicate<? super Pair<IElementType, String>> condition) {
     return BasicJavaParserUtil.stoppingBuilder(builder, condition);
   }

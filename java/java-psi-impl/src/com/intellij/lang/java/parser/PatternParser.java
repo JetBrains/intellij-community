@@ -4,6 +4,11 @@ package com.intellij.lang.java.parser;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class PatternParser extends BasicPatternParser {
   public PatternParser(@NotNull JavaParser javaParser) {
     super(javaParser);

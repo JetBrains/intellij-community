@@ -3,6 +3,11 @@ package com.intellij.lang.java.parser;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class OldExpressionParser extends BasicOldExpressionParser {
   public OldExpressionParser(@NotNull JavaParser javaParser) {
     super(javaParser);
