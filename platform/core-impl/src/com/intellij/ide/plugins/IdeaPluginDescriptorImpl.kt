@@ -103,11 +103,6 @@ class IdeaPluginDescriptorImpl private constructor(
 
   override val incompatibleWith: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
 
-  @Transient
-  @JvmField
-  var jarFiles: List<Path>? = null
-  private var _pluginClassLoader: ClassLoader? = null
-
   @JvmField
   val actions: List<ActionElement> = raw.actions
 
@@ -154,6 +149,11 @@ class IdeaPluginDescriptorImpl private constructor(
   private val sinceBuild: String? = raw.sinceBuild
   private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater( raw.untilBuild, raw.name ?: raw.id)
   private var isEnabled = true
+
+  @Transient
+  @JvmField
+  var jarFiles: List<Path>? = null
+  private var _pluginClassLoader: ClassLoader? = null
 
   var isDeleted: Boolean = false
 
