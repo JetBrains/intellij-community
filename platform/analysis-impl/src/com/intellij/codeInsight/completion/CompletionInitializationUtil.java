@@ -65,24 +65,6 @@ public final class CompletionInitializationUtil {
     });
   }
 
-
-  public static CompletionInitializationContextImpl createCompletionInitializationContext(@NotNull Project project,
-                                                                                          @NotNull Editor editor,
-                                                                                          @NotNull Caret caret,
-                                                                                          int invocationCount,
-                                                                                          CompletionType completionType,
-                                                                                          PsiFile psiFile) {
-    return WriteAction.compute(() -> {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      CompletionAssertions.checkEditorValid(editor);
-
-      assert psiFile != null : "no PSI file: ";
-      psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-
-      return new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount) ;
-    });
-  }
-
   @ApiStatus.Internal
   public static CompletionInitializationContextImpl runContributorsBeforeCompletion(Editor editor,
                                                                                     PsiFile psiFile,

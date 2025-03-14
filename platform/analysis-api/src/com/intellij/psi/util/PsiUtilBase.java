@@ -38,31 +38,6 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     return getLanguageInEditor(editor.getCaretModel().getCurrentCaret(), project);
   }
 
-
-  public static @Nullable Language getLanguageInEditor(@NotNull PsiFile file, final @NotNull Editor editor, final @NotNull Project project) {
-    assertEditorAndProjectConsistent(project, editor);
-
-    if (file == null) {
-      return null;
-    }
-
-    if (file instanceof PsiFileWithOneLanguage) {
-      return file.getLanguage();
-    }
-
-    Caret caret = editor.getCaretModel().getCurrentCaret();
-    @NotNull TextRange selection = caret.getSelectionRange();
-    int mostProbablyCorrectLanguageOffset = selection.getStartOffset();
-    PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
-    Language lang = findLanguageFromElement(elt);
-
-    if (caret.hasSelection()) {
-      lang = evaluateLanguageInRange(selection, file);
-    }
-
-    return narrowLanguage(lang, file.getLanguage());
-  }
-
   public static @Nullable Language getLanguageInEditor(@NotNull Caret caret, final @NotNull Project project) {
     Editor editor = caret.getEditor();
     assertEditorAndProjectConsistent(project, editor);

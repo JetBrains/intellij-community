@@ -27,7 +27,9 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.impl.PsiFileEx
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.outputModelImpl
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
 import org.jetbrains.annotations.NotNull
@@ -119,8 +121,10 @@ class TerminalCodeCompletionBase(
       var context: CompletionInitializationContextImpl? =
         ProgressIndicatorUtils.withTimeout<CompletionInitializationContextImpl?>(
           calcSyncTimeOut(startingTime).toLong(), Computable {
-            CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType,
-                                                                               psiFile)
+            PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+            psiFile.putUserData<Boolean?>(PsiFileEx.BATCH_REFERENCE_PROCESSING, true)
+            CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount, psiFile.language)
           })
       val hasValidContext = context != null
       if (!hasValidContext) {
