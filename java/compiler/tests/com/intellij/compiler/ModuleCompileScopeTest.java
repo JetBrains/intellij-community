@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderEnumerationHandler;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -142,6 +146,87 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     make(getCompilerManager().createModulesCompileScope(new Module[] {module}, false, false, false));
     assertOutput(module, fs().file("A.class"), false);
     assertOutput(module, fs(), true); // make sure B is not compiled, even if it is modified
+  }
+
+  public void testDoNotCompileDependentTests() {
+    Disposable extDisposable = Disposer.newDisposable();
+
+    // emulate behavior for maven-imported projects
+    OrderEnumerationHandler.EP_NAME.getPoint().registerExtension(new OrderEnumerationHandler.Factory() {
+      private static final OrderEnumerationHandler HANDLER = new OrderEnumerationHandler() {
+        @Override
+        public boolean shouldIncludeTestsFromDependentModulesToTestClasspath() {
+          return false;
+        }
+      };
+
+      @Override
+      public boolean isApplicable(@NotNull Module module) {
+        return true;
+      }
+
+      @Override
+      public @NotNull OrderEnumerationHandler createHandler(@NotNull Module module) {
+        return HANDLER;
+      }
+    }, extDisposable);
+
+    try {
+      String aText = "class A{ public static void foo(int param) {} }";
+      VirtualFile a = createFile("m1/src/A.java", aText);
+      String bText = "class B { void bar() {A.foo(10);}}";
+      VirtualFile b = createFile("m1/testSrc/B.java", bText);
+      Module m1 = addModule("m1", a.getParent(), b.getParent(), null);
+
+      String bm2Text = "class BM2{}";
+      VirtualFile fileBM2 = createFile("m2/src/BM2.java", bm2Text);
+      String testBM2Text = "class TestBM2{}";
+      VirtualFile fileTestBM2 = createFile("m2/testSrc/TestBM2.java", testBM2Text);
+      Module m2 = addModule("m2", fileBM2.getParent(), fileTestBM2.getParent(), null);
+
+      ModuleRootModificationUtil.addDependency(m1, m2);
+      make(m1, m2);
+
+      assertOutput(m1, fs().file("A.class"), false);
+      assertOutput(m1, fs().file("B.class"), true);
+      assertOutput(m2, fs().file("BM2.class"), false);
+      assertOutput(m2, fs().file("TestBM2.class"), true);
+
+      VirtualFile outputM1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m1, false));
+      assertNotNull(outputM1);
+      final VirtualFile testOutputM1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m1, true));
+      assertNotNull(testOutputM1);
+      VirtualFile classFileM1 = outputM1.findChild("A.class");
+      assertNotNull(classFileM1);
+      VirtualFile testClassFileM1 = testOutputM1.findChild("B.class");
+      assertNotNull(testClassFileM1);
+      deleteFile(classFileM1);
+      deleteFile(testClassFileM1);
+      changeFile(a, aText + "  "); // touch a
+      changeFile(b, bText + "  "); // touch b
+
+      VirtualFile outputM2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m2, false));
+      assertNotNull(outputM2);
+      VirtualFile testOutputM2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(m2, true));
+      assertNotNull(testOutputM2);
+      VirtualFile classFileM2 = outputM2.findChild("BM2.class");
+      assertNotNull(classFileM2);
+      VirtualFile testClassFileM2 = testOutputM2.findChild("TestBM2.class");
+      assertNotNull(testClassFileM2);
+      deleteFile(classFileM2);
+      deleteFile(testClassFileM2);
+      changeFile(fileBM2, bm2Text + "  "); // touch fileBM2
+      changeFile(fileTestBM2, testBM2Text + "  some error"); // touch fileTestBM2, so it won't compile
+
+      make(getCompilerManager().createModulesCompileScope(new Module[] {m1}, true, true, true));
+      assertOutput(m1, fs().file("A.class"), false);
+      assertOutput(m1, fs().file("B.class"), true);
+      assertOutput(m2, fs().file("BM2.class"), false);
+      assertOutput(m2, fs(), true); // make sure TestBM2 is not compiled, even if it is modified
+    }
+    finally {
+      Disposer.dispose(extDisposable);
+    }
   }
 
   public void testMakeTwoModules() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -202,7 +202,7 @@ public final class CompileDriver {
     if (explicitScopes != null) {
       scopes.addAll(explicitScopes);
     }
-    else if (!compileContext.isRebuild() && (!paths.isEmpty() || !CompileScopeUtil.allProjectModulesAffected(compileContext))) {
+    else if (!compileContext.isRebuild() && (!paths.isEmpty() || !CompileScopeUtil.allProjectModulesAffected(compileContext) || !allSourceTypesAffected(scope))) {
       CompileScopeUtil.addScopesForSourceSets(scope.getAffectedSourceSets(), scope.getAffectedUnloadedModules(), scopes, forceBuild);
     }
     else {
@@ -225,6 +225,21 @@ public final class CompileDriver {
       scopes = mergeScopesFromProviders(scope, scopes, forceBuild);
     }
     return scopes;
+  }
+
+  private static boolean allSourceTypesAffected(CompileScope scope) {
+    Map<Module, Set<ModuleSourceSet.Type>> affectedSourceTypes = new HashMap<>();
+    for (ModuleSourceSet set : scope.getAffectedSourceSets()) {
+      affectedSourceTypes.computeIfAbsent(set.getModule(), m -> EnumSet.noneOf(ModuleSourceSet.Type.class)).add(set.getType());
+    }
+    for (Set<ModuleSourceSet.Type> moduleSourceTypes : affectedSourceTypes.values()) {
+      for (ModuleSourceSet.Type value : ModuleSourceSet.Type.values()) {
+        if (!moduleSourceTypes.contains(value)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   private List<TargetTypeBuildScope> mergeScopesFromProviders(CompileScope scope,
