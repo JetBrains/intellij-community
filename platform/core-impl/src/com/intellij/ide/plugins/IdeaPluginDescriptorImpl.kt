@@ -103,7 +103,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   override val incompatibleWith: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
 
-  val actions: List<ActionElement> = raw.actions
+  override val actions: List<ActionElement> = raw.actions
 
   // extension point name -> list of extension descriptors
   val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions

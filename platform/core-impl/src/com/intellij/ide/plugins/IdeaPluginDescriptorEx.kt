@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.plugins.parser.impl.elements.ActionElement
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -10,4 +11,6 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
   val useCoreClassLoader: Boolean
   val isIndependentFromCoreClassLoader: Boolean
   val incompatibleWith: List<PluginId>
+
+  val actions: List<ActionElement>
 }
