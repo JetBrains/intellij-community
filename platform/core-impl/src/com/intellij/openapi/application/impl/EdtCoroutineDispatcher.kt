@@ -55,19 +55,28 @@ internal sealed class EdtCoroutineDispatcher(
   }
 
   private fun wrapWithLocking(runnable: Runnable): Runnable {
-    if (!type.allowLocks()) {
-      return Runnable {
-        ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, type.lockBehavior == LockBehavior.LOCKS_DISALLOWED_FAIL_SOFT, lockAccessViolationMessage)
+    return when (type) {
+      EdtDispatcherKind.MODERN_UI -> {
+        Runnable {
+          ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, false, lockAccessViolationMessage)
+        }
       }
-    }
-    if (isCoroutineWILEnabled) {
-      return Runnable {
-        WriteIntentReadAction.run {
-          runnable.run()
+      EdtDispatcherKind.MAIN -> {
+        runnable
+      }
+      EdtDispatcherKind.LEGACY_EDT -> {
+        return if (isCoroutineWILEnabled) {
+          Runnable {
+            WriteIntentReadAction.run {
+              runnable.run()
+            }
+          }
+        }
+        else {
+          runnable
         }
       }
     }
-    return runnable
   }
 
   object Locking : EdtCoroutineDispatcher(EdtDispatcherKind.LEGACY_EDT)
@@ -97,10 +106,6 @@ private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoro
     // as dominates(any()) always returns false, no special any() handling required here.
     if (!ModalityState.current().accepts(contextModality)) {
       return true
-    }
-    if (type.allowLocks()) {
-      // this dispatcher requires RW lock => if EDT does not the hold lock, then we need to reschedule to avoid blocking
-      return !ApplicationManager.getApplication().isWriteIntentLockAcquired
     }
     return false
   }
