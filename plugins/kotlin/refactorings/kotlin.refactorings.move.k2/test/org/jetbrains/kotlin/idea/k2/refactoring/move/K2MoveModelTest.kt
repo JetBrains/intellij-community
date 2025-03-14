@@ -10,6 +10,7 @@ import com.intellij.testFramework.assertInstanceOf
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
+import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveTargetModel
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.*
 
@@ -63,7 +64,8 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Foo")
-        assert(moveDeclarationsModel.target.fileName == "Bar.kt")
+        assertInstanceOf<K2MoveTargetModel.File>(moveDeclarationsModel.target)
+        assert((moveDeclarationsModel.target as K2MoveTargetModel.File).fileName == "Bar.kt")
     }
 
     fun `test file from source directory to class move`() {
@@ -80,7 +82,8 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Foo")
-        assert(moveDeclarationsModel.target.fileName == "Bar.kt")
+        assertInstanceOf<K2MoveTargetModel.File>(moveDeclarationsModel.target)
+        assert((moveDeclarationsModel.target as K2MoveTargetModel.File).fileName == "Bar.kt")
     }
 
     fun `test file from source directory to source directory move`() {
@@ -236,7 +239,8 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             val sourceElement = moveFilesModel.source.elements.firstOrNull()
             assert(sourceElement is KtClass && sourceElement.name == "Foo")
             assertEquals("bar", moveFilesModel.target.pkgName.asString())
-            assertEquals("Foo.kt", moveFilesModel.target.fileName)
+            assertInstanceOf<K2MoveTargetModel.Declarations>(moveFilesModel.target)
+            assert((moveFilesModel.target as K2MoveTargetModel.Declarations).fileName == "Foo.kt")
         } finally {
             PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         }
