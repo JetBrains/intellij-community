@@ -7,6 +7,9 @@ import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.html.webSymbols.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
@@ -18,6 +21,8 @@ import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 
 class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBase<XmlAttribute>() {
 
@@ -73,8 +78,10 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
             val fullName = name.substring(0, item.offset) + item.name
             val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName)
                           .asSingleSymbol() ?: return@withInsertHandlerAdded
-            val info = WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
-            if (info.acceptsValue && !info.acceptsNoValue) {
+            val info = runWithTimeoutOrNull {
+                WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
+            }
+            if (info != null && info.acceptsValue && !info.acceptsNoValue) {
               XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)
             }
           }
@@ -96,5 +103,11 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
 
   }
 
+  @Suppress("UsagesOfObsoleteApi")
+  private fun <T> runWithTimeoutOrNull(block: () -> T): T? =
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode())
+      block()
+    else
+      ProgressIndicatorUtils.withTimeout(250, block)
 
 }
