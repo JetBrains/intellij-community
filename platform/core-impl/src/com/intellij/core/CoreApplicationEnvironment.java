@@ -29,6 +29,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
@@ -82,12 +83,10 @@ public class CoreApplicationEnvironment {
 
     PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(true);
 
+    application = createApplication(parentDisposable);
+    ApplicationManager.setApplication(application, parentDisposable);
     myFileTypeRegistry = new CoreFileTypeRegistry();
-
-    application = createApplication(myParentDisposable);
-    ApplicationManager.setApplication(application,
-                                      () -> myFileTypeRegistry,
-                                      myParentDisposable);
+    FileTypeRegistry.setInstanceSupplier(() -> myFileTypeRegistry, parentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
     myJrtFileSystem = createJrtFileSystem();
