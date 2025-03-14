@@ -23,10 +23,13 @@ QT_API_PYQT5 = 'pyqt5'
 QT_API_PYQT6 = 'pyqt6'
 
 
-def find_module(module_name, path=None):
+def find_module(module_name, path=None, parent_name=None):
     spec = importlib.util.find_spec(module_name, path)
     if spec is None:
-        raise ImportError
+        if parent_name is not None:
+            spec = importlib.util.find_spec(parent_name + '.' + module_name, path)
+        if spec is None:
+            raise ImportError
 
 
 class ImportDenier(object):
@@ -66,7 +69,7 @@ def commit_api(api):
         ID.forbid('PyQt5')
         ID.forbid('PyQt6')
     else:
-        ID.forbid('PySide')
+        ID.forbid('PySide6')
 
 
 def loaded_api():
@@ -84,7 +87,7 @@ def loaded_api():
             return QT_API_PYQT
         else:
             return QT_API_PYQTv1
-    elif 'PySide.QtCore' in sys.modules:
+    elif 'PySide6.QtCore' in sys.modules:
         return QT_API_PYSIDE
     elif 'PyQt5.QtCore' in sys.modules:
         return QT_API_PYQT5
@@ -94,7 +97,7 @@ def loaded_api():
 
 
 def has_binding(api):
-    """Safely check for PyQt4 or PySide, without importing
+    """Safely check for PyQt4 or PySide6, without importing
        submodules
 
        Parameters
@@ -109,7 +112,7 @@ def has_binding(api):
     # we can't import an incomplete pyside and pyqt4
     # this will cause a crash in sip (#1431)
     # check for complete presence before importing
-    module_name = {QT_API_PYSIDE: 'PySide',
+    module_name = {QT_API_PYSIDE: 'PySide6',
                    QT_API_PYQT: 'PyQt4',
                    QT_API_PYQTv1: 'PyQt4',
                    QT_API_PYQT_DEFAULT: 'PyQt4',
@@ -119,16 +122,16 @@ def has_binding(api):
     module_name = module_name[api]
 
     try:
-        #importing top level PyQt4/PySide module is ok...
+        #importing top level PyQt4/PySide6 module is ok...
         mod = __import__(module_name)
         #...importing submodules is not
-        find_module('QtCore', mod.__path__)
-        find_module('QtGui', mod.__path__)
-        find_module('QtSvg', mod.__path__)
+        find_module('QtCore', mod.__path__, mod.__name__)
+        find_module('QtGui', mod.__path__, mod.__name__)
+        find_module('QtSvg', mod.__path__, mod.__name__)
 
-        #we can also safely check PySide version
+        #we can also safely check PySide6 version
         if api == QT_API_PYSIDE:
-            return check_version(mod.__version__, '1.0.3')
+            return check_version(mod.__version__, '6.0.0')
         else:
             return True
     except ImportError:
@@ -191,7 +194,7 @@ def import_pyqt4(version=2):
         raise ImportError("IPython requires PyQt4 >= 4.7, found %s" %
                           QtCore.PYQT_VERSION_STR)
 
-    # Alias PyQt-specific functions for PySide compatibility.
+    # Alias PyQt-specific functions for PySide6 compatibility.
     QtCore.Signal = QtCore.pyqtSignal
     QtCore.Slot = QtCore.pyqtSlot
 
@@ -208,7 +211,7 @@ def import_pyqt5():
     """
     from PyQt5 import QtGui, QtCore, QtSvg
 
-    # Alias PyQt-specific functions for PySide compatibility.
+    # Alias PyQt-specific functions for PySide6 compatibility.
     QtCore.Signal = QtCore.pyqtSignal
     QtCore.Slot = QtCore.pyqtSlot
 
@@ -217,7 +220,7 @@ def import_pyqt5():
 def import_pyqt6():
     from PyQt6 import QtGui, QtCore, QtSvg
 
-    # Alias PyQt-specific functions for PySide compatibility.
+    # Alias PyQt-specific functions for PySide6 compatibility.
     QtCore.Signal = QtCore.pyqtSignal
     QtCore.Slot = QtCore.pyqtSlot
 
@@ -226,11 +229,11 @@ def import_pyqt6():
 
 def import_pyside():
     """
-    Import PySide
+    Import PySide6
 
     ImportErrors raised within this function are non-recoverable
     """
-    from PySide import QtGui, QtCore, QtSvg  # @UnresolvedImport
+    from PySide6 import QtGui, QtCore, QtSvg  # @UnresolvedImport
     return QtCore, QtGui, QtSvg, QT_API_PYSIDE
 
 
@@ -287,14 +290,14 @@ def load_qt(api_options):
     else:
         raise ImportError("""
     Could not load requested Qt binding. Please ensure that
-    PyQt4 >= 4.7 or PySide >= 1.0.3 is available,
+    PyQt4 >= 4.7 or PySide6 >= 6.0.0 is available,
     and only one is imported per session.
 
     Currently-imported Qt library:   %r
     PyQt4 installed:                 %s
     PyQt5 installed:                 %s
     PyQt6 installed:                 %s
-    PySide >= 1.0.3 installed:       %s
+    PySide6 >= 6.0.0 installed:      %s
     Tried to load:                   %r
     """ % (loaded_api(),
            has_binding(QT_API_PYQT),
