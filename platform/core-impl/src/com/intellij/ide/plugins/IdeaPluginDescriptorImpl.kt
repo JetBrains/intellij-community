@@ -49,8 +49,8 @@ class IdeaPluginDescriptorImpl private constructor(
   id: PluginId?,
   moduleName: String?,
   moduleLoadingRule: ModuleLoadingRule? = null,
-  override val useCoreClassLoader: Boolean = false,
-  override val isIndependentFromCoreClassLoader: Boolean = false,
+  useCoreClassLoader: Boolean = false,
+  isIndependentFromCoreClassLoader: Boolean = false,
   private val descriptorPath: String? = null
 ) : IdeaPluginDescriptorEx {
 
@@ -129,7 +129,10 @@ class IdeaPluginDescriptorImpl private constructor(
   private val isImplementationDetail: Boolean = raw.isImplementationDetail
   private val isBundled: Boolean = isBundled
   private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
+
   val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+  override val isIndependentFromCoreClassLoader: Boolean = isIndependentFromCoreClassLoader
+  override val useCoreClassLoader: Boolean = useCoreClassLoader
 
   private val path: Path = path
 
