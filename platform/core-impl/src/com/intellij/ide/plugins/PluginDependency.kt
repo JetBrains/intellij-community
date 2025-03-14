@@ -6,11 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PluginDependency internal constructor(override val pluginId: PluginId,
-                                            configFile: String?,
+                                            val configFile: String?,
                                             isOptional: Boolean) : IdeaPluginDependency {
-  var configFile: String? = configFile
-    internal set
-
   override var isOptional: Boolean = isOptional
     internal set
 
