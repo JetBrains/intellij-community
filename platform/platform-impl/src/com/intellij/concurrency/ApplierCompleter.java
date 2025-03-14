@@ -237,18 +237,27 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   static boolean completeTaskWhichFailToAcquireReadAction(@NotNull List<? extends ApplierCompleter<?>> tasks) {
     final boolean[] result = {true};
     // these tasks could not be executed in the other thread; do them here
+    boolean inReadAction = ApplicationManager.getApplication()
+      .isReadAccessAllowed(); // we are going to reset thread context here, so the information about locks will be lost
     try (AccessToken ignored = ThreadContext.resetThreadContext()) {
       for (ApplierCompleter<?> task : tasks) {
         ProgressManager.checkCanceled();
-        ApplicationManager.getApplication().runReadAction(() ->
-                                                            task.wrapInReadActionAndIndicator(() -> {
-                                                              try {
-                                                                task.processArray();
-                                                              }
-                                                              catch (ComputationAbortedException e) {
-                                                                result[0] = false;
-                                                              }
-                                                            }));
+        Runnable r = () -> {
+          task.wrapInReadActionAndIndicator(() -> {
+            try {
+              task.processArray();
+            }
+            catch (ComputationAbortedException e) {
+              result[0] = false;
+            }
+          });
+        };
+        if (inReadAction) {
+          r.run();
+        }
+        else {
+          ApplicationManager.getApplication().runReadAction(r);
+        }
       }
     }
     return result[0];
