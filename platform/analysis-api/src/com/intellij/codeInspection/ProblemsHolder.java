@@ -137,6 +137,11 @@ public class ProblemsHolder {
     registerProblem(identifier, "possible problem", ProblemHighlightType.POSSIBLE_PROBLEM);
   }
 
+  @ApiStatus.Internal
+  public void clearResults() {
+    myProblems.clear();
+  }
+
   /**
    * Returns {@link EmptyResolveMessageProvider#getUnresolvedMessagePattern()} (if implemented),
    * otherwise, default message "Cannot resolve symbol '[reference.getCanonicalText()]'".
