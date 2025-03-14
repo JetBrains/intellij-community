@@ -91,7 +91,7 @@ class IdeaPluginDescriptorImpl private constructor(
   private var resourceBundleBaseName: String? = null
   private val changeNotes: String? = raw.changeNotes
   private var version: String? = raw.version
-  private var vendor: String? = raw.vendor
+  private val vendor: String? = raw.vendor
   private val vendorEmail: String? = raw.vendorEmail
   private val vendorUrl: String? = raw.vendorUrl
   private val category: String? = raw.category
@@ -183,6 +183,7 @@ class IdeaPluginDescriptorImpl private constructor(
     module: PluginContentDescriptor.ModuleItem?,
   ): IdeaPluginDescriptorImpl {
     subBuilder.name = name
+    subBuilder.vendor = vendor
     val raw = subBuilder.build()
     val result = IdeaPluginDescriptorImpl(
       raw = raw,
@@ -195,7 +196,6 @@ class IdeaPluginDescriptorImpl private constructor(
       isIndependentFromCoreClassLoader = raw.isIndependentFromCoreClassLoader,
       descriptorPath = descriptorPath)
     context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
-    result.vendor = vendor
     result.resourceBundleBaseName = resourceBundleBaseName
     if (raw.resourceBundleBaseName != null) {
       result.readResourceBundleBaseName(raw)
