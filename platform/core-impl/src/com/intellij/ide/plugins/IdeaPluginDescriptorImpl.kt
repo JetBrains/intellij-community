@@ -105,8 +105,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   override val actions: List<ActionElement> = raw.actions
 
-  // extension point name -> list of extension descriptors
-  val miscExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions
+  override val miscExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions
     .let(::convertExtensions)
     .let(::sortExtensions)
 
