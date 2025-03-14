@@ -3310,19 +3310,6 @@ c:com.intellij.ide.impl.ProjectUtilService
 - pf:getProject():com.intellij.openapi.project.Project
 f:com.intellij.ide.impl.ProjectUtilService$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.impl.ProjectUtilService
-com.intellij.ide.impl.TrustStateListener
-- sf:Companion:com.intellij.ide.impl.TrustStateListener$Companion
-- sf:TOPIC:com.intellij.util.messages.Topic
-- onProjectTrusted(com.intellij.openapi.project.Project):V
-- onProjectTrustedFromNotification(com.intellij.openapi.project.Project):V
-- onProjectUntrusted(com.intellij.openapi.project.Project):V
-f:com.intellij.ide.impl.TrustStateListener$Bridge
-- com.intellij.ide.trustedProjects.TrustedProjectsListener
-- <init>():V
-- onProjectTrusted(com.intellij.openapi.project.Project):V
-- onProjectTrustedFromNotification(com.intellij.openapi.project.Project):V
-- onProjectUntrusted(com.intellij.openapi.project.Project):V
-f:com.intellij.ide.impl.TrustStateListener$Companion
 f:com.intellij.ide.lightEdit.LightEditorInfoImpl
 - com.intellij.ide.lightEdit.LightEditorInfo
 - disposeEditor():V

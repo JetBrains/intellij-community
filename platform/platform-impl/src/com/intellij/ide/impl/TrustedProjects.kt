@@ -14,7 +14,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ThreeState
-import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 
 @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
@@ -70,47 +69,6 @@ fun Project.getTrustedState(): ThreeState {
 @Deprecated("Use TrustedProjects.isTrustedCheckDisabled instead")
 fun isTrustedCheckDisabled(): Boolean {
   return TrustedProjects.isTrustedCheckDisabled()
-}
-
-@Suppress("DEPRECATION")
-@Deprecated("Use TrustedProjectsListener instead")
-interface TrustStateListener {
-
-  fun onProjectTrusted(project: Project) {
-  }
-
-  fun onProjectUntrusted(project: Project) {
-  }
-
-  fun onProjectTrustedFromNotification(project: Project) {
-  }
-
-  class Bridge : TrustedProjectsListener {
-
-    override fun onProjectTrusted(project: Project) {
-      ApplicationManager.getApplication().messageBus
-        .syncPublisher(TOPIC)
-        .onProjectTrusted(project)
-    }
-
-    override fun onProjectUntrusted(project: Project) {
-      ApplicationManager.getApplication().messageBus
-        .syncPublisher(TOPIC)
-        .onProjectUntrusted(project)
-    }
-
-    override fun onProjectTrustedFromNotification(project: Project) {
-      ApplicationManager.getApplication().messageBus
-        .syncPublisher(TOPIC)
-        .onProjectTrustedFromNotification(project)
-    }
-  }
-
-  companion object {
-    @JvmField
-    @Topic.AppLevel
-    val TOPIC: Topic<TrustStateListener> = Topic(TrustStateListener::class.java, Topic.BroadcastDirection.NONE)
-  }
 }
 
 @ApiStatus.Internal // Used in MPS
