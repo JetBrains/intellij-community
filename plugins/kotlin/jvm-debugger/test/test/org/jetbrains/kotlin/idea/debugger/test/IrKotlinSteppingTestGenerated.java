@@ -629,6 +629,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
                 runTest("testData/stepping/stepOver/inlineInObject.kt");
             }
 
+            @TestMetadata("inplaceArgumentLineNum.kt")
+            public void testInplaceArgumentLineNum() throws Exception {
+                runTest("testData/stepping/stepOver/inplaceArgumentLineNum.kt");
+            }
+
             @TestMetadata("kt14869.kt")
             public void testKt14869() throws Exception {
                 runTest("testData/stepping/stepOver/kt14869.kt");
