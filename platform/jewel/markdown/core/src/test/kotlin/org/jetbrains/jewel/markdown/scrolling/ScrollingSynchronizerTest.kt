@@ -47,15 +47,7 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
-import org.jetbrains.jewel.ui.component.styling.DividerMetrics
-import org.jetbrains.jewel.ui.component.styling.DividerStyle
-import org.jetbrains.jewel.ui.component.styling.LocalDividerStyle
-import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
-import org.jetbrains.jewel.ui.component.styling.ScrollbarColors
-import org.jetbrains.jewel.ui.component.styling.ScrollbarMetrics
-import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
-import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
-import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
+import org.jetbrains.jewel.ui.component.styling.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -636,6 +628,41 @@ public class ScrollingSynchronizerTest {
         assertTrue(elements.size > 1)
         for (i in 0..<elements.lastIndex) {
             assertEquals(Arrays.toString(elements), distance, elements[i + 1] - elements[i])
+        }
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    public fun `identical items`() {
+        val markdown =
+            """
+                |Items:
+                |- item
+                |
+                |Another items:
+                |- item
+                        """
+                .trimMargin()
+        doTest(markdown) { scrollState, synchronizer ->
+            synchronizer.scrollToLine(1)
+            val l1Top = scrollState.value
+            assertTrue(l1Top > 0)
+
+            synchronizer.scrollToLine(2)
+            val sl1Top = scrollState.value
+            assertTrue(sl1Top > l1Top)
+
+            synchronizer.scrollToLine(3)
+            val emptyTop = scrollState.value
+            assertTrue(emptyTop == sl1Top)
+
+            synchronizer.scrollToLine(4)
+            val l2Top = scrollState.value
+            assertTrue(l2Top > emptyTop)
+
+            synchronizer.scrollToLine(4)
+            val sl2Top = scrollState.value
+            assertTrue(sl2Top == l2Top)
         }
     }
 
