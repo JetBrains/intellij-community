@@ -320,7 +320,7 @@ object DynamicPlugins {
 
     for (dependency in module.pluginDependencies) {
       if (pluginSet.isPluginEnabled(dependency.pluginId)) {
-        checkCanUnloadWithoutRestart(dependency.subDescriptor ?: continue, parentModule ?: module, null, context)?.let {
+        checkCanUnloadWithoutRestart(dependency.getSubDescriptor() ?: continue, parentModule ?: module, null, context)?.let {
           return "$it in optional dependency on ${dependency.pluginId}"
         }
       }
@@ -714,7 +714,7 @@ object DynamicPlugins {
                                           pluginSet: PluginSet,
                                           classLoaders: WeakList<PluginClassLoader>) {
     for (dependency in plugin.pluginDependencies) {
-      val subDescriptor = dependency.subDescriptor ?: continue
+      val subDescriptor = dependency.getSubDescriptor() ?: continue
       val classLoader = subDescriptor.pluginClassLoader
       if (!pluginSet.isPluginEnabled(dependency.pluginId)) {
         LOG.assertTrue(classLoader == null,
@@ -1251,7 +1251,7 @@ private fun processOptionalDependenciesInOldFormatOnPlugin(
       continue
     }
 
-    val subDescriptor = dependency.subDescriptor ?: continue
+    val subDescriptor = dependency.getSubDescriptor() ?: continue
     if (loadStateFilter != LoadStateFilter.ANY) {
       val isModuleLoaded = subDescriptor.pluginClassLoader != null
       if (isModuleLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
@@ -1380,7 +1380,7 @@ private fun findLoadedPluginExtensionPointRecursive(pluginDescriptor: IdeaPlugin
   findPluginExtensionPoint(pluginDescriptor, epName)?.let { return it to false }
   for (dependency in pluginDescriptor.pluginDependencies) {
     if (pluginSet.isPluginEnabled(dependency.pluginId) || context.any { it.pluginId == dependency.pluginId }) {
-      dependency.subDescriptor?.let { subDescriptor ->
+      dependency.getSubDescriptor()?.let { subDescriptor ->
         findLoadedPluginExtensionPointRecursive(subDescriptor, epName, pluginSet, context, seenPlugins)?.let { return it }
       }
       pluginSet.findEnabledPlugin(dependency.pluginId)?.let { dependencyDescriptor ->
@@ -1426,7 +1426,7 @@ private fun unloadClassLoader(pluginDescriptor: IdeaPluginDescriptorImpl, timeou
 private fun setClassLoaderState(pluginDescriptor: IdeaPluginDescriptorImpl, state: Int) {
   (pluginDescriptor.pluginClassLoader as? PluginClassLoader)?.state = state
   for (dependency in pluginDescriptor.pluginDependencies) {
-    dependency.subDescriptor?.let { setClassLoaderState(it, state) }
+    dependency.getSubDescriptor()?.let { setClassLoaderState(it, state) }
   }
 }
 

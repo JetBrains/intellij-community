@@ -63,7 +63,7 @@ private inline fun executeRegisterTask(modules: List<IdeaPluginDescriptorImpl>, 
 inline fun executeRegisterTaskForOldContent(mainPluginDescriptor: IdeaPluginDescriptorImpl,
                                             crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
   for (dep in mainPluginDescriptor.pluginDependencies) {
-    val subDescriptor = dep.subDescriptor
+    val subDescriptor = dep.getSubDescriptor()
     if (subDescriptor?.pluginClassLoader == null) {
       continue
     }
@@ -71,10 +71,10 @@ inline fun executeRegisterTaskForOldContent(mainPluginDescriptor: IdeaPluginDesc
     task(subDescriptor)
 
     for (subDep in subDescriptor.pluginDependencies) {
-      val d = subDep.subDescriptor
+      val d = subDep.getSubDescriptor()
       if (d?.pluginClassLoader != null) {
         task(d)
-        assert(d.pluginDependencies.isEmpty() || d.pluginDependencies.all { it.subDescriptor == null })
+        assert(d.pluginDependencies.isEmpty() || d.pluginDependencies.all { it.getSubDescriptor() == null })
       }
     }
   }

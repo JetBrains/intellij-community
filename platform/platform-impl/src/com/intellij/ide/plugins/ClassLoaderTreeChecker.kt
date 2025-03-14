@@ -27,7 +27,7 @@ internal class ClassLoaderTreeChecker(private val unloadedMainDescriptor: IdeaPl
   private fun checkThatClassLoaderNotReferencedByPluginClassLoader(descriptor: IdeaPluginDescriptorImpl) {
     checkThatClassloaderNotReferenced(descriptor)
     for (dependency in descriptor.pluginDependencies) {
-      checkThatClassLoaderNotReferencedByPluginClassLoader(dependency.subDescriptor ?: continue)
+      checkThatClassLoaderNotReferencedByPluginClassLoader(dependency.getSubDescriptor() ?: continue)
     }
   }
 

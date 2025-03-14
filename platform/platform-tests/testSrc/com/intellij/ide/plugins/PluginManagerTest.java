@@ -421,7 +421,7 @@ public class PluginManagerTest {
           sb.append("\n    <depends>").append(escape.apply(dependency.getPluginId().getIdString())).append("</depends>");
         }
         else {
-          var optionalConfigPerId = dependency.subDescriptor;
+          var optionalConfigPerId = dependency.getSubDescriptor();
           if (optionalConfigPerId == null) {
             sb.append("\n    <depends optional=\"true\" config-file=\"???\">")
               .append(escape.apply(dependency.getPluginId().getIdString()))

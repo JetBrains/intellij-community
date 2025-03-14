@@ -341,7 +341,7 @@ class IdeaPluginDescriptorImpl private constructor(
       if (subDescriptor.isIncomplete == null) {
         subDescriptor.processOldDependencies(subDescriptor, context, pathResolver, subDescriptor.pluginDependencies, dataLoader)
       }
-      dependency.subDescriptor = subDescriptor
+      dependency.setSubDescriptor(subDescriptor)
       visitedFiles.clear() // TODO: shouldn't it be removeLast instead?
     }
   }
