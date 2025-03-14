@@ -4,12 +4,10 @@ package com.intellij.html.webSymbols.attributes
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
+import com.intellij.codeInsight.completion.XmlTagInsertHandler
 import com.intellij.html.webSymbols.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
@@ -21,20 +19,20 @@ import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
 
 class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBase<XmlAttribute>() {
 
   override fun getContext(position: PsiElement): XmlAttribute? =
     PsiTreeUtil.getParentOfType(position, XmlAttribute::class.java)
 
-  override fun addCompletions(parameters: CompletionParameters,
-                              result: CompletionResultSet,
-                              position: Int,
-                              name: String,
-                              queryExecutor: WebSymbolsQueryExecutor,
-                              context: XmlAttribute) {
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    result: CompletionResultSet,
+    position: Int,
+    name: String,
+    queryExecutor: WebSymbolsQueryExecutor,
+    context: XmlAttribute,
+  ) {
     val tag = context.parent ?: return
     val patchedResultSet = result.withPrefixMatcher(
       AsteriskAwarePrefixMatcher(result.prefixMatcher.cloneWithPrefix(name)))
@@ -78,8 +76,8 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
             val fullName = name.substring(0, item.offset) + item.name
             val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName)
                           .asSingleSymbol() ?: return@withInsertHandlerAdded
-            val info = runWithTimeoutOrNull {
-                WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
+            val info = XmlTagInsertHandler.runWithTimeoutOrNull {
+              WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
             }
             if (info != null && info.acceptsValue && !info.acceptsNoValue) {
               XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)
@@ -102,12 +100,4 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
     }
 
   }
-
-  @Suppress("UsagesOfObsoleteApi")
-  private fun <T> runWithTimeoutOrNull(block: () -> T): T? =
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode())
-      block()
-    else
-      ProgressIndicatorUtils.withTimeout(250, block)
-
 }
