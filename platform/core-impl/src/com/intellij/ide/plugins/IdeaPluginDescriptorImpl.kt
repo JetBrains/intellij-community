@@ -567,7 +567,7 @@ class IdeaPluginDescriptorImpl private constructor(
     "PluginDescriptor(name=$name, id=$id, " +
     (if (moduleName == null) "" else "moduleName=$moduleName, ") +
     "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-    "path=${pluginPathToUserString(pluginPath)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
+    "path=${PluginUtils.pluginPathToUserString(pluginPath)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
 
   private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String, visitedFiles: List<String>) {
     var i = 0

@@ -66,7 +66,7 @@ class DescriptorListLoadingContext(
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
     PluginManagerCore.logger.warn("Cannot load $file", e)
     globalErrors.add(Supplier {
-      CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", pluginPathToUserString(file))
+      CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", PluginUtils.pluginPathToUserString(file))
     })
   }
 
