@@ -44,6 +44,7 @@ import com.intellij.util.SingleEdtTaskScheduler
 import com.intellij.util.UtilBundle
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.*
@@ -62,7 +63,8 @@ import kotlin.time.Duration.Companion.days
 
 private const val FONT_KEY = "FontFunction"
 
-internal class NotificationsPanel(private val project: Project, parentDisposable: Disposable) : ProjectNotificationsModelListener, Disposable {
+@ApiStatus.Internal
+class NotificationsPanel(private val project: Project, parentDisposable: Disposable) : ProjectNotificationsModelListener, Disposable {
   private val mainPanel: JBPanelWithEmptyText = JBPanelWithEmptyText(BorderLayout())
   val component: JComponent
     get() = mainPanel

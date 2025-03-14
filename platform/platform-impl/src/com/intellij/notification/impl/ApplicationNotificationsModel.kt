@@ -186,7 +186,7 @@ object ApplicationNotificationsModel {
     project.closeAllBalloons()
   }
 
-  internal fun register(project: Project, listener: ProjectNotificationsModelListener) {
+  fun register(project: Project, listener: ProjectNotificationsModelListener) {
     val callback = synchronized(dataGuard) {
       val initNotifications = notifications.toMutableList()
       notifications.clear()
@@ -199,7 +199,7 @@ object ApplicationNotificationsModel {
     callback.inProject(project).invokeLaterIfNeeded()
   }
 
-  internal fun unregister(project: Project) {
+  fun unregister(project: Project) {
     synchronized(dataGuard) {
       projectToModel.remove(project)
     }

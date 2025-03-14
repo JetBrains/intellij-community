@@ -2,9 +2,11 @@
 package com.intellij.notification.impl
 
 import com.intellij.notification.Notification
+import org.jetbrains.annotations.ApiStatus
 
 // not REALLY a listener, but should be made into one eventually
-internal interface ProjectNotificationsModelListener {
+@ApiStatus.Internal
+interface ProjectNotificationsModelListener {
   fun add(notification: Notification)
   fun add(notifications: List<Notification>)
 

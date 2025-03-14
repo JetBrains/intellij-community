@@ -2,8 +2,10 @@
 package com.intellij.notification
 
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
-internal interface NotificationsLogController {
+@ApiStatus.Internal
+interface NotificationsLogController {
   @RequiresEdt
   fun show()
 
