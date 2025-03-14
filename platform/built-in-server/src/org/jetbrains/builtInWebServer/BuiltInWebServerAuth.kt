@@ -62,6 +62,9 @@ class BuiltInWebServerAuth {
     if (token == null) {
       token = DigestUtil.randomToken()
       tokens.put(token, true)
+    } else {
+      // Update token's access time
+      tokens.getIfPresent(token)
     }
     return token
   }
