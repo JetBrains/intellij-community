@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.extensions
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.logger
@@ -103,7 +103,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
     }
 
     private fun createNewCache(): PluginsCache? {
-        if (!project.isTrusted()) return null
+        if (!TrustedProjects.isProjectTrusted(project)) return null
         val pluginsClassLoader: UrlClassLoader = UrlClassLoader.build().apply {
             parent(KaSourceModule::class.java.classLoader)
 

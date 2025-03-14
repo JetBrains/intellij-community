@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
@@ -142,7 +142,7 @@ class MavenProjectAsyncBuilder {
 
     val manager = MavenProjectsManager.getInstance(project)
 
-    if (project.isTrusted()) {
+    if (TrustedProjects.isProjectTrusted(project)) {
       withBackgroundProgress(project, MavenProjectBundle.message("maven.installing.wrapper"), false) {
         withContext(Dispatchers.IO) {
           tracer.spanBuilder("checkOrInstallMavenWrapper").useWithScope {

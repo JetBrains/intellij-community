@@ -15,7 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -292,7 +292,7 @@ public final class ExternalSystemUtil {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
-    if (!isPreviewMode && !TrustedProjects.isTrusted(project)) {
+    if (!isPreviewMode && !TrustedProjects.isProjectTrusted(project)) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Skip " + externalSystemId + " load, because project is not trusted", new Throwable());
       }

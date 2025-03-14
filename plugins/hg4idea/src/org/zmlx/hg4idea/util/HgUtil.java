@@ -13,7 +13,7 @@
 package org.zmlx.hg4idea.util;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -532,7 +532,7 @@ public abstract class HgUtil {
   }
 
   public static @NotNull HgCommandResult getVersionOutput(@NotNull Project project, @NotNull String executable) throws ShellCommandException {
-    if (!project.isDefault() && !TrustedProjects.isTrusted(project)) {
+    if (!project.isDefault() && !TrustedProjects.isProjectTrusted(project)) {
       throw new ShellCommandException("Can't run a Hg command in the safe mode");
     }
 

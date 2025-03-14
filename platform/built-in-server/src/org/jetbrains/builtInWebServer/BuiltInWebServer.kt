@@ -2,7 +2,7 @@
 package org.jetbrains.builtInWebServer
 
 import com.google.common.net.InetAddresses
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -189,7 +189,7 @@ internal class BuiltInWebServer : HttpRequestHandler() {
 
     if (project == null) return false
 
-    if (request.headers().get("Service-Worker") == "script" && !project.isTrusted()) {
+    if (request.headers().get("Service-Worker") == "script" && !TrustedProjects.isProjectTrusted(project)) {
       return false
     }
 

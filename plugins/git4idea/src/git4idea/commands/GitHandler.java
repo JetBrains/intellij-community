@@ -3,7 +3,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -442,7 +442,7 @@ public abstract class GitHandler {
   }
 
   private void start() {
-    if (myProject != null && !myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+    if (myProject != null && !myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
       throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
     }
 

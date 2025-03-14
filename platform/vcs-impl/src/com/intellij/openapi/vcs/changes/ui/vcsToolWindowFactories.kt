@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToolWindowEmptyStateAction.rebuildContentUi
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
@@ -51,7 +51,7 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
     }
   }
 
-  override fun isAvailable(project: Project) = project.isTrusted()
+  override fun isAvailable(project: Project) = TrustedProjects.isProjectTrusted(project)
 
   private fun showInStripeWithoutActiveVcs(project: Project): Boolean {
     return shouldShowWithoutActiveVcs.asBoolean() || ProjectLevelVcsManager.getInstance(project).hasAnyMappings()
@@ -72,7 +72,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   override fun isAvailable(project: Project): Boolean {
     return ProjectLevelVcsManager.getInstance(project).hasAnyMappings() &&
            ChangesViewContentManager.isCommitToolWindowShown(project) &&
-           project.isTrusted()
+           TrustedProjects.isProjectTrusted(project)
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {

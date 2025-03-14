@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.runner;
 
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.wsl.WslPath;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -96,7 +96,7 @@ public final class LocalOptionsConfigurer {
 
     TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 
-    if (TrustedProjects.isTrusted(project)) {
+    if (TrustedProjects.isProjectTrusted(project)) {
       PathMacroManager macroManager = PathMacroManager.getInstance(project);
       for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
         envs.put(env.getKey(), macroManager.expandPath(env.getValue()));

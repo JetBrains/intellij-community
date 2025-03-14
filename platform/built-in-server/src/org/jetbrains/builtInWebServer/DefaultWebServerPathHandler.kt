@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -113,7 +113,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler {
 
   private fun checkAccess(file: Path, project: Project): Boolean =
     hasAccess(file) &&
-    project.isTrusted() || runCatching { file.toRealPath().startsWith(project.basePath!!) }.getOrDefault(false)
+    TrustedProjects.isProjectTrusted(project) || runCatching { file.toRealPath().startsWith(project.basePath!!) }.getOrDefault(false)
 }
 
 // deny access to any dot-prefixed file

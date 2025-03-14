@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
@@ -78,7 +78,7 @@ internal class ActivateCommitToolWindowAction : ActivateToolWindowAction(ToolWin
   override fun hasEmptyState(project: Project): Boolean = ChangesViewContentManager.isCommitToolWindowShown(project)
 
   override fun update(e: AnActionEvent) {
-    if (e.project?.isTrusted() == false) {
+    if (e.project?.let { TrustedProjects.isProjectTrusted(it) } == false) {
       e.presentation.isEnabledAndVisible = false
       return
     }

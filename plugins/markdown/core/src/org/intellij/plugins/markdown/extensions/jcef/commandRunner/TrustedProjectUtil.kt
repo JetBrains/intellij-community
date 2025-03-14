@@ -2,7 +2,7 @@
 package org.intellij.plugins.markdown.extensions.jcef.commandRunner
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.openapi.project.Project
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -14,7 +14,7 @@ internal object TrustedProjectUtil {
    * execute [block] depending on the dialog result.
    */
   fun executeIfTrusted(project: Project, block: () -> Unit): Boolean {
-    if (project.isTrusted() || confirmProjectIsTrusted(project)) {
+    if (TrustedProjects.isProjectTrusted(project) || confirmProjectIsTrusted(project)) {
       block.invoke()
       return true
     }

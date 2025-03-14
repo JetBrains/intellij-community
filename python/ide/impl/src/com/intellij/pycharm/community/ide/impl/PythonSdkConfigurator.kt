@@ -2,7 +2,7 @@
 package com.intellij.pycharm.community.ide.impl
 
 import com.intellij.concurrency.SensitiveProgressWrapper
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
@@ -79,7 +79,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
   }
 
   private fun findExtension(module: Module): PyProjectSdkConfigurationExtension? {
-    return if (!module.project.isTrusted() || ApplicationManager.getApplication().isUnitTestMode) {
+    return if (!TrustedProjects.isProjectTrusted(module.project) || ApplicationManager.getApplication().isUnitTestMode) {
       null
     }
     else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe {
@@ -110,7 +110,7 @@ fun configureSdk(
       runInEdt { it.forEach { module.excludeInnerVirtualEnv(it) } }
     }
 
-    if (!project.isTrusted()) {
+    if (!TrustedProjects.isProjectTrusted(project)) {
       // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
       LOGGER.info("Python interpreter has not been configured since project is not trusted")
       return

@@ -2,7 +2,7 @@
 package com.intellij.ide.trustedProjects.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
@@ -18,7 +18,7 @@ import javax.swing.JComponent
 
 class UntrustedProjectNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-    if (project.isTrusted()) return null
+    if (TrustedProjects.isProjectTrusted(project)) return null
 
     return Function {
       UntrustedProjectEditorNotificationPanel(project, it) {

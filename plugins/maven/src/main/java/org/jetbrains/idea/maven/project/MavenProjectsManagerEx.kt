@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.diagnostic.dumpCoroutines
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -366,13 +366,13 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                 modelsProvider,
                 importingSettings,
                 generalSettings,
-                !project.isTrusted(),
+                !TrustedProjects.isProjectTrusted(project),
                 SimpleStructureProjectVisitor(),
                 syncActivity,
                 true)
             if (MavenUtil.enablePreimportOnly()) return@useWithScope result.modules
 
-            if (!project.isTrusted()) {
+            if (!TrustedProjects.isProjectTrusted(project)) {
               projectsTree.updater().copyFrom(result.projectTree)
               showUntrustedProjectNotification(myProject)
               return@useWithScope result.modules
@@ -586,7 +586,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   protected suspend fun checkOrInstallMavenWrapper(project: Project) {
     if (!MavenUtil.isWrapper(generalSettings)) return
-    if (!myProject.isTrusted()) {
+    if (!TrustedProjects.isProjectTrusted(myProject)) {
       showUntrustedProjectNotification(myProject)
       return
     }

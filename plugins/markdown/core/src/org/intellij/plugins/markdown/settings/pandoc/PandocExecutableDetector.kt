@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.settings.pandoc
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.util.ExecUtil
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -35,7 +35,7 @@ internal object PandocExecutableDetector {
   }
 
   fun detect(project: Project): String? {
-    if (!project.isTrusted()) return null
+    if (!TrustedProjects.isProjectTrusted(project)) return null
 
     val executableFromPath = PathEnvironmentVariableUtil.findInPath(
       if (SystemInfo.isWindows) WIN_EXECUTABLE else UNIX_EXECUTABLE,

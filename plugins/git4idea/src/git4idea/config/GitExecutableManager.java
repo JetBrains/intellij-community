@@ -4,6 +4,7 @@ package git4idea.config;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslPath;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.NoSuchFileException;
 
-import static com.intellij.ide.impl.TrustedProjects.isTrusted;
 import static git4idea.config.GitExecutableProblemHandlersKt.showUnsupportedVersionError;
 
 /**
@@ -61,7 +61,7 @@ public class GitExecutableManager {
 
   private @Nullable String getPathToGit(@Nullable Project project, @Nullable File gitDirectory, boolean detectIfNeeded) {
     String path = null;
-    if (project != null && (project.isDefault() || isTrusted(project))) {
+    if (project != null && (project.isDefault() || TrustedProjects.isProjectTrusted(project))) {
       path = GitVcsSettings.getInstance(project).getPathToGit();
     }
     if (path == null) path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();

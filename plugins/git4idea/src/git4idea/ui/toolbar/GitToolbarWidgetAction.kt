@@ -4,7 +4,7 @@ package git4idea.ui.toolbar
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.icons.AllIcons
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -73,7 +73,7 @@ class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
     updatePlaceholder(project, null)
 
-    val group = if (project.isTrusted()) {
+    val group = if (TrustedProjects.isProjectTrusted(project)) {
       ActionManager.getInstance().getAction("Vcs.ToolbarWidget.CreateRepository") as ActionGroup
     }
     else {

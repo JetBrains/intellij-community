@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -224,7 +224,7 @@ public final class GroovyDslFileIndex {
 
   private static List<VirtualFile> getGdslFiles(final Project project) {
     final List<VirtualFile> result = new ArrayList<>(bundledGdslFiles.getValue());
-    if (TrustedProjects.isTrusted(project)) {
+    if (TrustedProjects.isProjectTrusted(project)) {
       result.addAll(getProjectGdslFiles(project));
     }
     return result;

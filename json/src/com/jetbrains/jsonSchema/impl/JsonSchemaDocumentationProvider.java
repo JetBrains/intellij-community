@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -212,7 +212,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
 
   private static boolean hasNonTrustedProjects() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (!TrustedProjects.isTrusted(project)) {
+      if (!TrustedProjects.isProjectTrusted(project)) {
         return true;
       }
     }

@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.treeView.FileNameComparator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
@@ -186,7 +186,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
   }
 
   private fun scheduleUnregisteredRootsLoading() {
-    if (project.isDefault || !project.isTrusted()) return
+    if (project.isDefault || !TrustedProjects.isProjectTrusted(project)) return
     rootDetectionIndicator?.cancel()
     if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
 
@@ -298,7 +298,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
       .setDefaultWeightX(1.0)
       .setDefaultFill(GridBagConstraints.HORIZONTAL)
 
-    if (!project.isTrusted()) {
+    if (!TrustedProjects.isProjectTrusted(project)) {
       val notificationPanel = EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error)
       notificationPanel.text = VcsBundle.message("configuration.project.not.trusted.label")
       panel.add(notificationPanel, gb.nextLine().next())

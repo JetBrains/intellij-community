@@ -21,7 +21,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject
-import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
@@ -528,8 +527,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         useDefaultProjectAsTemplate = true,
         preloadServices = true,
         markAsNew = false
-      ).apply {
-        setTrusted(true)
+      ).also { project ->
+        TrustedProjects.setProjectTrusted(project, true)
       }
     }
   }
@@ -816,8 +815,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       options.useDefaultProjectAsTemplate,
       options.preloadServices,
       markAsNew = false
-    ).apply {
-      setTrusted(true)
+    ).also { project ->
+      TrustedProjects.setProjectTrusted(project, true)
     }
 
   protected open fun handleErrorOnNewProject(t: Throwable) {
@@ -860,7 +859,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     preloadServices: Boolean,
     markAsNew: Boolean = true,
   ): Project {
-    TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(projectStoreBaseDir, project = null), true)
+    TrustedProjects.setProjectTrusted(projectStoreBaseDir, true)
     return coroutineScope {
       val templateAsync = if (useDefaultProjectAsTemplate) {
         async {

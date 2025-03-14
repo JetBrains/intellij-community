@@ -132,7 +132,7 @@ private class ShowTrustProjectDialogAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabledAndVisible = project != null && !project.isDefault && !project.isTrusted()
+    e.presentation.isEnabledAndVisible = project != null && !project.isDefault && !TrustedProjects.isProjectTrusted(project)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
