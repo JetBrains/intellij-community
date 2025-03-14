@@ -12,7 +12,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 
-abstract class NonExtendableApiUsageTestBase : JvmInspectionTestBase() {
+abstract class NonExtendableApiInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: InspectionProfileEntry = NonExtendableApiInspection()
 
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {

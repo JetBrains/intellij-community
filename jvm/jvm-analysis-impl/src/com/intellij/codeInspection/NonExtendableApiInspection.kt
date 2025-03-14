@@ -7,27 +7,30 @@ import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.uast.UastVisitorAdapter
+import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 
-private val ANNOTATION_NAME get() = ApiStatus.NonExtendable::class.java.canonicalName!!
+private inline val ANNOTATION_NAME get() = ApiStatus.NonExtendable::class.java.canonicalName!!
 
 /**
  * UAST-based inspection checking that no API class, interface or method, which is marked with [ApiStatus.NonExtendable] annotations,
  * is extended, implemented or overridden in client code.
  *
  * It also checks that the annotation itself is applied on a correct target.
+ *
+ * @see OverrideOnlyApiInspection
  */
 @VisibleForTesting
 class NonExtendableApiInspection : LocalInspectionTool() {
-
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     if (AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(ANNOTATION_NAME, holder.file)) {
       val apiUsageProcessor = NonExtendableApiUsageProcessor(holder)
@@ -42,39 +45,36 @@ class NonExtendableApiInspection : LocalInspectionTool() {
     private val problemsHolder: ProblemsHolder,
   ) : ApiUsageUastVisitor(apiUsageProcessor) {
 
-    override fun visitClass(klass: UClass): Boolean {
-      val annName = ANNOTATION_NAME
-      val hasAnnotation = klass.findAnnotation(annName) != null
-      if (hasAnnotation && klass.isFinal) {
-        val anchor = klass.getAnchorPsi() ?: return super.visitClass(klass)
+    override fun visitClass(node: UClass): Boolean {
+      val hasAnnotation = node.findAnnotation(ANNOTATION_NAME) != null
+      if (hasAnnotation && node.isFinal) {
         val options = PsiFormatUtilBase.SHOW_NAME
-        val className = PsiFormatUtil.formatClass(klass.javaPsi, options)
-        val description = JvmAnalysisBundle.message("jvm.inspections.api.no.extension.on.invalid.target.class.description", className)
-        problemsHolder.registerProblem(anchor, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        val className = PsiFormatUtil.formatClass(node.javaPsi, options)
+        val elementName = StringUtil.capitalize(ElementDescriptionUtil.getElementDescription(node.javaPsi, UsageViewTypeLocation.INSTANCE))
+        val description = JvmAnalysisBundle.message("jvm.inspections.api.no.extension.on.invalid.target.class.description", elementName, className)
+        problemsHolder.registerUProblem(node, description)
       }
-      return super.visitClass(klass)
+      return super.visitClass(node)
     }
 
-    override fun visitMethod(method: UMethod): Boolean {
-      val containingClass = method.getContainingUClass()
-      val hasAnnotation = method.findAnnotation(ANNOTATION_NAME) != null
+    override fun visitMethod(node: UMethod): Boolean {
+      val containingClass = node.getContainingUClass()
+      val hasAnnotation = node.findAnnotation(ANNOTATION_NAME) != null
       if (hasAnnotation) {
         val isRedundant = containingClass?.isFinal == false && containingClass.findAnnotation(ANNOTATION_NAME) != null
-        val isIncorrect = (containingClass == null || containingClass.isFinal || !method.javaPsi.isOverridable())
-
-        val anchor = method.getAnchorPsi() ?: return super.visitMethod(method)
-        val methodName = HighlightMessageUtil.getSymbolName(method.javaPsi) ?: return super.visitMethod(method)
+        val isIncorrect = (containingClass == null || containingClass.isFinal || !node.javaPsi.isOverridable())
+        val methodName = HighlightMessageUtil.getSymbolName(node.javaPsi) ?: return super.visitMethod(node)
 
         val description = if (isRedundant) JvmAnalysisBundle.message("jvm.inspections.api.no.extension.on.redundant.target.method.description")
         else if (isIncorrect) JvmAnalysisBundle.message("jvm.inspections.api.no.extension.on.invalid.target.method.description", methodName)
         else null
 
         if (description != null) {
-          problemsHolder.registerProblem(anchor, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+          problemsHolder.registerUProblem(node, description)
         }
       }
 
-      return super.visitMethod(method)
+      return super.visitMethod(node)
     }
   }
 

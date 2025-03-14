@@ -30,34 +30,32 @@ private inline val ANNOTATION_NAME get() = ApiStatus.OverrideOnly::class.java.ca
  *
  * It also checks that the annotation itself is applied on a correct target.
  *
- * @see NonExtendableApiUsageInspection
+ * @see NonExtendableApiInspection
  */
 @VisibleForTesting
-class OverrideOnlyInspection : LocalInspectionTool() {
+class OverrideOnlyApiInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     if (AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(ANNOTATION_NAME, holder.file)) {
-      val apiUsageProcessor = OverrideOnlyProcessor(holder)
-      UastVisitorAdapter(OverrideOnlyVisitor(apiUsageProcessor, holder), true)
+      val apiUsageProcessor = OverrideOnlyApiUsageProcessor(holder)
+      UastVisitorAdapter(OverrideOnlyApiVisitor(apiUsageProcessor, holder), true)
     }
     else {
       PsiElementVisitor.EMPTY_VISITOR
     }
 
-  private class OverrideOnlyVisitor(
+  private class OverrideOnlyApiVisitor(
     apiUsageProcessor: ApiUsageProcessor,
     private val problemsHolder: ProblemsHolder,
   ) : ApiUsageUastVisitor(apiUsageProcessor) {
 
     override fun visitClass(node: UClass): Boolean {
-      val annName = ANNOTATION_NAME
-      val hasAnnotation = node.findAnnotation(annName) != null
+      val hasAnnotation = node.findAnnotation(ANNOTATION_NAME) != null
       if (hasAnnotation && node.isFinal) {
-        val anchor = node.getAnchorPsi() ?: return super.visitClass(node)
         val options = PsiFormatUtilBase.SHOW_NAME
         val className = PsiFormatUtil.formatClass(node.javaPsi, options)
         val elementName = StringUtil.capitalize(ElementDescriptionUtil.getElementDescription(node.javaPsi, UsageViewTypeLocation.INSTANCE))
         val description = JvmAnalysisBundle.message("jvm.inspections.api.override.only.on.invalid.class.description", elementName, className)
-        problemsHolder.registerProblem(anchor, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        problemsHolder.registerUProblem(node, description)
       }
       return super.visitClass(node)
     }
@@ -68,15 +66,14 @@ class OverrideOnlyInspection : LocalInspectionTool() {
       if (hasAnnotation) {
         val isRedundant = containingClass?.isFinal == false && containingClass.findAnnotation(ANNOTATION_NAME) != null
         val isIncorrect = (containingClass == null || containingClass.isFinal || !node.javaPsi.isOverridable())
-
-        val anchor = node.getAnchorPsi() ?: return super.visitMethod(node)
         val methodName = HighlightMessageUtil.getSymbolName(node.javaPsi) ?: return super.visitMethod(node)
+
         val description = if (isRedundant) JvmAnalysisBundle.message("jvm.inspections.api.override.only.on.invalid.method.redundant.description")
         else if (isIncorrect) JvmAnalysisBundle.message("jvm.inspections.api.override.only.on.invalid.method.description", methodName)
         else null
 
         if (description != null) {
-          problemsHolder.registerProblem(anchor, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+          problemsHolder.registerUProblem(node, description)
         }
       }
 
@@ -84,7 +81,7 @@ class OverrideOnlyInspection : LocalInspectionTool() {
     }
   }
 
-  private class OverrideOnlyProcessor(private val problemsHolder: ProblemsHolder) : ApiUsageProcessor {
+  private class OverrideOnlyApiUsageProcessor(private val problemsHolder: ProblemsHolder) : ApiUsageProcessor {
 
     private fun isLibraryElement(method: PsiMethod): Boolean {
       val containingVirtualFile = PsiUtilCore.getVirtualFile(method)

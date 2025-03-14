@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.java;
 
-import com.intellij.jvm.analysis.internal.testFramework.NonExtendableApiUsageTestBase
+import com.intellij.jvm.analysis.internal.testFramework.NonExtendableApiInspectionTestBase
 
-class JavaNonExtendableApiUsageInspectionTest : NonExtendableApiUsageTestBase() {
+class JavaNonExtendableApiInspectionTest : NonExtendableApiInspectionTestBase() {
 
   fun `test extensions`() {
     myFixture.testHighlighting("plugin/javaExtensions.java")

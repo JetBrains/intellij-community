@@ -5,16 +5,16 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable;
 
 class JavaInvalidAnnotationTargets {
   @NonExtendable
-  public final void <warning descr="'staticMethod()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">staticMethod</warning>() {}
+  public final void <warning descr="Method 'staticMethod()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">staticMethod</warning>() {}
 
   @ApiStatus.NonExtendable
-  private void <warning descr="'privateMethodA()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">privateMethodA</warning>() {}
+  private void <warning descr="Method 'privateMethodA()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">privateMethodA</warning>() {}
 
   @NonExtendable
-  private void <warning descr="'privateMethodB()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">privateMethodB</warning>() {}
+  private void <warning descr="Method 'privateMethodB()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">privateMethodB</warning>() {}
 
   @NonExtendable
-  final void <warning descr="'finalMethod()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">finalMethod</warning>() {}
+  final void <warning descr="Method 'finalMethod()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">finalMethod</warning>() {}
 }
 
 @NonExtendable
@@ -32,12 +32,12 @@ class MyClass {
 }
 
 @NonExtendable
-final class <warning descr="'FinalClass' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">FinalClass</warning> {
+final class <warning descr="Class 'FinalClass' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">FinalClass</warning> {
   void blah() {}
 }
 
 @NonExtendable
-record <warning descr="'SomeRecord' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">SomeRecord</warning>(String name, int age) {}
+record <warning descr="Record 'SomeRecord' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">SomeRecord</warning>(String name, int age) {}
 
 @NonExtendable
-enum <warning descr="'SomeEnum' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">SomeEnum</warning> { BLACK, WHITE }
+enum <warning descr="Enum 'SomeEnum' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">SomeEnum</warning> { BLACK, WHITE }

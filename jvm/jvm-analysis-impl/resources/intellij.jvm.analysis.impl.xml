@@ -131,7 +131,7 @@
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="OverrideOnly"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.override.only.display.name"
-                     implementationClass="com.intellij.codeInspection.OverrideOnlyInspection"/>
+                     implementationClass="com.intellij.codeInspection.OverrideOnlyApiInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="MissingDeprecatedAnnotationOnScheduledForRemovalApi"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name"

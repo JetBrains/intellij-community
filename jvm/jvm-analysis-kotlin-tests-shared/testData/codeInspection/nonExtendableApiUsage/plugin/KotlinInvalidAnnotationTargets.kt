@@ -4,14 +4,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 
 @ApiStatus.NonExtendable
-fun <warning descr="'foo()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">foo</warning>() {}
+fun <warning descr="Method 'foo()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">foo</warning>() {}
 
 @NonExtendable
-fun <warning descr="'bar()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">bar</warning>() {}
+fun <warning descr="Method 'bar()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">bar</warning>() {}
 
 class NotOpenClass {
   @NonExtendable
-  fun <warning descr="'foo()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">foo</warning>() {}
+  fun <warning descr="Method 'foo()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">foo</warning>() {}
 }
 
 @NonExtendable
@@ -24,10 +24,10 @@ open class SomeOpenClass {
 
 open class OpenClass {
   @NonExtendable
-  private fun <warning descr="'foo()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">foo</warning>() {}
+  private fun <warning descr="Method 'foo()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">foo</warning>() {}
 
   @NonExtendable
-  fun <warning descr="'bar()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">bar</warning>() {}
+  fun <warning descr="Method 'bar()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">bar</warning>() {}
 
   @NonExtendable
   open fun thisCouldBeActuallyExtended() {
@@ -42,15 +42,15 @@ open class OpenClass {
 
   companion object {
     @NonExtendable
-    private fun <warning descr="'blah()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">blah</warning>() {}
+    private fun <warning descr="Method 'blah()' is marked with '@ApiStatus.NonExtendable', but it cannot be overridden">blah</warning>() {}
   }
 }
 
 @NonExtendable
-class <warning descr="'SomeClass' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">SomeClass</warning> {}
+class <warning descr="Class 'SomeClass' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">SomeClass</warning> {}
 
 @NonExtendable
-enum class <warning descr="'EnumClass' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">EnumClass</warning> { BLACK, WHITE }
+enum class <warning descr="Class 'EnumClass' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">EnumClass</warning> { BLACK, WHITE }
 
 @NonExtendable
-data class <warning descr="'DataClass' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">DataClass</warning>(val name: String)
+data class <warning descr="Class 'DataClass' is marked with '@ApiStatus.NonExtendable', but it cannot be extended">DataClass</warning>(val name: String)
