@@ -419,8 +419,8 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private final Ref<Boolean> myAnonymousClassFlag = Ref.create(false);
   private final Ref<Boolean> mySealedClassFlag = Ref.create(false);
 
-  private final Set<JvmMethod> myMethods = new HashSet<>();
-  private final Set<JvmField> myFields = new HashSet<>();
+  private final List<JvmMethod> myMethods = new ArrayList<>();
+  private final List<JvmField> myFields = new ArrayList<>();
   private final Set<Usage> myUsages = new HashSet<>();
   private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
   private RetentionPolicy myRetentionPolicy = null;
