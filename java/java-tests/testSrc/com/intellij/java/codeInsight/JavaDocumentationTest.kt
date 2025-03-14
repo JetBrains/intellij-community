@@ -15,6 +15,8 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import java.util.concurrent.Callable
+import kotlin.test.assertContains
+import kotlin.test.assertFails
 
 class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
   fun testConstructorJavadoc() {
@@ -375,6 +377,167 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     TestCase.assertEquals(expected, doc)
   }
 
+  fun testInheritDoc() {
+    configure("""
+      public interface A {
+        /**
+         * A::m-doc
+         * @param a A::m-param
+         */
+        void m(int a);
+      }
+      public interface B extends A {
+        /**
+         * B::m-doc
+         * @param a B::m-param
+         */
+        void m(int a);
+      }
+      public interface C extends B {
+        /**
+         * {@inheritDoc A}
+         * @param a {@inheritDoc}
+         */
+        void m<caret>(int a);
+      }
+    """.trimIndent())
+
+    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
+    val doc = JavaDocumentationProvider().generateDoc(method, null)
+    assert(doc != null)
+    val text = doc.toString()
+    assertContains(text, "A::m-doc")
+    assertFails { assertContains(text, "B::m-doc") }
+    assertContains(text, "B::m-param")
+    assertFails { assertContains(text, "A::m-param") }
+  }
+
+  fun testInheritDocImplementOrder() {
+    data class Param(val order: String, val contains: String, val notContains: String)
+
+    for (param in arrayOf(
+      Param("A, B", "A::m-doc", "B::m-doc"),
+      Param("B, A", "B::m-doc", "A::m-doc"),
+    )) {
+      configure("""
+      public interface A {
+        /** A::m-doc */
+        void m(int a);
+      }
+      public interface B {
+        /** B::m-doc */
+        void m(int a);
+      }
+      public interface C extends ${param.order} {
+        /** {@inheritDoc} */
+        void m<caret>(int a);
+      }
+    """.trimIndent())
+
+      val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
+      val doc = JavaDocumentationProvider().generateDoc(method, null)
+      assert(doc != null)
+      val text = doc.toString()
+      assertContains(text, param.contains)
+      assertFails { assertContains(text, param.notContains) }
+    }
+  }
+
+  fun testInheritDocOrder() {
+    configure("""
+      public interface A {
+        /**
+         * @param d A::foo-d
+         * @param b A::foo-b
+         * @param a A::foo-a
+         */
+        void foo(int a, int b, int c, int d, int e);
+      }
+      public interface B extends A {
+        /**
+         * @param d B::foo-d
+         * @param b B::foo-b
+         */
+        void foo(int a, int b, int c, int d, int e);
+      }
+      public interface C extends B {
+        /**
+         * @param d C::foo-d
+         * @param b C::foo-b
+         * @param a C::foo-a
+         * @param c C::foo-c
+         */
+        void foo(int a, int b, int c, int d, int e);
+      }
+      public class D implements B, C {
+        /**
+         * @param d D::foo-d
+         */
+        void foo(int a, int b, int c, int d, int e);
+      }
+      public interface E {
+        /**
+         * @param d E::foo-d
+         * @param b E::foo-b
+         * @param a E::foo-a
+         * @param c E::foo-c
+         * @param e E::foo-e
+         */
+        void foo(int a, int b, int c, int d, int e);
+      }
+      public class F extends D implements E {
+        /**
+         * @param d {@inheritDoc}
+         * @param b {@inheritDoc}
+         * @param a {@inheritDoc}
+         * @param c {@inheritDoc}
+         * @param e {@inheritDoc}
+         */
+        void foo<caret>(int a, int b, int c, int d, int e);
+      }
+    """.trimIndent())
+
+    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
+    val doc = JavaDocumentationProvider().generateDoc(method, null)
+    assert(doc != null)
+    val text = doc.toString()
+    assertContains(text, "D::foo-d")
+    assertContains(text, "B::foo-b")
+    assertContains(text, "A::foo-a")
+    assertContains(text, "C::foo-c")
+    assertContains(text, "E::foo-e")
+  }
+
+  fun testInheritDocSkipObject() {
+    configure("""
+      public interface A {
+        /**
+         * @param obj A::equals-obj
+         */
+        public boolean equals(Object obj);
+      }
+      
+      public class B extends A {
+        /**
+         * @param obj {@inheritDoc}
+         * @return {@inheritDoc}
+         */
+        @Override
+        public boolean equals<caret>(Object obj) {
+          return super.equals(obj);
+        }
+      }
+    """.trimIndent())
+
+    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
+    val doc = JavaDocumentationProvider().generateDoc(method, null)
+    assert(doc != null)
+    val text = doc.toString()
+    // A has priority over Object
+    assertContains(text, "A::equals-obj")
+    // A has no doc for `return` so we should inherit from Object
+    assertContains(text, "if this object is the same as the obj")
+  }
 
   private fun doTestCtrlHoverDoc(inputFile: String, expectedDoc: String) {
     configure(inputFile.trimIndent())
