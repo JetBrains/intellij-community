@@ -1,4 +1,4 @@
-<idea-plugin package="org.toml">
+<idea-plugin package="org.toml" allow-bundled-update="true">
     <id>org.toml.lang</id>
     <name>Toml</name>
     <vendor>JetBrains</vendor>

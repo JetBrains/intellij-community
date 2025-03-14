@@ -1,4 +1,4 @@
-<idea-plugin package="org.intellij.plugins.markdown">
+<idea-plugin package="org.intellij.plugins.markdown" allow-bundled-update="true">
   <id>org.intellij.plugins.markdown</id>
   <name>Markdown</name>
   <vendor>JetBrains</vendor>
@@ -8,6 +8,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
+
   <content>
     <module name="intellij.markdown.fenceInjection"/>
     <module name="intellij.markdown.frontmatter"/>
@@ -21,18 +22,18 @@
   </content>
 
   <description><![CDATA[
-<p>Provides editing assistance for Markdown files within the IDE.</p>
-</br>
-<ul>
-<li>Full support for vanilla Markdown syntax: highlighting, completion, navigation, inspection, intentions, and much more.</li>
-<li>Live HTML preview, customizable with CSS (except Android Studio, see <a href="https://issuetracker.google.com/issues/159933628?pli=1#comment7">issue and workaround</a>).</li>
-<li>Assistance for editing tables and lists: automatic alignment and numbering.</li>
-<li>Drag and drop to insert images.</li>
-<li>Language injection in code blocks.</li>
-<li>Pandoc Converter for HTML, Microsoft Word, and PDF formats.</li>
-<li>Support for PlantUML diagram rendering (you can add support for Mermaid diagrams with a <a href="https://plugins.jetbrains.com/plugin/20146-mermaid">separate plugin</a>).</li>
-</ul>
-]]></description>
+    <p>Provides editing assistance for Markdown files within the IDE.</p>
+    </br>
+    <ul>
+      <li>Full support for vanilla Markdown syntax: highlighting, completion, navigation, inspection, intentions, and much more.</li>
+      <li>Live HTML preview, customizable with CSS (except Android Studio, see <a href="https://issuetracker.google.com/issues/159933628?pli=1#comment7">issue and workaround</a>).</li>
+      <li>Assistance for editing tables and lists: automatic alignment and numbering.</li>
+      <li>Drag and drop to insert images.</li>
+      <li>Language injection in code blocks.</li>
+      <li>Pandoc Converter for HTML, Microsoft Word, and PDF formats.</li>
+      <li>Support for PlantUML diagram rendering (you can add support for Mermaid diagrams with a <a href="https://plugins.jetbrains.com/plugin/20146-mermaid">separate plugin</a>).</li>
+    </ul>
+  ]]></description>
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.intellij.markdown.html.panel.provider"
@@ -547,10 +548,10 @@
 
     <!--
       This group is supposed to override the default generate popup.
-      Please, make sure to adjust action text for MarkdownActionPlaces.INSERT_POPUP.
+      Please make sure to adjust action text for MarkdownActionPlaces.INSERT_POPUP.
     -->
     <group id="Markdown.InsertGroup">
-      <!-- Also add all insert actions into default generate popup -->
+      <!-- Also add all insert actions into the default generate popup -->
       <add-to-group group-id="GenerateGroup" anchor="last"/>
       <reference ref="Markdown.Styling.CreateLink"/>
       <action id="Markdown.InsertEmptyTable"

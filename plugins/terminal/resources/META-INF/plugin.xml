@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.terminal">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.terminal" allow-bundled-update="true">
   <name>Terminal</name>
   <category>Other Tools</category>
   <id>org.jetbrains.plugins.terminal</id>

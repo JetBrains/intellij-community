@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.yaml">
+<idea-plugin package="org.jetbrains.yaml" allow-bundled-update="true">
   <name>YAML</name>
   <id>org.jetbrains.plugins.yaml</id>
   <vendor>JetBrains</vendor>
