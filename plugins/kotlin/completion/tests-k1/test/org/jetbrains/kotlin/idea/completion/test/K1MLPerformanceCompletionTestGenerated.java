@@ -2939,6 +2939,16 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AbsentReceiver1.kt")
+            public void testAbsentReceiver1() throws Exception {
+                runTest("../testData/basic/common/AbsentReceiver1.kt");
+            }
+
+            @TestMetadata("AbsentReceiver2.kt")
+            public void testAbsentReceiver2() throws Exception {
+                runTest("../testData/basic/common/AbsentReceiver2.kt");
+            }
+
             @TestMetadata("AfterFloatOnNewLine.kt")
             public void testAfterFloatOnNewLine() throws Exception {
                 runTest("../testData/basic/common/AfterFloatOnNewLine.kt");

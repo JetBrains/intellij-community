@@ -281,6 +281,9 @@ object KotlinPositionContextDetector {
         val subjectExpressionForWhenCondition = (parent as? KtWhenCondition)?.getSubjectExpression()
 
         return when {
+            nameExpression.prevSibling is PsiErrorElement ->
+                KotlinIncorrectPositionContext(position)
+
             parent is KtUserType -> {
                 detectForTypeContext(parent, position, reference, nameExpression, explicitReceiver)
             }
