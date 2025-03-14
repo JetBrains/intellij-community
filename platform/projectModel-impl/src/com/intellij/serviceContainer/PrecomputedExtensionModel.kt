@@ -39,7 +39,7 @@ fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
   val nameToExtensions = java.util.Map.copyOf(mutableNameToExtensions)
   // step 2 - collect container level extensions
   executeRegisterTask(modules) { pluginDescriptor ->
-    val map = pluginDescriptor.epNameToExtensions
+    val map = pluginDescriptor.miscExtensions
     for ((name, list) in map.entries) {
       nameToExtensions.get(name)?.add(pluginDescriptor to list)
     }
