@@ -46,6 +46,7 @@ class TrustedPaths : TrustedProjectsStateStorage<TrustedPaths.State>(State()) {
     }
   }
 
+  @Deprecated("Use TrustedProjects.setProjectTrusted(Path, Boolean) instead")
   fun setProjectPathTrusted(path: Path, value: Boolean) {
     updateState {
       State(it.trustedPaths + (path.toString() to value))

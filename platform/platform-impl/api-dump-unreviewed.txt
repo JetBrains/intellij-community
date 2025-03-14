@@ -4177,6 +4177,14 @@ f:com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector
 - com.intellij.troubleshooting.TroubleInfoCollector
 - <init>():V
 - collectInfo(com.intellij.openapi.project.Project):java.lang.String
+f:com.intellij.ide.trustedProjects.TrustedProjects
+- sf:INSTANCE:com.intellij.ide.trustedProjects.TrustedProjects
+- sf:isProjectTrusted(com.intellij.openapi.project.Project):Z
+- sf:isProjectTrusted(java.nio.file.Path):Z
+- sf:isProjectTrusted(java.nio.file.Path,com.intellij.openapi.project.Project):Z
+- sf:setProjectTrusted(com.intellij.openapi.project.Project,Z):V
+- sf:setProjectTrusted(java.nio.file.Path,com.intellij.openapi.project.Project,Z):V
+- sf:setProjectTrusted(java.nio.file.Path,Z):V
 f:com.intellij.ide.trustedProjects.TrustedProjectsDialog
 - sf:INSTANCE:com.intellij.ide.trustedProjects.TrustedProjectsDialog
 - f:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String):Z
