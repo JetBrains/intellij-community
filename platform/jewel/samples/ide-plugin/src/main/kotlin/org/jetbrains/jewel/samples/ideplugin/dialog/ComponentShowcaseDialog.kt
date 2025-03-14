@@ -45,13 +45,13 @@ internal class ComponentShowcaseDialog(project: Project) : DialogWrapper(project
 
     @OptIn(ExperimentalLayoutApi::class)
     override fun createCenterPanel(): JComponent {
-        val dialogPanel = JewelComposePanel {
-            val viewModel =
-                ComponentsViewModel(
-                    alwaysVisibleScrollbarVisibility = ScrollbarVisibility.AlwaysVisible.default(),
-                    whenScrollingScrollbarVisibility = ScrollbarVisibility.WhenScrolling.macOs(),
-                )
+        val viewModel =
+            ComponentsViewModel(
+                alwaysVisibleScrollbarVisibility = ScrollbarVisibility.AlwaysVisible.default(),
+                whenScrollingScrollbarVisibility = ScrollbarVisibility.WhenScrolling.macOs(),
+            )
 
+        val dialogPanel = JewelComposePanel {
             val iconButtonMetrics = JewelTheme.iconButtonStyle.metrics
             val uiSettings = UISettings.Companion.getInstance()
             ComponentsView(

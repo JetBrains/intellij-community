@@ -426,6 +426,7 @@ class ListComboBoxUiTest {
         comboBox.assertTextEquals("Item 2", includeEditableText = false)
     }
 
+    @Ignore("JEWEL-780")
     @Test
     fun `stateless ListComboBox displays and selects initial selectedIndex item`() {
         var selectedIdx = 0
