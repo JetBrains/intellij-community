@@ -39,11 +39,11 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema";
+    return PlatformTestUtil.getCommunityPath() + "/json/backend/tests/testData/jsonSchema";
   }
 
   public void testReadSchemaItself() throws Exception {
-    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/schema.json");
+    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/backend/tests/testData/jsonSchema/schema.json");
     final JsonSchemaObject read = getSchemaObject(file);
 
     Assert.assertEquals("http://json-schema.org/draft-04/schema", read.getId());
@@ -104,13 +104,13 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
   }
 
   public void testReadSchemaWithCustomTags() throws Exception {
-    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withNotesCustomTag.json");
+    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/backend/tests/testData/jsonSchema/withNotesCustomTag.json");
     final JsonSchemaObject read = getSchemaObject(file);
     Assert.assertNotNull(read.getDefinitionByName("common").getPropertyByName("id"));
   }
 
   public void testArrayItemsSchema() throws Exception {
-    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/arrayItemsSchema.json");
+    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/backend/tests/testData/jsonSchema/arrayItemsSchema.json");
     final JsonSchemaObject read = getSchemaObject(file);
     Iterable<String> iterable = () -> read.getPropertyNames();
     var properties = StreamSupport.stream(iterable.spliterator(), false).toList();
@@ -135,11 +135,11 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
   }
 
   public void testReadSchemaWithWrongRequired() throws Exception {
-    doTestSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/WithWrongRequired.json"));
+    doTestSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/backend/tests/testData/jsonSchema/WithWrongRequired.json"));
   }
 
   public void testReadSchemaWithWrongItems() throws Exception {
-    doTestSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/WithWrongItems.json"));
+    doTestSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/backend/tests/testData/jsonSchema/WithWrongItems.json"));
   }
 
   public void testReadNestedSchemaObject() {

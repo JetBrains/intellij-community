@@ -56,9 +56,9 @@ public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
   public String getTestDataPath() {
     PathManagerEx.TestDataLookupStrategy strategy = PathManagerEx.guessTestDataLookupStrategy();
     if (strategy.equals(PathManagerEx.TestDataLookupStrategy.COMMUNITY)) {
-      return PathManager.getHomePath() + "/json" + getBasePath() + "/";
+      return PathManager.getHomePath() + "/json/backend" + getBasePath() + "/";
     }
-    return PathManager.getHomePath() + "/community/json" + getBasePath() + "/";
+    return PathManager.getHomePath() + "/community/json/backend" + getBasePath() + "/";
   }
 
   public static @NotNull String getJsonSchemaTestDataFilePath(@NotNull String jsonSchemaRelativePath) {
@@ -70,7 +70,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
     else {
       prefix = PathManager.getHomePath() + "/community/json/";
     }
-    return prefix + "/tests/testData/jsonSchema/" + jsonSchemaRelativePath;
+    return prefix + "backend/tests/testData/jsonSchema/" + jsonSchemaRelativePath;
   }
 
   @Override

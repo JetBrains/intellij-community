@@ -21,7 +21,7 @@ public abstract class JsonSchemaQuickFixTestBase extends JsonSchemaHighlightingT
 
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting";
+    return PlatformTestUtil.getCommunityPath() + "/json/backend/tests/testData/jsonSchema/highlighting";
   }
 
   protected void doTest(@Language("JSON") @NotNull String schema, @NotNull String text, String fixName, String afterFix) {

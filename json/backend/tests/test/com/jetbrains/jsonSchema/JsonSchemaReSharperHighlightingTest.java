@@ -18,7 +18,7 @@ public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingT
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting/resharper";
+    return PlatformTestUtil.getCommunityPath() + "/json/backend/tests/testData/jsonSchema/highlighting/resharper";
   }
 
   @Override

@@ -23,7 +23,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting";
+    return PlatformTestUtil.getCommunityPath() + "/json/backend/tests/testData/jsonSchema/highlighting";
   }
 
   @Override

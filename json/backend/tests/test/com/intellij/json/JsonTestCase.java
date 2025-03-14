@@ -45,8 +45,8 @@ public abstract class JsonTestCase extends BasePlatformTestCase {
     String communityPath = PlatformTestUtil.getCommunityPath();
     String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
     if (communityPath.startsWith(homePath)) {
-      return communityPath.substring(homePath.length()) + "/json/tests/testData";
+      return communityPath.substring(homePath.length()) + "/json/backend/tests/testData";
     }
-    return "/json/tests/testData";
+    return "/json/backend/tests/testData";
   }
 }

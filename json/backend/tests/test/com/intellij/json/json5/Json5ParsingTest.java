@@ -14,7 +14,7 @@ public class Json5ParsingTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/json/tests/testData";
+    return PlatformTestUtil.getCommunityPath() + "/json/backend/tests/testData";
   }
 
   private void doTest() {

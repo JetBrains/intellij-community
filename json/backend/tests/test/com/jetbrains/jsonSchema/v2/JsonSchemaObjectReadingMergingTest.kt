@@ -393,9 +393,9 @@ internal class JsonSchemaObjectReadingMergingTest : BasePlatformTestCase() {
   override fun getTestDataPath(): String {
     val strategy = PathManagerEx.guessTestDataLookupStrategy()
     if (strategy == TestDataLookupStrategy.COMMUNITY) {
-      return PathManager.getHomePath() + "/json/tests/testData/jsonSchema/v2"
+      return PathManager.getHomePath() + "/json/backend/tests/testData/jsonSchema/v2"
     }
-    return PathManager.getHomePath() + "/community/json/tests/testData/jsonSchema/v2"
+    return PathManager.getHomePath() + "/community/json/backend/tests/testData/jsonSchema/v2"
   }
 
   private fun propertyDependencySchema(): String {
