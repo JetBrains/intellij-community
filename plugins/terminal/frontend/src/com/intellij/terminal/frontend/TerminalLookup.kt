@@ -9,7 +9,7 @@ import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.editor.Editor
 
 
-class TerminalLookup(session: ClientProjectSession?, editor: Editor?, myArranger: LookupArranger, val terminalInput: TerminalInput?) : LookupImpl(session, editor, myArranger) {
+class TerminalLookup(session: ClientProjectSession, editor: Editor, myArranger: LookupArranger, val terminalInput: TerminalInput) : LookupImpl(session, editor, myArranger) {
 
   override fun isCompletion(): Boolean {
     return true
@@ -20,9 +20,6 @@ class TerminalLookup(session: ClientProjectSession?, editor: Editor?, myArranger
   }
 
   override fun finishLookup(completionChar: Char, item: LookupElement?) {
-    if (terminalInput == null) {
-      return
-    }
     if (item == null || !item.isValid() || item is EmptyLookupItem) {
       hideWithItemSelected(null, completionChar)
       return

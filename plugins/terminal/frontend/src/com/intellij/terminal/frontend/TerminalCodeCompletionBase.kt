@@ -1,14 +1,7 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.completion.CodeCompletionFeatures
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
-import com.intellij.codeInsight.completion.CompletionAssertions
-import com.intellij.codeInsight.completion.CompletionInitializationContextImpl
-import com.intellij.codeInsight.completion.CompletionInitializationUtil
-import com.intellij.codeInsight.completion.CompletionPhase
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.StatisticsUpdate
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.lookup.LookupArranger.DefaultArranger
 import com.intellij.codeInsight.lookup.LookupFocusDegree
@@ -35,7 +28,6 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.outputModelImpl
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
 import org.jetbrains.annotations.NotNull
@@ -50,26 +42,22 @@ class TerminalCodeCompletionBase(
   CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup, synchronous) {
   fun invokeCompletion(e: AnActionEvent, time: Int) {
     val outputModel = e.outputModelImpl
-    if (outputModel == null) {
-      throw AssertionError("Output model is null during completion")
-      return
-    }
+                      ?: throw AssertionError("Output model is null during completion")
+
     val commonEditor = e.getData(CommonDataKeys.EDITOR)
-    if (commonEditor == null) {
-      throw AssertionError("Common editor is null during completion")
-      return
-    }
-    val project = commonEditor.getProject();
-    if (project == null) {
-      throw AssertionError("Project editor is null during completion")
-      return
-    }
+                       ?: throw AssertionError("Common editor is null during completion")
+
+    val project = commonEditor.project
+                  ?: throw AssertionError("Project is null during completion")
+
+    val terminalInput = e.terminalInput
+                        ?: throw AssertionError("Terminal input is null during completion")
 
     val inputEvent = e.inputEvent
     val caret = prepareCaret(commonEditor, outputModel)
 
     invokeCompletion(project, commonEditor, time, inputEvent != null && inputEvent.modifiersEx != 0,
-                     caret, e.terminalInput)
+                     caret, terminalInput)
   }
 
   private fun invokeCompletion(
@@ -78,7 +66,7 @@ class TerminalCodeCompletionBase(
     time: Int,
     hasModifiers: Boolean,
     @NotNull caret: Caret,
-    terminalInput: TerminalInput?,
+    terminalInput: TerminalInput,
   ) {
     var time = time
     StatisticsUpdate.Companion.applyLastCompletionStatisticsUpdate()
@@ -136,13 +124,12 @@ class TerminalCodeCompletionBase(
           })
       val hasValidContext = context != null
       if (!hasValidContext) {
-        val psiFile = PsiUtilBase.getPsiFileInEditor(caret, project)
         context = CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount)
       }
 
-      val mylookup = obtainLookup(editor, project, autopopup, terminalInput)
+      val terminalLookup = obtainLookup(editor, project, autopopup, terminalInput)
       val clientLookupManager = ClientLookupManager.getInstance(project.currentSession) as? ClientLookupManagerBase
-      clientLookupManager?.putLookup(mylookup)
+      clientLookupManager?.putLookup(terminalLookup)
 
       doComplete(context, hasModifiers, hasValidContext, startingTime)
     }
@@ -166,7 +153,7 @@ class TerminalCodeCompletionBase(
     return primaryCaret
   }
 
-  private fun obtainLookup(editor: Editor, project: Project, autopopup: Boolean, terminalInput: TerminalInput?): LookupImpl {
+  private fun obtainLookup(editor: Editor, project: Project, autopopup: Boolean, terminalInput: TerminalInput): LookupImpl {
     CompletionAssertions.checkEditorValid(editor)
 
     val session = project.currentSession
