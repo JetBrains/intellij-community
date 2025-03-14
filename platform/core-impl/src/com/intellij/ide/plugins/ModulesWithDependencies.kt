@@ -167,7 +167,7 @@ private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
 private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,
                                                  idMap: Map<String, IdeaPluginDescriptorImpl>,
                                                  dependenciesCollector: MutableSet<IdeaPluginDescriptorImpl>) {
-  for (dependency in rootDescriptor.pluginDependencies) {
+  for (dependency in rootDescriptor.dependenciesV1) {
     // check for missing optional dependency
     val dep = idMap.get(dependency.pluginId.idString) ?: continue
     if (dep.pluginId != PluginManagerCore.CORE_ID || dep.moduleName != null) {

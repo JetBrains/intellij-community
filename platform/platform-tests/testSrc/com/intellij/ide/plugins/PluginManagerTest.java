@@ -416,7 +416,7 @@ public class PluginManagerTest {
       for (PluginId module : d.pluginAliases) {
         sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
-      for (var dependency : d.getPluginDependencies()) {
+      for (var dependency : d.getDependenciesV1()) {
         if (!dependency.isOptional()) {
           sb.append("\n    <depends>").append(escape.apply(dependency.getPluginId().getIdString())).append("</depends>");
         }
