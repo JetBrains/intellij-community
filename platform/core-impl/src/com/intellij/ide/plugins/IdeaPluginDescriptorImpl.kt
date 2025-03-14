@@ -127,7 +127,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
 
-  internal val implementationDetail: Boolean = raw.isImplementationDetail
+  private val isImplementationDetail: Boolean = raw.isImplementationDetail
 
   private val isRestartRequired: Boolean = raw.isRestartRequired
 
@@ -563,7 +563,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   override fun allowBundledUpdate(): Boolean = isBundledUpdateAllowed
 
-  override fun isImplementationDetail(): Boolean = implementationDetail
+  override fun isImplementationDetail(): Boolean = isImplementationDetail
 
   override fun isRequireRestart(): Boolean = isRestartRequired
 
