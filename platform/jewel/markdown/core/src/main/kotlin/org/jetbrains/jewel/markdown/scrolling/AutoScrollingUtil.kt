@@ -28,7 +28,8 @@ public fun AutoScrollableBlock(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    var previousPosition by remember(block) { mutableStateOf(Offset.Zero) }
+    val originalBlock = (block as? ScrollingSynchronizer.LocatableMarkdownBlock)?.originalBlock ?: block
+    var previousPosition by remember(originalBlock) { mutableStateOf(Offset.Zero) }
 
     Box(
         modifier =
