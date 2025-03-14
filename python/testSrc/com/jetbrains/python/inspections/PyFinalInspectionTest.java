@@ -8,6 +8,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyFinalInspectionTest extends PyInspectionTestCase {
 
+  // PY-79743
+  public void testImportedVariableFinalReassignment() {
+    doMultiFileTest();
+  }
+
   // PY-34945
   public void testSubclassingFinalClass() {
     doMultiFileTest();
