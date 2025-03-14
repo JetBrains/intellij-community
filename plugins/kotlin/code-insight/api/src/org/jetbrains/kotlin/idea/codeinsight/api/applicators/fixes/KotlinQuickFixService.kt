@@ -18,9 +18,14 @@ class KotlinQuickFixService {
         fun getInstance(): KotlinQuickFixService = service()
     }
 
-    private val list = KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allQuickFixesList())
-    private val lazyList = KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allLazyQuickFixesList())
-    private val importOnTheFlyList = KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allImportOnTheFlyQuickFixList())
+    private val list: KotlinQuickFixesList =
+        KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allQuickFixesList())
+
+    private val lazyList: KotlinQuickFixesList =
+        KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allLazyQuickFixesList())
+
+    private val importOnTheFlyList: KotlinQuickFixesList =
+        KotlinQuickFixesList.createCombined(KotlinQuickFixRegistrar.allImportOnTheFlyQuickFixList())
 
     fun KaSession.getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
         with(list) { getQuickFixesFor(diagnostic) }
