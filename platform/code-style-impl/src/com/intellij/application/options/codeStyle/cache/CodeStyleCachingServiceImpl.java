@@ -167,6 +167,8 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
     if (myFileDataCache.containsKey(path)) {
       final FileData fileData = myFileDataCache.get(path);
       fileData.update();
+      myRemoveQueue.remove(fileData);
+      myRemoveQueue.add(fileData);
       return fileData;
     }
     FileData newData = new FileData();
