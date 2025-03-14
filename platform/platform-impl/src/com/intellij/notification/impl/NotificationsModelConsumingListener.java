@@ -22,8 +22,6 @@ public final class NotificationsModelConsumingListener implements Notifications 
 
   @Override
   public void notify(@NotNull Notification notification) {
-    if (notification.canShowFor(myProject) && NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
-      ApplicationNotificationsModel.addNotification(myProject, notification);
-    }
+    ApplicationNotificationsModel.addNotification(myProject, notification);
   }
 }

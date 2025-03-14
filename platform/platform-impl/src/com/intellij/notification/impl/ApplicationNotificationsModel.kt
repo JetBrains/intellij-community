@@ -31,6 +31,10 @@ object ApplicationNotificationsModel {
 
   @JvmStatic
   fun addNotification(project: Project?, notification: Notification) {
+    if (!notification.canShowFor(project) || !NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
+      return
+    }
+
     if (project == null) {
       addApplicationNotification(notification)
     }
@@ -226,12 +230,10 @@ private class ProjectNotificationsModel {
     newListener: ProjectNotificationsModelListener,
     appInitNotifications: List<Notification>,
   ): Runnable {
-    val initNotifications = sequence {
-      yieldAll(appInitNotifications)
-      yieldAll(myNotifications)
-    }.filter {
-      NotificationsConfigurationImpl.getSettings(it.groupId).isShouldLog
-    }.toList()
+    val initNotifications = buildList {
+      addAll(appInitNotifications)
+      addAll(myNotifications)
+    }
     myNotifications.clear()
     listener = newListener
     return Runnable {
@@ -246,9 +248,7 @@ private class ProjectNotificationsModel {
     unreadNotifications.add(notification)
     val listener = listener
     return Runnable {
-      if (listener != null && NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
-        listener.add(notification)
-      }
+      listener?.add(notification)
       setStatusMessage(project, notification)
       fireStateChanged()
     }
