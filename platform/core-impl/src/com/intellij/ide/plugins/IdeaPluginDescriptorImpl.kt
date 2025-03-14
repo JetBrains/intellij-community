@@ -102,7 +102,6 @@ class IdeaPluginDescriptorImpl private constructor(
    *
    * Note that it's different from [dependenciesV2]
    */
-  @JvmField
   val pluginDependencies: List<PluginDependency> = raw.depends
     .let(::convertDepends)
     .let(::fixDepends)
