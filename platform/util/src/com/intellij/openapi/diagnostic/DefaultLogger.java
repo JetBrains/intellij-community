@@ -4,6 +4,7 @@ package com.intellij.openapi.diagnostic;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +94,11 @@ public class DefaultLogger extends Logger {
   @Override
   public void setLevel(@NotNull LogLevel level) {
     this.level = level;
+  }
+
+  @ApiStatus.Internal
+  public LogLevel getLevel() {
+    return level;
   }
 
   public static @NotNull String detailsToString(String @NotNull ... details) {
