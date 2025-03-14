@@ -28,8 +28,6 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
 
   private final Map<String, FileData> myFileDataCache = new HashMap<>();
 
-  private final Object CACHE_LOCK = new Object();
-
   private final PriorityQueue<FileData> myRemoveQueue = new PriorityQueue<>(
     MAX_CACHE_SIZE,
     Comparator.comparingLong(fileData -> fileData.lastRefTimeStamp));
@@ -67,7 +65,7 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
   }
 
   private @NotNull CodeStyleCachedValueProvider getOrCreateCachedValueProvider(@NotNull VirtualFile virtualFile) {
-    synchronized (CACHE_LOCK) {
+    synchronized(this) {
       FileData fileData = getOrCreateFileData(getFileKey(virtualFile));
       SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
       CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
@@ -146,7 +144,7 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
   }
 
   private void clearCache() {
-    synchronized (CACHE_LOCK) {
+    synchronized (this) {
       myFileDataCache.values().forEach(fileData -> {
         SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
         CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
