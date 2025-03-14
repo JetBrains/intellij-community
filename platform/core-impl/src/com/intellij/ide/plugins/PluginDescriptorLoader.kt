@@ -1131,10 +1131,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
 
 fun loadDescriptor(file: Path, isBundled: Boolean, pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
   DescriptorListLoadingContext().use { context ->
-    @Suppress("SSBasedInspection")
-    return runBlocking {
-      loadDescriptorFromFileOrDir(file = file, context = context, pool = NonShareableJavaZipFilePool(), pathResolver = pathResolver, isBundled = isBundled)
-    }
+    return loadDescriptorFromFileOrDir(file = file, context = context, pool = NonShareableJavaZipFilePool(), pathResolver = pathResolver, isBundled = isBundled)
   }
 }
 
