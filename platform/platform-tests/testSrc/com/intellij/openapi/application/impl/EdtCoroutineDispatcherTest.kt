@@ -308,8 +308,8 @@ class EdtCoroutineDispatcherTest {
         withClue("This code should be executing in the same frame as it was called from") {
           assertThat(Throwable().stackTrace.reversed()).startsWith(*currentTrace.toTypedArray())
         }
-        withClue("Locks should be acquired in EDT dispatcher") {
-          assertThat(application.isReadAccessAllowed).isTrue
+        withClue("Locks should not be acquired in immediate EDT dispatcher") {
+          assertThat(application.isReadAccessAllowed).isFalse
         }
       }
       assertThat(application.isReadAccessAllowed).isFalse
@@ -392,27 +392,22 @@ class EdtCoroutineDispatcherTest {
   }
 
   @Test
-  fun `main dispatcher fails softly on locking actions`(): Unit = timeoutRunBlocking(context = Dispatchers.Main) {
+  fun `main dispatcher allows locking actions`(): Unit = timeoutRunBlocking(context = Dispatchers.Main) {
     val counter = AtomicInteger()
-    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
-      application.runWriteAction {
-        counter.incrementAndGet()
-      }
+    assertThat(application.isReadAccessAllowed).isFalse
+    assertThat(application.isWriteAccessAllowed).isFalse
+    assertThat(application.isWriteIntentLockAcquired).isFalse
+    application.runWriteAction {
+      counter.incrementAndGet()
     }
-    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
-      application.runReadAction {
-        counter.incrementAndGet()
-      }
+    application.runReadAction {
+      counter.incrementAndGet()
     }
-    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
-      assertTrue(ApplicationManagerEx.getApplicationEx().tryRunReadAction {
-        counter.incrementAndGet()
-      })
-    }
-    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
-      application.runWriteIntentReadAction<Unit, Exception> {
-        counter.incrementAndGet()
-      }
+    assertTrue(ApplicationManagerEx.getApplicationEx().tryRunReadAction {
+      counter.incrementAndGet()
+    })
+    application.runWriteIntentReadAction<Unit, Exception> {
+      counter.incrementAndGet()
     }
     assertThat(counter.get()).isEqualTo(4)
   }
@@ -474,29 +469,6 @@ class EdtCoroutineDispatcherTest {
           .contains("write-intent access")
           .contains("Dispatchers.UI")
           .doesNotContain("Dispatchers.Main")
-      }
-    }
-  }
-
-  @Test
-  fun `exception messages in preventive locking for Dispatchers Main`(): Unit = timeoutRunBlocking {
-    withContext(Dispatchers.Main) {
-      IdeEventQueue.getInstance().threadingSupport.runPreventiveWriteIntentReadAction {
-        val error = assertErrorLogged<RuntimeException> {
-          ThreadingAssertions.assertReadAccess()
-        }
-        assertThat(error.message)
-          .contains("read access")
-          .contains("Dispatchers.Main")
-          .doesNotContain("Dispatchers.UI")
-
-        val error2 = assertErrorLogged<RuntimeException> {
-          ThreadingAssertions.assertWriteIntentReadAccess()
-        }
-        assertThat(error2.message)
-          .contains("write-intent access")
-          .contains("Dispatchers.Main")
-          .doesNotContain("Dispatchers.UI")
       }
     }
   }

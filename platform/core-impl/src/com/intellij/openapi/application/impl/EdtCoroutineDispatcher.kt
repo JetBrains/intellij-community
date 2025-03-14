@@ -55,19 +55,28 @@ internal sealed class EdtCoroutineDispatcher(
   }
 
   private fun wrapWithLocking(runnable: Runnable): Runnable {
-    if (!type.allowLocks()) {
-      return Runnable {
-        ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, type.lockBehavior == LockBehavior.LOCKS_DISALLOWED_FAIL_SOFT, lockAccessViolationMessage)
+    return when (type) {
+      EdtDispatcherKind.UI -> {
+        Runnable {
+          ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, false, lockAccessViolationMessage)
+        }
       }
-    }
-    if (isCoroutineWILEnabled) {
-      return Runnable {
-        WriteIntentReadAction.run {
-          runnable.run()
+      EdtDispatcherKind.MAIN -> {
+        runnable
+      }
+      EdtDispatcherKind.EDT -> {
+        return if (isCoroutineWILEnabled) {
+          Runnable {
+            WriteIntentReadAction.run {
+              runnable.run()
+            }
+          }
+        }
+        else {
+          runnable
         }
       }
     }
-    return runnable
   }
 
   object Locking : EdtCoroutineDispatcher(EdtDispatcherKind.EDT)
@@ -98,26 +107,7 @@ private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoro
     if (!ModalityState.current().accepts(contextModality)) {
       return true
     }
-    if (type.allowLocks()) {
-      // this dispatcher requires RW lock => if EDT does not the hold lock, then we need to reschedule to avoid blocking
-      return !ApplicationManager.getApplication().isWriteIntentLockAcquired
-    }
     return false
-  }
-
-  override fun dispatch(context: CoroutineContext, block: Runnable) {
-    if (type.allowLocks() && !ApplicationManager.getApplication().isWriteIntentLockAcquired) {
-      // this was a request to perform an immediate dispatch from a non-locking dispatcher (UI or Main) to a locking one.
-      // In this case, 'isDispatchNeeded' returned true because locking was not acquired, but we still need to emulate immediate execution
-      // by executing the runnable in-place.
-      // once the lock is acquired, subsequent dispatches will be processed via 'invokeLater' as they should
-      return ApplicationManagerEx.getApplicationEx().allowTakingLocksInsideAndRun {
-        WriteIntentReadAction.run {
-          block.run()
-        }
-      }
-    }
-    super.dispatch(context, block)
   }
 
   override fun toString(): String {
