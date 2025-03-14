@@ -113,11 +113,12 @@ class IdeaPluginDescriptorImpl private constructor(
   val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
   val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
 
-  private var resourceBundleBaseName: String? = null
-  override val actions: List<ActionElement> = raw.actions
   override val miscExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions
     .let(::convertExtensions)
     .let(::sortExtensions)
+
+  private var resourceBundleBaseName: String? = null
+  override val actions: List<ActionElement> = raw.actions
 
   val content: PluginContentDescriptor =
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
