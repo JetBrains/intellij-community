@@ -4,14 +4,12 @@
 
 package com.intellij.ide.impl
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -28,13 +26,7 @@ fun confirmLoadingUntrustedProject(
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String
 ): Boolean {
-  return TrustedProjectsDialog.confirmLoadingUntrustedProject(
-    project = project,
-    title = title,
-    message = message,
-    trustButtonText = trustButtonText,
-    distrustButtonText = distrustButtonText
-  )
+  return TrustedProjectsDialog.confirmLoadingUntrustedProject(project, title, message, trustButtonText, distrustButtonText)
 }
 
 @ApiStatus.Internal
@@ -137,14 +129,7 @@ private class ShowTrustProjectDialogAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    if (TrustedProjectsDialog.confirmLoadingUntrustedProject(
-        project = project,
-        title = IdeBundle.message("untrusted.project.general.dialog.title"),
-        message = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
-        trustButtonText = IdeBundle.message("untrusted.project.dialog.trust.button"),
-        distrustButtonText = IdeBundle.message("untrusted.project.dialog.distrust.button")
-      )
-    ) {
+    if (TrustedProjectsDialog.confirmLoadingUntrustedProject(project)) {
       ApplicationManager.getApplication().messageBus
         .syncPublisher(TrustedProjectsListener.TOPIC)
         .onProjectTrusted(project)

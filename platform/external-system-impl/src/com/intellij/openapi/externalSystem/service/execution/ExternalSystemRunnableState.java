@@ -34,6 +34,7 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -179,7 +180,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     if (myProject.isDisposed()) return null;
 
     ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
-    if (!confirmLoadingUntrustedProject(myProject, externalSystemId)) {
+    if (!ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(myProject, externalSystemId)) {
       String externalSystemName = externalSystemId.getReadableName();
       throw new ExecutionException(ExternalSystemBundle.message("untrusted.project.notification.execution.error", externalSystemName));
     }

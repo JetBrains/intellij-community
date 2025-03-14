@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.project.trusted
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
+import com.intellij.ide.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
@@ -16,10 +17,10 @@ object ExternalSystemTrustedProjectDialog {
     systemId: ProjectSystemId,
     projectRoot: Path
   ): Boolean {
-    return TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
-      projectRoot,
-      project,
-      title = IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectRoot.fileName ?: projectRoot.toString()),
+    return confirmOpeningOrLinkingUntrustedProject(
+      projectRoot = projectRoot,
+      project = project,
+      title = IdeBundle.message("untrusted.project.link.dialog.title", systemId, projectRoot.fileName ?: projectRoot.toString()),
       cancelButtonText = IdeBundle.message("untrusted.project.link.dialog.cancel.button"))
   }
 
@@ -36,11 +37,9 @@ object ExternalSystemTrustedProjectDialog {
   ): Boolean {
     val systemsPresentation = ExternalSystemUtil.naturalJoinSystemIds(systemIds)
     return TrustedProjectsDialog.confirmLoadingUntrustedProjectAsync(
-      project,
-      IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size),
-      IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size),
-      IdeBundle.message("untrusted.project.dialog.trust.button"),
-      IdeBundle.message("untrusted.project.dialog.distrust.button")
+      project = project,
+      title = IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size),
+      message = IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size),
     )
   }
 
@@ -61,11 +60,9 @@ object ExternalSystemTrustedProjectDialog {
   ): Boolean {
     val systemsPresentation = ExternalSystemUtil.naturalJoinSystemIds(systemIds)
     return TrustedProjectsDialog.confirmLoadingUntrustedProject(
-      project,
-      IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size),
-      IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size),
-      IdeBundle.message("untrusted.project.dialog.trust.button"),
-      IdeBundle.message("untrusted.project.dialog.distrust.button")
+      project = project,
+      title = IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size),
+      message = IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size),
     )
   }
 }

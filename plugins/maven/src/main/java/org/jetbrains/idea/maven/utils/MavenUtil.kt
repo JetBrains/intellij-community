@@ -22,7 +22,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkEx
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.InvalidJavaHomeException
 import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
@@ -1462,7 +1462,7 @@ object MavenUtil {
   }
 
   fun isProjectTrustedEnoughToImport(project: Project): Boolean {
-    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID)
+    return ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, SYSTEM_ID)
   }
 
   /**
