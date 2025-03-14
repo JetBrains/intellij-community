@@ -2,15 +2,10 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.ListPopupStep
-import com.intellij.openapi.ui.popup.PopupStep
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.ui.IconManager
-import com.intellij.util.PlatformIcons
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -29,30 +24,27 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.predictImplicitModality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddMemberToSupertypeFixFactory.MemberData
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifier
 import org.jetbrains.kotlin.types.Variance
-import javax.swing.Icon
 
 object AddMemberToSupertypeFixFactory {
 
   internal class MemberData(val signaturePreview: String, val sourceCode: String, val targetClass: KtClass)
 
-  val addMemberToSupertypeFixFactory: KotlinQuickFixFactory<KaFirDiagnostic.NothingToOverride> = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NothingToOverride ->
+  val addMemberToSupertypeFixFactory: KotlinQuickFixFactory<KaFirDiagnostic.NothingToOverride> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NothingToOverride ->
     val element = diagnostic.psi
-    if (element !is KtProperty && element !is KtNamedFunction) return@IntentionBased emptyList()
+    if (element !is KtProperty && element !is KtNamedFunction) return@ModCommandBased emptyList()
 
     val candidateMembers = getCandidateMembers(element)
     if (candidateMembers.isEmpty()) {
-      return@IntentionBased emptyList()
+      return@ModCommandBased emptyList()
     }
 
     val action = when (element) {
@@ -152,91 +144,99 @@ object AddMemberToSupertypeFixFactory {
   }
 }
 
-internal abstract class AddMemberToSupertypeFix(
-    element: KtCallableDeclaration,
-    private val candidateMembers: List<MemberData>,
-) : KotlinQuickFixAction<KtCallableDeclaration>(
-  element), LowPriorityAction {
+internal sealed class AddMemberToSupertypeFix(
+  private val element: KtCallableDeclaration,
+  private val candidateMembers: List<MemberData>,
+) : ModCommandAction {
+
+  abstract val kind: String
 
   init {
     assert(candidateMembers.isNotEmpty())
   }
 
-  abstract val kind: String
-  abstract val icon: Icon
+  private class AddSelectedMemberToSupertypeFix(
+    element: KtCallableDeclaration,
+    private val memberData: MemberData,
+    @param:IntentionFamilyName private val familyName: String,
+  ) : PsiUpdateModCommandAction<KtCallableDeclaration>(element) {
 
-  override fun getText(): String =
-    candidateMembers.singleOrNull()?.let { actionName(it) } ?: KotlinBundle.message("fix.add.member.supertype.text", kind)
+    override fun getFamilyName(): @IntentionFamilyName String = familyName
 
-  override fun getFamilyName() = KotlinBundle.message("fix.add.member.supertype.family", kind)
+    override fun invoke(
+      context: ActionContext,
+      element: KtCallableDeclaration,
+      updater: ModPsiUpdater,
+    ): Unit = addMember(context.project, element, memberData, updater)
+  }
 
-  override fun startInWriteAction(): Boolean = false
+  override fun getPresentation(context: ActionContext): Presentation {
+    val actionName = candidateMembers.singleOrNull()?.let { actionName(it) }
+                     ?: KotlinBundle.message("fix.add.member.supertype.text", kind)
+    return Presentation.of(actionName).withPriority(PriorityAction.Priority.LOW)
+  }
 
-  override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-    if (candidateMembers.size == 1 || editor == null || !editor.component.isShowing) {
-      addMember(candidateMembers.first(), project)
+  override fun getFamilyName(): @IntentionFamilyName String =
+    KotlinBundle.message("fix.add.member.supertype.family", kind)
+
+  override fun perform(context: ActionContext): ModCommand {
+    return if (candidateMembers.size == 1) {
+      AddSelectedMemberToSupertypeFix(element, candidateMembers.first(), familyName).perform(context)
     }
     else {
-      JBPopupFactory.getInstance().createListPopup(createMemberPopup(project)).showInBestPositionFor(editor)
+      ModCommand.chooseAction(
+        KotlinBundle.message("fix.add.member.supertype.choose.type"),
+        candidateMembers.map { candidateMember -> AddSelectedMemberToSupertypeFix(element, candidateMember, actionName(candidateMember)) },
+      )
     }
   }
-
-  private fun addMember(memberData: MemberData, project: Project) {
-    project.executeWriteCommand(KotlinBundle.message("fix.add.member.supertype.progress", kind)) {
-      element?.removeDefaultParameterValues()
-      val classBody = memberData.targetClass.getOrCreateBody()
-      val memberElement: KtCallableDeclaration = KtPsiFactory(project).createDeclaration(memberData.sourceCode)
-      memberElement.copyAnnotationEntriesFrom(element)
-      val insertedMemberElement = classBody.addBefore(memberElement, classBody.rBrace) as KtCallableDeclaration
-      shortenReferences(insertedMemberElement)
-      val modifierToken = insertedMemberElement.modalityModifier()?.node?.elementType as? KtModifierKeywordToken
-                          ?: return@executeWriteCommand
-      if (insertedMemberElement.predictImplicitModality() == modifierToken) {
-        RemoveModifierFixBase.invokeImpl(insertedMemberElement, modifierToken)
-      }
-    }
-  }
-
-  private fun KtCallableDeclaration.removeDefaultParameterValues() {
-    valueParameters.forEach {
-      it.defaultValue?.delete()
-      it.equalsToken?.delete()
-    }
-  }
-
-  private fun KtCallableDeclaration.copyAnnotationEntriesFrom(member: KtCallableDeclaration?) {
-    member?.annotationEntries?.reversed()?.forEach { addAnnotationEntry(it) }
-  }
-
-  private fun createMemberPopup(project: Project): ListPopupStep<*> {
-    return object : BaseListPopupStep<MemberData>(KotlinBundle.message("fix.add.member.supertype.choose.type"), candidateMembers) {
-      override fun isAutoSelectionEnabled() = false
-
-      override fun onChosen(selectedValue: MemberData, finalChoice: Boolean): PopupStep<*>? {
-        if (finalChoice) {
-          addMember(selectedValue, project)
-        }
-        return FINAL_CHOICE
-      }
-
-      override fun getIconFor(value: MemberData) = icon
-      override fun getTextFor(value: MemberData) = actionName(value)
-    }
-  }
-
-  @Nls
-  private fun actionName(memberData: MemberData): String =
-    KotlinBundle.message("fix.add.member.supertype.add.to", memberData.signaturePreview, memberData.targetClass.name.toString())
 }
 
-internal class AddFunctionToSupertypeFix(element: KtNamedFunction, functions: List<MemberData>) : AddMemberToSupertypeFix(element,
-                                                                                                                          functions) {
+private fun addMember(
+  project: Project,
+  element: KtCallableDeclaration,
+  memberData: MemberData,
+  updater: ModPsiUpdater,
+) {
+  val memberElement: KtCallableDeclaration = KtPsiFactory(project).createDeclaration(memberData.sourceCode)
+  val classBody = updater.getWritable(memberData.targetClass).getOrCreateBody()
+  element.removeDefaultParameterValues()
+  memberElement.copyAnnotationEntriesFrom(element)
+  val insertedMemberElement = classBody.addBefore(memberElement, classBody.rBrace) as KtCallableDeclaration
+  shortenReferences(insertedMemberElement)
+  val modifierToken = insertedMemberElement.modalityModifier()?.node?.elementType as? KtModifierKeywordToken
+                      ?: return
+  if (insertedMemberElement.predictImplicitModality() == modifierToken) {
+    RemoveModifierFixBase.invokeImpl(insertedMemberElement, modifierToken)
+  }
+}
+
+private fun KtCallableDeclaration.removeDefaultParameterValues() {
+  valueParameters.forEach {
+    it.defaultValue?.delete()
+    it.equalsToken?.delete()
+  }
+}
+
+private fun KtCallableDeclaration.copyAnnotationEntriesFrom(member: KtCallableDeclaration?) {
+  member?.annotationEntries?.reversed()?.forEach { addAnnotationEntry(it) }
+}
+
+@Nls
+private fun actionName(memberData: MemberData): String =
+  KotlinBundle.message("fix.add.member.supertype.add.to", memberData.signaturePreview, memberData.targetClass.name.toString())
+
+
+private class AddFunctionToSupertypeFix(
+  element: KtNamedFunction,
+  functions: List<MemberData>,
+) : AddMemberToSupertypeFix(element, functions) {
   override val kind: String = "function"
-  override val icon: Icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function)
 }
 
-internal class AddPropertyToSupertypeFix(element: KtProperty, properties: List<MemberData>) : AddMemberToSupertypeFix(element, properties) {
-
+private class AddPropertyToSupertypeFix(
+  element: KtProperty,
+  properties: List<MemberData>,
+) : AddMemberToSupertypeFix(element, properties) {
   override val kind: String = "property"
-  override val icon: Icon = PlatformIcons.PROPERTY_ICON
 }
