@@ -104,7 +104,12 @@ class EelLocalExecApiTest {
         val text = ByteBuffer.allocate(8192)
         withContext(Dispatchers.Default) {
           withTimeoutOrNull(10.seconds) {
-            while (process.stderr.receive(text).getOrThrow() != ReadResult.EOF) {
+            val helloStream = if (ptyManagement == PTYManagement.NO_PTY) {
+              process.stderr
+            } else {
+              process.stdout // stderr is redirected to stdout when launched with PTY
+            }
+            while (helloStream.receive(text).getOrThrow() != ReadResult.EOF) {
               if (HELLO in text.slice(0, text.position()).decodeString()) break
             }
           }

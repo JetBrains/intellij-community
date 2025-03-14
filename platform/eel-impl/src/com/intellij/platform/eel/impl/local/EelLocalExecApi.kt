@@ -50,7 +50,7 @@ class EelLocalExecApi : EelExecApi {
               environment.getOrPut("TERM") { "xterm" }
             }
             LocalEelProcess(PtyProcessBuilder()
-                              .setConsole(true)
+                              .setConsole(!p.echo)
                               .setCommand(arrayOf(builder.exe) + args)
                               .setEnvironment(environment)
                               .setDirectory(builder.workingDirectory?.toString())
