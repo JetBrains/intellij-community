@@ -32,7 +32,7 @@ class XNextRoundedBorder private constructor(
       val borderColor = fillColor
       val emptyCornersGraphics = { g: Graphics, c: JComponent -> IdeBackgroundUtil.withEditorBackground(g, c) }
       val emptyCornersColor = { c: JComponent -> InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() }
-      val arcDiameter: Int = 35
+      val arcDiameter = 35
       val thickness: Int = JBUI.scale(2)
       val innerInsets: Insets = JBInsets(12, 12, 12, 12)
       val outerInsets: Insets = JBInsets(6, 5, 6, 5)
@@ -44,7 +44,7 @@ class XNextRoundedBorder private constructor(
       val borderColor = fillColor
       val emptyCornersGraphics = { g: Graphics, c: JComponent -> IdeBackgroundUtil.withEditorBackground(g, c) }
       val emptyCornersColor = { c: JComponent -> InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() }
-      val arcDiameter: Int = 30
+      val arcDiameter = 30
       val thickness: Int = JBUI.scale(2)
       val innerInsets: Insets = JBInsets(12, 6, 12, 12)
       val outerInsets: Insets = JBInsets(6, 0, 0, 5)
@@ -57,22 +57,22 @@ class XNextRoundedBorder private constructor(
       val emptyCornersGraphics = { g: Graphics, c: JComponent -> IdeBackgroundUtil.withEditorBackground(g, c) }
       val emptyCornersColor: (c: JComponent) -> Paint? = { c: JComponent -> InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() }
       val thickness: Int = JBUI.scale(2)
-      val arcDiameter: Int = 35
+      val arcDiameter = 35
       val innerInsets: Insets = JBInsets(10, 25, 10, 15)
       val outerInsets: Insets = JBInsets(4, 10, 4, 10)
 
       return XNextRoundedBorder(fillColor, borderColor, emptyCornersGraphics, emptyCornersColor, arcDiameter, thickness, innerInsets, outerInsets)
     }
 
-    fun createAiChatBorder(borderColor: (c: JComponent) -> Paint? = { c: JComponent -> c.background }): XNextRoundedBorder {
+    fun createAiChatBorder(fillColor: (c: JComponent) -> Paint? = { c: JComponent -> c.background }, borderColor: (c: JComponent) -> Paint? = { c: JComponent -> c.background }): XNextRoundedBorder {
 
       val emptyCornersGraphics = { g: Graphics, c: JComponent -> null }
       val emptyCornersColor: (c: JComponent) -> Paint? = { c: JComponent -> null }
       val thickness: Int = JBUI.scale(2)
-      val arcDiameter: Int = 35
-      val innerInsets: Insets = JBInsets(5, 10, 5, 5)
+      val arcDiameter = 35
+      val innerInsets: Insets = JBInsets(5, 15, 5, 5)
 
-      return XNextRoundedBorder({null}, borderColor, emptyCornersGraphics, emptyCornersColor, arcDiameter, thickness, innerInsets)
+      return XNextRoundedBorder(fillColor, borderColor, emptyCornersGraphics, emptyCornersColor, arcDiameter, thickness, innerInsets)
     }
   }
 

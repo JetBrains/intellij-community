@@ -64,6 +64,8 @@ open class InternalUICustomization {
 
   open fun transformGraphics(component: JComponent, graphics: Graphics): Graphics = graphics
 
+  open fun transformButtonGraphics(graphics: Graphics): Graphics = graphics
+
   open fun preserveGraphics(graphics: Graphics): Graphics = graphics
 
   open fun createCustomDivider(isVertical: Boolean, splitter: Splittable): Divider? = null
