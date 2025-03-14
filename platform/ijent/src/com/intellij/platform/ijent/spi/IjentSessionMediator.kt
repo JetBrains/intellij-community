@@ -235,7 +235,16 @@ private fun logIjentStderr(ijentLabel: String, line: String) {
   val (rawRemoteDateTime, level, message) =
     ijentLogMessageRegex.matchEntire(line)?.destructured
     ?: run {
-      LOG.info("$ijentLabel log: $line")
+      val message = "$ijentLabel log: $line"
+      // It's important to always log such messages,
+      // but if logs are supposed to be written to a separate file in debug level,
+      // they're logged in debug level.
+      if (LOG.isDebugEnabled) {
+        LOG.debug(message)
+      }
+      else {
+        LOG.info(message)
+      }
       return
     }
 

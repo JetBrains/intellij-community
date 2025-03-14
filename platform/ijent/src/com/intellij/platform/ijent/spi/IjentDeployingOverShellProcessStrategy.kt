@@ -45,7 +45,8 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
       createDeployingContext(shellProcess.apply {
         val initializationTime = measureTime {
           withTimeout(runCatching { Registry.intValue("ijent.shell.initialization.timeout") }.getOrDefault(30_000).milliseconds) {
-            write("set -ex")
+            val debugOption = if (LOG.isDebugEnabled) "x" else ""
+            write("set -e$debugOption")
             ensureActive()
             filterOutBanners()
           }
