@@ -29,7 +29,7 @@ fun confirmLoadingUntrustedProject(
   return TrustedProjectsDialog.confirmLoadingUntrustedProject(project, title, message, trustButtonText, distrustButtonText)
 }
 
-@ApiStatus.Internal
+@ApiStatus.Internal // Used in MPS
 enum class OpenUntrustedProjectChoice {
   TRUST_AND_OPEN,
   OPEN_IN_SAFE_MODE,
@@ -113,10 +113,7 @@ interface TrustStateListener {
   }
 }
 
-/**
- * Used in MPS
- */
-@ApiStatus.Internal
+@ApiStatus.Internal // Used in MPS
 const val TRUSTED_PROJECTS_HELP_TOPIC: String = "Project_security"
 
 private class ShowTrustProjectDialogAction : DumbAwareAction() {

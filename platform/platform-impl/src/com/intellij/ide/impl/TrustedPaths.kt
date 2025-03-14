@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-@ApiStatus.Internal
+@ApiStatus.Internal // Used in MPS
 @State(name = "Trusted.Paths",
        category = SettingsCategory.TOOLS,
        exportable = true,
