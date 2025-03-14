@@ -15,20 +15,13 @@
  */
 package com.intellij.debugger.impl
 
-import kotlin.coroutines.CoroutineContext
-
 /**
  * @author Eugene Zhuravlev
  */
 interface PrioritizedTask {
   val priority: Priority
 
-  enum class Priority : CoroutineContext.Element {
-    HIGH, NORMAL, LOW, LOWEST;
-
-    override val key: CoroutineContext.Key<*>
-      get() = Key
-
-    companion object Key : CoroutineContext.Key<Priority>
+  enum class Priority {
+    HIGH, NORMAL, LOW, LOWEST
   }
 }

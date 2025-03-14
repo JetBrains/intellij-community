@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.ObjectCollectedException
 import com.sun.jdi.ThreadReference
 import com.sun.jdi.request.EventRequest
-import kotlin.coroutines.CoroutineContext
 
 /**
  *  This command tries to find the [com.intellij.debugger.engine.SuspendContext] suitable for execution,
@@ -82,12 +81,3 @@ abstract class DebuggerContextCommandImpl @JvmOverloads protected constructor(
     private val LOG = Logger.getInstance(DebuggerContextCommandImpl::class.java)
   }
 }
-
-internal data class DebugContextElement(val context: DebuggerContextImpl) : CoroutineContext.Element {
-  override val key: CoroutineContext.Key<*>
-    get() = Key
-
-  companion object Key : CoroutineContext.Key<DebugContextElement>
-}
-
-internal fun DebuggerContextImpl.asContextElement(): CoroutineContext.Element = DebugContextElement(this)
