@@ -103,8 +103,8 @@ class IdeaPluginDescriptorImpl private constructor(
    * Note that it's different from [dependenciesV2]
    */
   val pluginDependencies: List<PluginDependency> = raw.depends
-    .let(::convertDepends)
     .let(::fixDepends)
+    .let(::convertDepends)
 
   @JvmField
   val incompatibilities: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
@@ -615,7 +615,7 @@ class IdeaPluginDescriptorImpl private constructor(
       }
 
     /** https://youtrack.jetbrains.com/issue/IDEA-206274 */
-    private fun fixDepends(depends: MutableList<PluginDependency>): List<PluginDependency> {
+    private fun fixDepends(depends: List<DependsElement>): List<DependsElement> {
       val UNCHANGED = 0.toByte()
       val REMOVED = 1.toByte()
       val NON_OPTIONAL = 2.toByte()
@@ -645,7 +645,7 @@ class IdeaPluginDescriptorImpl private constructor(
         when (getState(index)) {
           UNCHANGED -> depends[index]
           REMOVED -> null
-          NON_OPTIONAL -> PluginDependency(depends[index].pluginId, depends[index].configFile, false)
+          NON_OPTIONAL -> DependsElement(depends[index].pluginId, false, depends[index].configFile)
           else -> throw IllegalStateException("Unknown state ${getState(index)}")
         }
       }
