@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use {
     anyhow::{bail, Context, Result},
@@ -32,7 +32,7 @@ macro_rules! cargo {
 fn main() {
     cargo!("rerun-if-changed=build.rs");
 
-    if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows" {
+    if env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows" {
         #[cfg(feature = "cef")]
         link_cef().expect("Failed to link with CEF");
 
@@ -42,7 +42,7 @@ fn main() {
 
 #[cfg(feature = "cef")]
 fn link_cef() -> Result<()> {
-    assert!(std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows");
+    assert_eq!(env::var("CARGO_CFG_TARGET_OS")?, "windows");
 
     let cef_version = "122.1.9+gd14e051+chromium-122.0.6261.94";
 
@@ -96,9 +96,9 @@ pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result
 #[cfg(feature = "cef")]
 fn download_file(url: &str, file: &Path) -> Result<()> {
     trace!("Downloading {url} to {file:?}");
-    let mut out = File::create(&file)?;
+    let mut out = File::create(file)?;
     let mut easy = Easy::new();
-    easy.url(&url)?;
+    easy.url(url)?;
     easy.follow_location(true)?;
     easy.write_function(move |data| {
         out.write_all(data).unwrap();
@@ -198,6 +198,7 @@ fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result
     Ok(())
 }
 
+#[cfg(feature = "cef")]
 fn is_7z_available_in_path() -> bool {
     let status = Command::new("7z")
         .arg("--help")
@@ -208,7 +209,7 @@ fn is_7z_available_in_path() -> bool {
 
 #[cfg(feature = "cef")]
 fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
-    assert!(std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows");
+    assert_eq!(env::var("CARGO_CFG_TARGET_OS")?, "windows");
 
     let cef_lib_search_path = &cef_dir.join("Release").canonicalize()?;
     let cef_lib_search_path_string = get_non_unc_string(cef_lib_search_path)?;
@@ -266,7 +267,7 @@ fn get_file_name(path: &Path) -> Result<String> {
 }
 
 fn embed_metadata() -> Result<()> {
-    assert!(std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows");
+    assert_eq!(env::var("CARGO_CFG_TARGET_OS")?, "windows");
 
     let cargo_root_env_var = env::var("CARGO_MANIFEST_DIR")?;
     let cargo_root = PathBuf::from(cargo_root_env_var);
