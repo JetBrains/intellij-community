@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
@@ -39,7 +40,6 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -153,6 +153,7 @@ class MainToolbar(
         }
       }
     }
+    repaintWhenProjectGradientOffsetChanged(this)
   }
 
   fun calculatePreferredWidth(): Int {
