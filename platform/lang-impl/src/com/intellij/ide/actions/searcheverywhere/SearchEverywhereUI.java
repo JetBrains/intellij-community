@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -157,6 +158,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   private UsagePreviewPanel myUsagePreviewPanel;
   private UsageViewPresentation myUsageViewPresentation;
   private static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
+
+  private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
 
   private int prevSelectedIndex = -1;
 
@@ -1499,6 +1502,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
                 fetch(contributor, foundElements, alreadyFoundCount, tooManyUsagesStatus);
               }
               catch (ProcessCanceledException ignore) {
+              }
+              catch (Throwable e) {
+                LOG.warn("ShowInFindToolWindowAction: Contributor " + contributor.getSearchProviderId() +" threw and exception during search:", e);
               }
             }
             fillUsages(foundElements, usages, targets);
