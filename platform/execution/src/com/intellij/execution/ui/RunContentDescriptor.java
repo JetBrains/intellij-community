@@ -303,13 +303,6 @@ public class RunContentDescriptor implements Disposable {
     return false;
   }
 
-  /**
-   * return true if the content should not be shown in toolwindows, but still should be used by {@link RunContentManager}
-   */
-  @ApiStatus.Internal
-  public boolean isUiLess() {
-    return false;
-  }
 
   public @NotNull RunContentDescriptorReusePolicy getReusePolicy() {
     return myReusePolicy;
