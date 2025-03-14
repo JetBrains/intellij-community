@@ -102,7 +102,7 @@ class IdeaPluginDescriptorImpl private constructor(
    *
    * Note that it's different from [dependenciesV2]
    */
-  val pluginDependencies: List<PluginDependency> = raw.depends
+  val pluginDependencies: List<PluginDependencyImpl> = raw.depends
     .let(::fixDepends)
     .let(::convertDepends)
 
@@ -282,7 +282,7 @@ class IdeaPluginDescriptorImpl private constructor(
   private fun processOldDependencies(descriptor: IdeaPluginDescriptorImpl,
                                      context: DescriptorListLoadingContext,
                                      pathResolver: PathResolver,
-                                     dependencies: List<PluginDependency>,
+                                     dependencies: List<PluginDependencyImpl>,
                                      dataLoader: DataLoader) {
     var visitedFiles: MutableList<String>? = null
     for (dependency in dependencies) {
@@ -609,9 +609,9 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 
   private companion object {
-    private fun convertDepends(depends: List<DependsElement>): MutableList<PluginDependency> =
+    private fun convertDepends(depends: List<DependsElement>): MutableList<PluginDependencyImpl> =
       depends.mapTo(ArrayList(depends.size)) {
-        PluginDependency(PluginId.getId(it.pluginId), it.configFile, it.isOptional)
+        PluginDependencyImpl(PluginId.getId(it.pluginId), it.configFile, it.isOptional)
       }
 
     /** https://youtrack.jetbrains.com/issue/IDEA-206274 */

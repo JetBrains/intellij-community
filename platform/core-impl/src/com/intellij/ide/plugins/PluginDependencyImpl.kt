@@ -5,9 +5,9 @@ import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PluginDependency internal constructor(override val pluginId: PluginId,
-                                            override val configFile: String?,
-                                            override val isOptional: Boolean) : PluginDependencyEx {
+class PluginDependencyImpl internal constructor(override val pluginId: PluginId,
+                                                override val configFile: String?,
+                                                override val isOptional: Boolean) : PluginDependencyEx {
   @Transient
   private var subDescriptor: IdeaPluginDescriptorImpl? = null
 
