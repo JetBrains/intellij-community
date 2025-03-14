@@ -81,60 +81,51 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id?.idString ?: raw.id!! // if it throws, it throws on `id` above
+  private var version: String? = raw.version
+  private val sinceBuild: String? = raw.sinceBuild
+  private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater( raw.untilBuild, raw.name ?: raw.id)
 
-  private val rawDescription: @NlsSafe String? = raw.description
   private val productCode: String? = raw.productCode
   private val releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
   private val releaseVersion: Int = raw.releaseVersion
   private val isLicenseOptional: Boolean = raw.isLicenseOptional
 
-  private var resourceBundleBaseName: String? = null
+  private val rawDescription: @NlsSafe String? = raw.description
+  private val category: String? = raw.category
   private val changeNotes: String? = raw.changeNotes
-  private var version: String? = raw.version
+
   private val vendor: String? = raw.vendor
   private val vendorEmail: String? = raw.vendorEmail
   private val vendorUrl: String? = raw.vendorUrl
-  private val category: String? = raw.category
   private val url: String? = raw.url
 
   private val dependenciesV1: List<PluginDependencyImpl> = raw.depends
     .let(::fixDepends)
     .let(::convertDepends)
-
   override val incompatibleWith: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
+  var pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
 
+  val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
+  val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
+  val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
+
+  private var resourceBundleBaseName: String? = null
   override val actions: List<ActionElement> = raw.actions
-
   override val miscExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions
     .let(::convertExtensions)
     .let(::sortExtensions)
 
-  val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
-
-  val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
-
-  val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
-
   val content: PluginContentDescriptor =
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
-
   override val dependenciesV2: ModuleDependenciesDescriptor = raw.dependencies.let(::convertDependencies)
-
-  var pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
-
-  val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
-
-  private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
-
-  private val isImplementationDetail: Boolean = raw.isImplementationDetail
-
-  private val isRestartRequired: Boolean = raw.isRestartRequired
-
   val packagePrefix: String? = raw.`package`
 
-  private val sinceBuild: String? = raw.sinceBuild
-  private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater( raw.untilBuild, raw.name ?: raw.id)
+  val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+  private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
+  private val isImplementationDetail: Boolean = raw.isImplementationDetail
+  private val isRestartRequired: Boolean = raw.isRestartRequired
+
   private var isEnabled = true
 
   @Transient
