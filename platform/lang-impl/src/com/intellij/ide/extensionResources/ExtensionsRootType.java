@@ -201,7 +201,7 @@ public final class ExtensionsRootType extends RootType {
     if (resources == null) {
       return Collections.emptyList();
     }
-    else if (plugin.isUseIdeaClassLoader) {
+    else if (plugin.isUseIdeaClassLoader()) {
       return ContainerUtil.toList(resources);
     }
 

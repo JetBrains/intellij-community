@@ -103,47 +103,35 @@ class IdeaPluginDescriptorImpl private constructor(
 
   override val incompatibleWith: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
 
-  @JvmField
   val actions: List<ActionElement> = raw.actions
 
   // extension point name -> list of extension descriptors
-  @JvmField
   val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.miscExtensions
     .let(::convertExtensions)
     .let(::sortExtensions)
 
-  @JvmField
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
 
-  @JvmField
   val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
 
-  @JvmField
   val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
 
-  @JvmField
   val content: PluginContentDescriptor =
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
 
   override val dependenciesV2: ModuleDependenciesDescriptor = raw.dependencies.let(::convertDependencies)
 
-  @JvmField
   var pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
 
-  @JvmField
   val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
 
-  @JvmField
   val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
 
-  @JvmField
   internal val implementationDetail: Boolean = raw.implementationDetail
 
-  @JvmField
   internal val isRestartRequired: Boolean = raw.isRestartRequired
 
-  @JvmField
   val packagePrefix: String? = raw.`package`
 
   private val sinceBuild: String? = raw.sinceBuild
@@ -151,13 +139,11 @@ class IdeaPluginDescriptorImpl private constructor(
   private var isEnabled = true
 
   @Transient
-  @JvmField
   var jarFiles: List<Path>? = null
   private var _pluginClassLoader: ClassLoader? = null
 
   var isDeleted: Boolean = false
 
-  @JvmField
   internal var isIncomplete: PluginLoadingError? = null
 
   @Volatile

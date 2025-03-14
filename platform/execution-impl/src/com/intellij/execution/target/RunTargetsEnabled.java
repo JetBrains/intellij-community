@@ -19,7 +19,7 @@ public final class RunTargetsEnabled {
     }
 
     IdeaPluginDescriptorImpl corePluginDescriptor = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
-    return corePluginDescriptor != null && corePluginDescriptor.pluginAliases.contains(PluginId.getId("com.intellij.modules.run.targets"));
+    return corePluginDescriptor != null && corePluginDescriptor.getPluginAliases().contains(PluginId.getId("com.intellij.modules.run.targets"));
   }
 
   @TestOnly

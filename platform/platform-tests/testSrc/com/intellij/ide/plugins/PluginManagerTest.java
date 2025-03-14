@@ -374,7 +374,7 @@ public class PluginManagerTest {
       var descriptor = PluginDescriptorLoadUtilsKt.createFromDescriptor(
         pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver, new LocalFsDataLoader(pluginPath));
       list.add(descriptor);
-      descriptor.jarFiles = List.of();
+      descriptor.setJarFiles(List.of());
     }
     parentContext.close();
     var result = new PluginLoadingResult(false);
@@ -413,7 +413,7 @@ public class PluginManagerTest {
       sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPluginPath().getFileName().getParent()).append("/META-INF/plugin.xml\">");
       sb.append("\n    <id>").append(escape.apply(d.getPluginId().getIdString())).append("</id>");
       sb.append("\n    <name>").append(StringUtil.escapeXmlEntities(d.getName())).append("</name>");
-      for (PluginId module : d.pluginAliases) {
+      for (PluginId module : d.getPluginAliases()) {
         sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
       for (var dependency : d.getDependencies()) {

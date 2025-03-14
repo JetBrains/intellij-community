@@ -991,7 +991,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       IdeaPluginDescriptor result = ContainerUtil.find(view, d -> pluginId.equals(d.getPluginId()));
       if (result == null && PluginManagerCore.isModuleDependency(pluginId)) {
         result = ContainerUtil.find(view, d -> {
-          return d instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)d).pluginAliases.contains(pluginId);
+          return d instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)d).getPluginAliases().contains(pluginId);
         });
         if (result != null) {
           setEnabled(pluginId, PluginEnabledState.ENABLED); // todo
