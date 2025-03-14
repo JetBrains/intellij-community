@@ -16,6 +16,7 @@ import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.utils.io.deleteRecursively
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -46,7 +47,7 @@ class ProjectWizardJdkComboBoxTest {
     val jdkTable = ProjectJdkTable.getInstance()
     val javaSdkType = SimpleJavaSdkType.getInstance()
     Disposer.register(disposable) {
-      Files.delete(path)
+      path.deleteRecursively()
     }
     val sdk = jdkTable.createSdk(name, javaSdkType)
     val modificator = sdk.sdkModificator

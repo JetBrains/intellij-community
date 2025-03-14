@@ -24,7 +24,12 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
   override val tunnels: EelTunnelsPosixApi
     get() = TODO()
   override val exec: EelExecApi
-    get() = TODO()
+    get() = object : EelExecApi {
+      override val descriptor: EelDescriptor get() = this@EelTestPosixApi.descriptor
+      override suspend fun execute(generatedBuilder: EelExecApi.ExecuteProcessOptions) = TODO()
+      override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = emptyMap()
+      override suspend fun findExeFilesInPath(binaryName: String) = TODO()
+    }
 
 }
 

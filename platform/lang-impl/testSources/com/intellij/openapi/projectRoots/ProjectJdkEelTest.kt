@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator.SdkInfo
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
@@ -14,7 +15,9 @@ import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -49,6 +52,7 @@ class ProjectJdkEelTest {
   }
 
   @Test
+  @RegistryKey("ide.workspace.model.per.environment.model.separation", "true")
   fun `multiple SDKs with the same name can exist`() = timeoutRunBlocking {
     val jdkTable = ProjectJdkTable.getInstance()
 
@@ -72,6 +76,7 @@ class ProjectJdkEelTest {
   }
 
   @Test
+  @RegistryKey("ide.workspace.model.per.environment.model.separation", "true")
   fun `removal of one jdk does not affect another`() = timeoutRunBlocking {
     val jdkTable = ProjectJdkTable.getInstance()
 
@@ -98,6 +103,7 @@ class ProjectJdkEelTest {
   }
 
   @Test
+  @RegistryKey("ide.workspace.model.per.environment.model.separation", "true")
   fun `addition of one jdk does not affect another`() = timeoutRunBlocking {
     val jdkTable = ProjectJdkTable.getInstance()
 
@@ -116,7 +122,9 @@ class ProjectJdkEelTest {
         jdkTable.addJdk(newSdk)
       }
       try {
-        localModel.reset(localProject.get())
+        withContext(Dispatchers.EDT) {
+          localModel.reset(localProject.get())
+        }
         Assertions.assertTrue { localModel.sdks.size == 1 }
         Assertions.assertTrue { eelModel.sdks.size == 1 }
         Assertions.assertEquals(newSdk.homePath, localModel.sdks[0].homePath)
@@ -213,15 +221,19 @@ class ProjectJdkEelTest {
     }
   }
 
-  private fun getLocalSdkModel(): ProjectSdksModel {
+  private suspend fun getLocalSdkModel(): ProjectSdksModel {
     return ProjectSdksModel().apply {
-      reset(localProject.get())
+      withContext(Dispatchers.EDT) {
+        reset(localProject.get())
+      }
     }
   }
 
-  private fun getEelSdkModel(): ProjectSdksModel {
+  private suspend fun getEelSdkModel(): ProjectSdksModel {
     return ProjectSdksModel().apply {
-      reset(eelProject.get())
+      withContext(Dispatchers.EDT) {
+        reset(eelProject.get())
+      }
     }
   }
 }
