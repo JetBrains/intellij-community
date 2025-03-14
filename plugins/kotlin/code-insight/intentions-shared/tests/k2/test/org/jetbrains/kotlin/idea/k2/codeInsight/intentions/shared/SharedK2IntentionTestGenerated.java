@@ -2045,6 +2045,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("../testData/intentions/removeBraces/ifWithComment2.kt");
         }
 
+        @TestMetadata("ifWithComment3.kt")
+        public void testIfWithComment3() throws Exception {
+            runTest("../testData/intentions/removeBraces/ifWithComment3.kt");
+        }
+
         @TestMetadata("ifWithLocalClass.kt")
         public void testIfWithLocalClass() throws Exception {
             runTest("../testData/intentions/removeBraces/ifWithLocalClass.kt");
