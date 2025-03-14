@@ -44,7 +44,7 @@ internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String =
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl private constructor(
   raw: RawPluginDescriptor,
-  path: Path,
+  pluginPath: Path,
   isBundled: Boolean,
   id: PluginId?,
   moduleName: String?,
@@ -56,7 +56,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   constructor(
     raw: RawPluginDescriptor,
-    path: Path,
+    pluginPath: Path,
     isBundled: Boolean,
     id: PluginId?,
     moduleName: String?,
@@ -64,7 +64,7 @@ class IdeaPluginDescriptorImpl private constructor(
     useCoreClassLoader: Boolean = false,
   ) : this(
     raw = raw,
-    path = path,
+    pluginPath = pluginPath,
     isBundled = isBundled,
     id = id,
     moduleName = moduleName,
@@ -134,7 +134,7 @@ class IdeaPluginDescriptorImpl private constructor(
   override val isIndependentFromCoreClassLoader: Boolean = isIndependentFromCoreClassLoader
   override val useCoreClassLoader: Boolean = useCoreClassLoader
 
-  private val path: Path = path
+  private val pluginPath: Path = pluginPath
 
   private var isEnabled = true
 
@@ -158,7 +158,7 @@ class IdeaPluginDescriptorImpl private constructor(
    */
   override fun getDependencies(): List<PluginDependency> = dependenciesV1
 
-  override fun getPluginPath(): Path = path
+  override fun getPluginPath(): Path = pluginPath
 
   internal fun createSub(
     subBuilder: PluginDescriptorBuilder,
@@ -171,7 +171,7 @@ class IdeaPluginDescriptorImpl private constructor(
     val raw = subBuilder.build()
     val result = IdeaPluginDescriptorImpl(
       raw = raw,
-      path = path,
+      pluginPath = pluginPath,
       isBundled = isBundled,
       id = id,
       moduleName = module?.name,
@@ -578,7 +578,7 @@ class IdeaPluginDescriptorImpl private constructor(
     "PluginDescriptor(name=$name, id=$id, " +
     (if (moduleName == null) "" else "moduleName=$moduleName, ") +
     "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-    "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
+    "path=${pluginPathToUserString(pluginPath)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
 
   private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String, visitedFiles: List<String>) {
     var i = 0
