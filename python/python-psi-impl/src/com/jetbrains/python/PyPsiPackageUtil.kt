@@ -3,6 +3,7 @@ package com.jetbrains.python
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ResourceUtil
 import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.normalizePackageName
 import java.io.IOException
 
 /**
@@ -30,7 +31,7 @@ object PyPsiPackageUtil {
   }
 
   fun moduleToPackageName(module: String, default: String = module): String {
-    return PACKAGES_TOPLEVEL.getOrDefault(module, default)
+    return normalizePackageName(PACKAGES_TOPLEVEL.getOrDefault(module, default))
   }
 
   private fun loadPackageAliases(): Map<String, String> {
