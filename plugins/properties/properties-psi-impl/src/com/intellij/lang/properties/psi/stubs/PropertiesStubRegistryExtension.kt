@@ -96,17 +96,12 @@ private class PropertiesListStubSerializer : StubSerializer<PropertiesListStub> 
     return "properties.propertieslist"
   }
 
-  @Throws(IOException::class)
-  override fun serialize(stub: PropertiesListStub, dataStream: StubOutputStream) {
-    // No additional data needed
-  }
+  override fun serialize(stub: PropertiesListStub, dataStream: StubOutputStream) = Unit
 
   @Throws(IOException::class)
   override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): PropertiesListStub {
     return PropertiesListStubImpl(parentStub)
   }
 
-  override fun indexStub(stub: PropertiesListStub, sink: IndexSink) {
-    // No additional indexing needed
-  }
+  override fun indexStub(stub: PropertiesListStub, sink: IndexSink) = Unit
 }
