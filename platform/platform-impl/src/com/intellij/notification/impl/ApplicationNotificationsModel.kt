@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl
 
-import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.ApplicationNotificationsModel.STATE_CHANGED
 import com.intellij.notification.impl.ui.NotificationsUtil
@@ -18,6 +17,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 object ApplicationNotificationsModel {
+  const val EVENT_REQUESTOR: String = "Internal notification event requestor"
+
   private val notifications = ArrayList<Notification>()
   private val projectToModel = HashMap<Project, ProjectNotificationsModel>()
   private val dataGuard = Object()
@@ -344,7 +345,7 @@ private class ProjectNotificationsModel {
     else {
       StatusMessage(notification, NotificationsUtil.buildStatusMessage(notification), notification.timestamp)
     }
-    StatusBar.Info.set("", project, ActionCenter.EVENT_REQUESTOR)
+    StatusBar.Info.set("", project, ApplicationNotificationsModel.EVENT_REQUESTOR)
   }
 
   // fired when [unreadNotifications] list changes

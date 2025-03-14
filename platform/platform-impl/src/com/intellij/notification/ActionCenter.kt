@@ -11,9 +11,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 object ActionCenter {
-  @Internal
-  const val EVENT_REQUESTOR: String = "Internal notification event requestor"
-
   @JvmStatic
   fun getNotifications(project: Project?): List<Notification> {
     return ApplicationNotificationsModel.getNotifications(project)
