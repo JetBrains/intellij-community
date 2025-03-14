@@ -101,12 +101,7 @@ class IdeaPluginDescriptorImpl private constructor(
     .let(::fixDepends)
     .let(::convertDepends)
 
-  /**
-   * aka `<depends>` elements from the plugin.xml
-   *
-   * Note that it's different from [dependenciesV2]
-   */
-  val dependenciesV1: List<PluginDependency> get() = _dependenciesV1
+  private val dependenciesV1: List<PluginDependency> get() = _dependenciesV1
 
   val incompatibilities: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
 
@@ -172,6 +167,11 @@ class IdeaPluginDescriptorImpl private constructor(
 
   override fun getDescriptorPath(): String? = descriptorPath
 
+  /**
+   * aka `<depends>` elements from the plugin.xml
+   *
+   * Note that it's different from [dependenciesV2]
+   */
   override fun getDependencies(): List<PluginDependency> = dependenciesV1
 
   override fun getPluginPath(): Path = path
