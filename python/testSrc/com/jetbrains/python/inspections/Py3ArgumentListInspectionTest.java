@@ -488,4 +488,30 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    dict(<warning descr="Expected a mapping, got int">**1</warning>)
                    """);
   }
+
+  // PY-79816
+  public void testGenericDataclassExplicitType() {
+    doTest();
+  }
+
+
+  // PY-79816
+  public void testGenericDataclassExplicitTypeDeconstructed() {
+    doTest();
+  }
+
+  // PY-79816
+  public void testGenericClassExplicitTypeDeconstructed() {
+    doTest();
+  }
+
+  // PY-79816
+  public void testGenericDataclassDeconstructed() {
+    doTest();
+  }
+
+  // PY-79816
+  public void testClassWith__init__Deconstructed() {
+    doTest();
+  }
 }

@@ -1362,8 +1362,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   // PY-78250
   public void testInitializingGenericDataclass() {
     runWithLanguageLevel(LanguageLevel.PYTHON313, () -> {
-      final Map<String, PsiElement> marks = loadTest(1);
+      final Map<String, PsiElement> marks = loadTest(2);
       feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: T", new String[]{"x: T"});
+      feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: T", new String[]{"x: T"});
     });
   }
 
