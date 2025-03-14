@@ -13,6 +13,12 @@ fun Finder.tryToScrollDown() {
   }
 }
 
+fun Finder.tryToScrollRight() {
+  runCatching {
+    scrollBars().single { it.getOrientation() == JScrollBar.HORIZONTAL }.scrollToMaximum()
+  }
+}
+
 fun Finder.scrollBars(): List<JScrollBarUi> = xx(xQuery { byType(JScrollBar::class.java) }, JScrollBarUi::class.java).list()
 
 fun Finder.verticalScrollBar(f: JScrollBarUi.() -> Unit = {}) =
