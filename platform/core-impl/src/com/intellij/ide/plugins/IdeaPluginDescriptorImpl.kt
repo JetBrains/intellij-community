@@ -51,7 +51,7 @@ class IdeaPluginDescriptorImpl private constructor(
   moduleLoadingRule: ModuleLoadingRule? = null,
   useCoreClassLoader: Boolean = false,
   isIndependentFromCoreClassLoader: Boolean = false,
-  private val descriptorPath: String? = null
+  descriptorPath: String? = null
 ) : IdeaPluginDescriptorEx {
 
   constructor(
@@ -135,6 +135,7 @@ class IdeaPluginDescriptorImpl private constructor(
   override val useCoreClassLoader: Boolean = useCoreClassLoader
 
   private val pluginPath: Path = pluginPath
+  private val descriptorPath: String? = descriptorPath
 
   private var isEnabled = true
 

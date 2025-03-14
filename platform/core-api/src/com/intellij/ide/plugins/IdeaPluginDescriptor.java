@@ -18,5 +18,8 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
    */
   @NotNull List<IdeaPluginDependency> getDependencies();
 
+  /**
+   * Path to the descriptor file relative to the plugin location
+   */
   @Nullable String getDescriptorPath();
 }
