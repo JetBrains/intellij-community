@@ -1,9 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.execution.Platform;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.Disposer;
@@ -34,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,6 +48,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -67,11 +75,12 @@ public final class JBCefApp {
   private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 18;
 
   private static final Version MIN_SUPPORTED_GLIBC_VERSION = new Version(2, 28, 0);
+  private static final AtomicInteger CEFAPP_INSTANCE_COUNT = new AtomicInteger(0);
 
   private final @Nullable CefDelegate myDelegate;
-  private final @Nullable CefApp myCefApp;
-
-  private final @Nullable CefSettings myCefSettings;
+  private @Nullable CefApp myCefApp;
+  private @Nullable String[] myCefArgs;
+  private @Nullable CefSettings myCefSettings;
   private final @NotNull CompletableFuture<Integer> myDebuggingPort = new CompletableFuture<>();
 
   private final @NotNull Disposable myDisposable = new Disposable() {
@@ -147,9 +156,11 @@ public final class JBCefApp {
       if (settings.log_severity != CefSettings.LogSeverity.LOGSEVERITY_DISABLE || settings.log_file != null)
         LOG.info(String.format("JCEF logging: level=%s, file=%s", settings.log_severity, settings.log_file));
 
-      CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
+      myCefArgs = args;
+      CefApp.addAppHandler(new MyCefAppHandler(myCefArgs, trackGPUCrashes.get()));
       myCefSettings = settings;
       myCefApp = CefApp.getInstance(settings);
+      CEFAPP_INSTANCE_COUNT.intValue();
 
       if (myCefSettings.remote_debugging_port > 0) {
         myDebuggingPort.complete(myCefSettings.remote_debugging_port);
@@ -165,13 +176,74 @@ public final class JBCefApp {
         });
       }
 
-      if (IS_REMOTE_ENABLED)
+      if (IS_REMOTE_ENABLED) {
         myCefApp.onInitialization(state -> StartupTest.checkBrowserCreation());
+        ActionManagerEx.getInstanceEx().registerAction("RestartJCEFActionId", new AnAction("Restart JCEF") {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            restartJCEF(false, true);
+          }
+        });
+        ActionManagerEx.getInstanceEx().registerAction("RestartJCEFWithDebugActionId", new AnAction("Restart JCEF with verbose logging") {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            restartJCEF(true, true);
+          }
+        });
+      }
     }
 
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
 
+  private boolean restartJCEF(boolean withVerboseLogging, boolean withNewCachePath) {
+    if (!IS_REMOTE_ENABLED)
+      return false;
+
+    boolean result = false;
+    // Temporary use reflection to avoid jcef-version increment
+    // TODO: use setDefaultInstance directly  (CefApp cefApp)
+    Class cefAppClass = null;
+    Method setDefaultMethod = null;
+    try {
+      cefAppClass = Class.forName("org.cef.CefApp");
+      setDefaultMethod = cefAppClass.getMethod("setDefaultInstance", cefAppClass);
+    } catch (NoSuchMethodException | ClassNotFoundException  ignored) {}
+
+    if (setDefaultMethod != null) {
+      if (withVerboseLogging) {
+        myCefSettings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_VERBOSE;
+        myCefSettings.log_file = PathManager.getLogPath() + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + "_i" + CEFAPP_INSTANCE_COUNT.get() + ".log";
+        myCefArgs = ArrayUtil.mergeArrays(myCefArgs, "--vmodule=statistics_recorder*=0", "--v=1");
+      }
+      if (withNewCachePath) {
+        myCefSettings.cache_path = System.getProperty("java.io.tmpdir") + Platform.current().fileSeparator + "jcef_cache_" + ProcessHandle.current().pid() + "_i" + CEFAPP_INSTANCE_COUNT.get();
+      }
+
+      CefApp.addAppHandler(new MyCefAppHandler(myCefArgs, true));
+      final CefApp newInstance = CefApp.getInstance(myCefArgs, myCefSettings);
+      if (newInstance == null) {
+        LOG.error("JCEF wasn't restarted (new instance is null).");
+        return false;
+      }
+      if (myCefApp == newInstance) {
+        LOG.info("JCEF wasn't restarted. It seems that args and settings were the same - please dispose current CefApp and then create a new one.");
+        return false;
+      }
+      CEFAPP_INSTANCE_COUNT.intValue();
+      try {
+        setDefaultMethod.invoke(cefAppClass, newInstance);
+        result = true;
+        if (myCefApp != null)
+          myCefApp.dispose();
+        myCefApp = newInstance;
+        LOG.info("JCEF has been restarted with verbose logging, with new cache_path '" + myCefSettings.cache_path + "', with log_file '" + myCefSettings.log_file + "'");
+      } catch (IllegalAccessException | InvocationTargetException ex){
+        LOG.debug(ex);
+      }
+    }
+    return result;
+  }
 
   @NotNull
   Disposable getDisposable() {
