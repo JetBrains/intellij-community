@@ -4,8 +4,9 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
-import com.intellij.codeInsight.inline.completion.logs.statistics.UserFactorDescriptions
-import com.intellij.codeInsight.inline.completion.logs.statistics.UserFactorStorage
+import com.intellij.codeInsight.inline.completion.logs.statistics.AcceptanceRateFactorsComponent
+import com.intellij.codeInsight.inline.completion.logs.statistics.CompletionFinishedTypeComponent
+import com.intellij.codeInsight.inline.completion.logs.statistics.PrefixLengthComponent
 
 private val EXPLICIT_CANCEL_TYPES = setOf(
   FinishType.MOUSE_PRESSED,
@@ -13,20 +14,20 @@ private val EXPLICIT_CANCEL_TYPES = setOf(
   FinishType.ESCAPE_PRESSED
 )
 
-private val SELECTED_TYPE = FinishType.SELECTED
-
-private val INVALIDATED_TYPE = FinishType.INVALIDATED
-
-internal class UserFactorsListener() : InlineCompletionEventAdapter {
+internal class UserFactorsListener : InlineCompletionEventAdapter {
   /**
    * This field is not thread-safe, please access it only on EDT.
    */
   private var holder = Holder()
 
+  private val acceptanceRateFactors = AcceptanceRateFactorsComponent.getInstance()
+  private val completionFinishType = CompletionFinishedTypeComponent.getInstance()
+  private val prefixLength = PrefixLengthComponent.getInstance()
+
   /**
    * Fields inside [Holder] are not thread-safe, please access them only on EDT.
    */
-  private class Holder() {
+  private class Holder {
     var wasShown: Boolean = false
     var prefixLength: Int = 0
   }
@@ -42,41 +43,27 @@ internal class UserFactorsListener() : InlineCompletionEventAdapter {
   }
 
   override fun onHide(event: InlineCompletionEventType.Hide) {
-    if(holder.wasShown && event.finishType != SELECTED_TYPE) {
-      UserFactorStorage.apply( UserFactorDescriptions.ACCEPTANCE_RATE_FACTORS) {
-        it.fireLookupElementShowUp()
-      }
+    if (!holder.wasShown) return
+
+    if (event.finishType != FinishType.SELECTED) {
+      acceptanceRateFactors.fireElementShowUp()
     }
-    if(holder.wasShown) {
-      when (event.finishType) {
-        in EXPLICIT_CANCEL_TYPES -> {
-          UserFactorStorage.apply( UserFactorDescriptions.COMPLETION_FINISH_TYPE) {
-            it.fireExplicitCancel()
-          }
-        }
-        SELECTED_TYPE -> {
-          UserFactorStorage.apply( UserFactorDescriptions.ACCEPTANCE_RATE_FACTORS) {
-            it.fireLookupElementSelected()
-          }
-          UserFactorStorage.apply( UserFactorDescriptions.COMPLETION_FINISH_TYPE) {
-            it.fireSelected()
-          }
-          UserFactorStorage.apply(UserFactorDescriptions.PREFIX_LENGTH_ON_COMPLETION) {
-            it.fireCompletionPerformed(holder.prefixLength)
-          }
-        }
-        INVALIDATED_TYPE -> {
-          UserFactorStorage.apply( UserFactorDescriptions.COMPLETION_FINISH_TYPE) {
-            it.fireInvalidated()
-          }
-        }
-        else -> {
-          UserFactorStorage.apply( UserFactorDescriptions.COMPLETION_FINISH_TYPE) {
-            it.fireOther()
-          }
-        }
+
+    when (event.finishType) {
+      in EXPLICIT_CANCEL_TYPES -> {
+        completionFinishType.fireExplicitCancel()
+      }
+      FinishType.SELECTED -> {
+        acceptanceRateFactors.fireElementSelected()
+        completionFinishType.fireSelected()
+        prefixLength.fireCompletionPerformed(holder.prefixLength)
+      }
+      FinishType.INVALIDATED -> {
+        completionFinishType.fireInvalidated()
+      }
+      else -> {
+        completionFinishType.fireOther()
       }
     }
   }
-
 }
