@@ -127,7 +127,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
 
-  internal val implementationDetail: Boolean = raw.implementationDetail
+  internal val implementationDetail: Boolean = raw.isImplementationDetail
 
   private val isRestartRequired: Boolean = raw.isRestartRequired
 

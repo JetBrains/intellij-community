@@ -138,7 +138,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     resourceBundleBaseName = resourceBundleBaseName,
     isUseIdeaClassLoader = isUseIdeaClassLoader,
     isBundledUpdateAllowed = isBundledUpdateAllowed,
-    implementationDetail = implementationDetail,
+    isImplementationDetail = implementationDetail,
     isRestartRequired = isRestartRequired,
     isLicenseOptional = isLicenseOptional,
     isIndependentFromCoreClassLoader = isIndependentFromCoreClassLoader,
