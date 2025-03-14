@@ -5,6 +5,8 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
+import java.io.File
+import java.nio.file.Path
 
 fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
@@ -15,3 +17,7 @@ internal fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptor
 
 internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String =
   joinToString(prefix = "Plugins to $operation: [", postfix = "]") { it.idString }
+
+/** don't expose user home in error messages */
+internal fun pluginPathToUserString(file: Path): String =
+  file.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")

@@ -21,7 +21,6 @@ import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
-import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.time.ZoneOffset
@@ -698,10 +697,6 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 }
-
-// don't expose user home in error messages
-internal fun pluginPathToUserString(file: Path): String =
-  file.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")
 
 private const val registryEpName = "com.intellij.registryKey"
 
