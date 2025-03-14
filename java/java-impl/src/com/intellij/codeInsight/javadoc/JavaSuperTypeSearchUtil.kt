@@ -105,7 +105,7 @@ object JavaSuperTypeSearchUtil {
 
     val provider = object : JavaDocInfoGenerator.InheritDocProvider<T> {
       override fun getInheritDoc(target: PsiDocTagValue?): com.intellij.openapi.util.Pair<T?, JavaDocInfoGenerator.InheritDocProvider<T?>?>? {
-        return JavaDocInfoGenerator.findInheritDocTag(method, loc, target)
+        return JavaDocInfoGenerator.findInheritDocTag(matchedMethod, loc, target)
       }
       override fun getElement(): PsiClass = psiClass
     }

@@ -412,6 +412,35 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertFails { assertContains(text, "A::m-param") }
   }
 
+  fun testInheritDocRecursive() {
+    configure("""
+      public interface A {
+        /**
+         * @param a A::m-param
+         */
+        void m(int a);
+      }
+      public interface B extends A {
+        /**
+         * @param a {@inheritDoc}
+         */
+        void m(int a);
+      }
+      public interface C extends B {
+        /**
+         * @param a {@inheritDoc B}
+         */
+        void m<caret>(int a);
+      }
+    """.trimIndent())
+
+    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
+    val doc = JavaDocumentationProvider().generateDoc(method, null)
+    assert(doc != null)
+    val text = doc.toString()
+    assertContains(text, "A::m-param")
+  }
+
   fun testInheritDocImplementOrder() {
     data class Param(val order: String, val contains: String, val notContains: String)
 
