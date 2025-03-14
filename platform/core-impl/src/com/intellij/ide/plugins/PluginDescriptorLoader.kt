@@ -11,11 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
-import com.intellij.platform.plugins.parser.impl.consume
-import com.intellij.platform.plugins.parser.impl.readBasicDescriptorData
+import com.intellij.platform.plugins.parser.impl.*
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
@@ -70,19 +66,16 @@ fun loadForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = Plu
     )
   }
   else {
-    @Suppress("SSBasedInspection")
-    return runBlocking {
-      loadDescriptorFromJar(
-        file = pluginRoot,
-        context = parentContext,
-        pool = NonShareableJavaZipFilePool(),
-        pathResolver = pathResolver,
-        descriptorRelativePath = relativePath,
-        isBundled = true,
-        isEssential = true,
-        id = id,
-      )
-    }
+    return loadDescriptorFromJar(
+      file = pluginRoot,
+      context = parentContext,
+      pool = NonShareableJavaZipFilePool(),
+      pathResolver = pathResolver,
+      descriptorRelativePath = relativePath,
+      isBundled = true,
+      isEssential = true,
+      id = id,
+    )
   }
 }
 
