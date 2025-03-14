@@ -553,8 +553,8 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar", "foo", "baz")
     val bar = pluginSet.getEnabledPlugin("bar")
-    val sub = bar.pluginDependencies[0].getSubDescriptor()!!
-    val subsub = sub.pluginDependencies[0].getSubDescriptor()!!
+    val sub = bar.pluginDependencies[0].subDescriptor!!
+    val subsub = sub.pluginDependencies[0].subDescriptor!!
     assertThat(subsub).hasExactlyApplicationServices("service")
   }
 

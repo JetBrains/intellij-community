@@ -190,7 +190,7 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
       idMap.get(PluginManagerCore.CORE_ID.idString)!!.content.modules.mapTo(dependenciesCollector) { it.requireDescriptor() }
     }
 
-    dependency.getSubDescriptor()?.let {
+    dependency.subDescriptor?.let {
       collectDirectDependenciesInOldFormat(it, idMap, dependenciesCollector)
     }
   }

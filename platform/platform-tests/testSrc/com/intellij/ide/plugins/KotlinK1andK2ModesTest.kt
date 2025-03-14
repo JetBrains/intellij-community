@@ -99,7 +99,7 @@ class KotlinK1andK2ModesTest {
     assertThat(plugin.isEnabled).isTrue()
 
     val dependency = plugin.pluginDependencies.single()
-    assertThat(dependency.getSubDescriptor()).isNull()
+    assertThat(dependency.subDescriptor).isNull()
   }
 
   @Test
@@ -123,7 +123,7 @@ class KotlinK1andK2ModesTest {
     assertThat(plugin.isEnabled).isTrue()
 
     val dependency = plugin.pluginDependencies.single()
-    assertThat(dependency.getSubDescriptor()).isNotNull()
+    assertThat(dependency.subDescriptor).isNotNull()
   }
 }
 
