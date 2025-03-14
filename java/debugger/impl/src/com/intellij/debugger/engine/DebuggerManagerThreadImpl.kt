@@ -34,7 +34,6 @@ import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.measureNanoTime
 
@@ -49,7 +48,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
 
   internal val debuggerThreadDispatcher = DebuggerThreadDispatcher(this)
   private val myDebugProcess = WeakReference(debugProcess)
-  internal val dispatchedCommandsCounter = AtomicInteger(0)
+  internal val dispatchedCommandsCounter get() = debuggerThreadDispatcher.dispatchedCommandsCounter
 
   @ApiStatus.Internal
   var coroutineScope: CoroutineScope = createScope()
@@ -421,13 +420,10 @@ fun executeOnDMT(
   suspendContext: SuspendContextImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
   block: suspend CoroutineScope.() -> Unit,
-): Job {
-  val managerThread = suspendContext.managerThread
-  return withJobCommandTracking(managerThread) {
-    val newContext = Dispatchers.Debugger(managerThread) + SuspendContextCommandProvider(suspendContext, priority)
-    suspendContext.coroutineScope.launch(newContext, block = block)
-  }
-}
+): Job = suspendContext.coroutineScope.launch(
+  context = Dispatchers.Debugger(suspendContext.managerThread) + SuspendContextCommandProvider(suspendContext, priority),
+  block = block
+)
 
 /**
  * Runs [block] in debugger manager thread as a [DebuggerCommandImpl].
@@ -440,10 +436,10 @@ fun executeOnDMT(
   managerThread: DebuggerManagerThreadImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
   block: suspend CoroutineScope.() -> Unit,
-): Job = withJobCommandTracking(managerThread) {
-  val newContext = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(priority)
-  managerThread.coroutineScope.launch(newContext, block = block)
-}
+): Job = managerThread.coroutineScope.launch(
+  context = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(priority),
+  block = block
+)
 
 
 /**
@@ -459,10 +455,10 @@ fun executeOnDMT(
   block: suspend CoroutineScope.() -> Unit,
 ): Job {
   val managerThread = debuggerContext.managerThread!!
-  return withJobCommandTracking(managerThread) {
-    val newContext = Dispatchers.Debugger(managerThread) + DebuggerContextCommandProvider(debuggerContext, priority)
-    managerThread.coroutineScope.launch(newContext, block = block)
-  }
+  return managerThread.coroutineScope.launch(
+    context = Dispatchers.Debugger(managerThread) + DebuggerContextCommandProvider(debuggerContext, priority),
+    block = block
+  )
 }
 
 /**
@@ -478,11 +474,11 @@ suspend fun <T> withDebugContext(
   suspendContext: SuspendContextImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
   block: suspend CoroutineScope.() -> T,
-): T {
-  val managerThread = suspendContext.managerThread
-  val newContext = Dispatchers.Debugger(managerThread) + SuspendContextCommandProvider(suspendContext, priority)
-  return runWithContext(managerThread, newContext, suspendContext.coroutineScope, block)
-}
+): T = runWithContext(
+  context = Dispatchers.Debugger(suspendContext.managerThread) + SuspendContextCommandProvider(suspendContext, priority),
+  parentScope = suspendContext.coroutineScope,
+  block = block
+)
 
 /**
  * Runs [block] in debugger manager thread as a [DebuggerCommandImpl].
@@ -497,10 +493,11 @@ suspend fun <T> withDebugContext(
   managerThread: DebuggerManagerThreadImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
   block: suspend CoroutineScope.() -> T,
-): T {
-  val newContext = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(priority)
-  return runWithContext(managerThread, newContext, managerThread.coroutineScope, block)
-}
+): T = runWithContext(
+  context = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(priority),
+  parentScope = managerThread.coroutineScope,
+  block = block
+)
 
 /**
  * Runs [block] in debugger manager thread as a [com.intellij.debugger.engine.events.DebuggerContextCommandImpl].
@@ -517,8 +514,11 @@ suspend fun <T> withDebugContext(
   block: suspend CoroutineScope.() -> T,
 ): T {
   val managerThread = debuggerContext.managerThread!!
-  val newContext = Dispatchers.Debugger(managerThread) + DebuggerContextCommandProvider(debuggerContext, priority)
-  return runWithContext(managerThread, newContext, managerThread.coroutineScope, block)
+  return runWithContext(
+    context = Dispatchers.Debugger(managerThread) + DebuggerContextCommandProvider(debuggerContext, priority),
+    parentScope = managerThread.coroutineScope,
+    block = block
+  )
 }
 
 /**
@@ -529,21 +529,11 @@ suspend fun <T> withDebugContext(
  * Due to [DebuggerThreadDispatcher] having a more complex contract than only thread switching, we need to ensure dispatching here.
  */
 private suspend fun <T> runWithContext(
-  managerThread: DebuggerManagerThreadImpl,
   context: CoroutineContext,
   parentScope: CoroutineScope,
   block: suspend CoroutineScope.() -> T,
 ): T = coroutineScope {
   // Ensure the job is canceled when the corresponding CoroutineScope is closed
   attachAsChildTo(parentScope)
-  withJobCommandTracking(managerThread) {
-    async(context, block = block)
-  }.await()
-}
-
-private inline fun <T : Job> withJobCommandTracking(managerThread: DebuggerManagerThreadImpl, block: () -> T): T {
-  managerThread.dispatchedCommandsCounter.incrementAndGet()
-  val job = block()
-  job.invokeOnCompletion { managerThread.dispatchedCommandsCounter.decrementAndGet() }
-  return job
+  async(context, block = block).await()
 }

@@ -6,15 +6,22 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.PrioritizedTask
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 
 internal class DebuggerThreadDispatcher(private val managerThread: DebuggerManagerThreadImpl) : CoroutineDispatcher() {
+  internal val dispatchedCommandsCounter = AtomicInteger()
+
   override fun dispatch(context: CoroutineContext, block: Runnable) {
     val debuggerCommand = createCommand(context, block)
+    val job = context[Job]
+    if (job != null) {
+      dispatchedCommandsCounter.incrementAndGet()
+      job.invokeOnCompletion {
+        dispatchedCommandsCounter.decrementAndGet()
+      }
+    }
     managerThread.schedule(debuggerCommand)
   }
 
