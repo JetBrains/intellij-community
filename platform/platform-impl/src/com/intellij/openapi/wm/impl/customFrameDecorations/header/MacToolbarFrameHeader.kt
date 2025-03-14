@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -122,6 +123,8 @@ internal class MacToolbarFrameHeader(
       frame.removeWindowListener(windowListener)
       frame.removeWindowStateListener(windowListener)
     }
+
+    repaintWhenProjectGradientOffsetChanged(this)
   }
 
   override fun getComponentGraphics(graphics: Graphics?): Graphics? {
