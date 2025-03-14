@@ -1,21 +1,7 @@
 package org.jetbrains.jewel.markdown.processing
 
-import org.commonmark.node.Block
-import org.commonmark.node.BlockQuote
-import org.commonmark.node.BulletList
-import org.commonmark.node.CustomBlock
-import org.commonmark.node.Document
-import org.commonmark.node.FencedCodeBlock
-import org.commonmark.node.Heading
-import org.commonmark.node.HtmlBlock
-import org.commonmark.node.IndentedCodeBlock
+import org.commonmark.node.*
 import org.commonmark.node.ListBlock as CMListBlock
-import org.commonmark.node.ListItem
-import org.commonmark.node.Node
-import org.commonmark.node.OrderedList
-import org.commonmark.node.Paragraph
-import org.commonmark.node.SourceSpan
-import org.commonmark.node.ThematicBreak
 import org.commonmark.parser.Parser
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
@@ -265,15 +251,19 @@ public class MarkdownProcessor(
             }
 
             else -> null
-        }.also { block ->
+        }.let { block ->
             if (scrollingSynchronizer != null && this is Block && block != null) {
                 postProcess(scrollingSynchronizer, this, block)
-            }
+            } else block
         }
 
-    private fun postProcess(scrollingSynchronizer: ScrollingSynchronizer, block: Block, mdBlock: MarkdownBlock) {
-        val spans = block.sourceSpans.takeIf { it.isNotEmpty() } ?: return
-        scrollingSynchronizer.acceptBlockSpans(mdBlock, spans.first().lineIndex..spans.last().lineIndex)
+    private fun postProcess(
+        scrollingSynchronizer: ScrollingSynchronizer,
+        block: Block,
+        mdBlock: MarkdownBlock,
+    ): MarkdownBlock {
+        val spans = block.sourceSpans.takeIf { it.isNotEmpty() } ?: return mdBlock
+        return scrollingSynchronizer.acceptBlockSpans(mdBlock, spans.first().lineIndex..spans.last().lineIndex)
     }
 
     private fun Paragraph.toMarkdownParagraph(): MarkdownBlock.Paragraph =

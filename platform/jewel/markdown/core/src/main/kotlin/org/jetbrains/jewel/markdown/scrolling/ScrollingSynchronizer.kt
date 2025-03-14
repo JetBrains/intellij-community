@@ -11,10 +11,11 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.TextLayoutResult
-import java.util.TreeMap
+import java.util.*
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.util.myLogger
 import org.jetbrains.jewel.markdown.MarkdownBlock
+import org.jetbrains.jewel.markdown.WithChildrenMarkdown
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 
 /**
@@ -94,8 +95,11 @@ public abstract class ScrollingSynchronizer {
     /**
      * Accept mapping between the markdown [block] and the [sourceRange] of lines containing this block. Called on every
      * block after it was (re)parsed.
+     *
+     * Return [MarkdownBlock] processed by the synchronizer. For example, see [PerLine.acceptBlockSpans] which just
+     * wraps a given [block] to a unique class, to separate equal blocks located in different places in the document.
      */
-    public abstract fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange)
+    public abstract fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange): MarkdownBlock
 
     /**
      * Accept mapping between the markdown [block] and the global [coordinates] of lines containing this block. Called
@@ -124,15 +128,16 @@ public abstract class ScrollingSynchronizer {
             }
     }
 
+    public data class LocatableMarkdownBlock(public val originalBlock: MarkdownBlock, public val lines: IntRange) :
+        MarkdownBlock.CustomBlock
+
     private class PerLine(private val scrollState: ScrollState) : ScrollingSynchronizer() {
         private val lines2Blocks = TreeMap<Int, MarkdownBlock>()
-        private var blocks2LineRanges = mutableMapOf<MarkdownBlock, IntRange>()
         private val blocks2Top = mutableMapOf<MarkdownBlock, Int>()
         private val previousPositions = mutableMapOf<MarkdownBlock, Int>()
 
-        // Only used to clean up obsolete keys in the maps above;
-        // otherwise stale MarkdownBlocks will keep piling up on each typed key
-        private val actualBlocks = mutableSetOf<MarkdownBlock>()
+        private var lastBlocks = listOf<LocatableMarkdownBlock>()
+        private val currentBlocks = mutableListOf<LocatableMarkdownBlock>()
 
         // It'd be a bit more performant if there were a map mapping lines to offsets,
         // and that was the initial approach,
@@ -152,7 +157,7 @@ public abstract class ScrollingSynchronizer {
             val block = findBestBlockForLine(sourceLine) ?: return
             val y = blocks2Top[block] ?: return
             if (y < 0) return
-            val lineRange = blocks2LineRanges[block] ?: return
+            val lineRange = (block as? LocatableMarkdownBlock)?.lines ?: return
             val textOffsets = blocks2TextOffsets[block]
             // The line may be empty and represent no block,
             // in this case scroll to the first line of the first block positioned after the line
@@ -176,24 +181,81 @@ public abstract class ScrollingSynchronizer {
             // acceptBlockSpans works on ALL the nodes, including those unchanged,
             // so it will be fully rebuilt during processing anyway
             lines2Blocks.clear()
-            blocks2LineRanges.clear()
         }
 
         override fun afterProcessing() {
-            blocks2LineRanges.keys.retainAll(actualBlocks)
-            blocks2Top.keys.retainAll(actualBlocks)
-            blocks2TextOffsets.keys.retainAll(actualBlocks)
-            previousPositions.keys.retainAll(actualBlocks)
-            actualBlocks.clear()
+            var firstChangedIndex = -1
+            for (i in 0..minOf(lastBlocks.lastIndex, currentBlocks.lastIndex)) {
+                val current = currentBlocks[i]
+                val last = lastBlocks[i]
+                if (!current.originallyEquals(last)) {
+                    firstChangedIndex = i
+                    break
+                }
+                if (current.lines != last.lines) {
+                    replace(last, current)
+                }
+            }
+            for (lastI in lastBlocks.lastIndex downTo firstChangedIndex + 1) {
+                val currI = currentBlocks.lastIndex - (lastBlocks.lastIndex - lastI)
+                if (currI < 0) break
+                val current = currentBlocks[currI]
+                val last = lastBlocks[lastI]
+                if (!current.originallyEquals(last)) {
+                    break
+                }
+                // compose does not recalculate text layout
+                // on unchanged code blocks positioned after the changed part,
+                // so relevant keys in blocks2TextOffsets have to be updated manually
+                if (current.originalBlock is MarkdownBlock.CodeBlock) {
+                    blocks2TextOffsets.replaceKey(last, current)
+                }
+            }
+            if (firstChangedIndex >= 0) {
+                for (i in firstChangedIndex..lastBlocks.lastIndex) {
+                    blocks2Top.remove(lastBlocks[i])
+                    previousPositions.remove(lastBlocks[i])
+                }
+            }
+            lastBlocks = ArrayList(currentBlocks)
+            currentBlocks.clear()
         }
 
-        override fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange) {
+        // literally equals check that bypasses absolute line numbers;
+        // here I rely on the fact that a block cannot have its own contents and children at the
+        // same time
+        // (or, at least, its contents always take a fixed number of lines)
+        private fun MarkdownBlock.originallyEquals(other: MarkdownBlock): Boolean {
+            if (this is LocatableMarkdownBlock && other is LocatableMarkdownBlock) {
+                if (lines.endInclusive - lines.start != other.lines.endInclusive - other.lines.start) return false
+            }
+            val originalBlock = (this as? LocatableMarkdownBlock)?.originalBlock ?: this
+            val otherOriginalBlock = (other as? LocatableMarkdownBlock)?.originalBlock ?: other
+            if (originalBlock !is WithChildrenMarkdown || otherOriginalBlock !is WithChildrenMarkdown)
+                return originalBlock == otherOriginalBlock
+
+            if (originalBlock.children.size != otherOriginalBlock.children.size) return false
+            return originalBlock.children.zip(otherOriginalBlock.children).all { (a, b) -> a.originallyEquals(b) }
+        }
+
+        private fun <K, V> MutableMap<K, V>.replaceKey(oldKey: K, newKey: K) {
+            remove(oldKey)?.let { put(newKey, it) }
+        }
+
+        private fun replace(oldBlock: MarkdownBlock, newBlock: MarkdownBlock) {
+            blocks2Top.replaceKey(oldBlock, newBlock)
+            blocks2TextOffsets.replaceKey(oldBlock, newBlock)
+            previousPositions.replaceKey(oldBlock, newBlock)
+        }
+
+        override fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange): MarkdownBlock {
+            val block = LocatableMarkdownBlock(block, sourceRange)
             for (line in sourceRange) {
                 // DFS -- keep the innermost block for the given line
                 lines2Blocks.putIfAbsent(line, block)
             }
-            blocks2LineRanges[block] = sourceRange
-            actualBlocks += block
+            currentBlocks += block
+            return block
         }
 
         override fun acceptGlobalPosition(block: MarkdownBlock, coordinates: LayoutCoordinates) {
@@ -211,13 +273,14 @@ public abstract class ScrollingSynchronizer {
         }
 
         override fun acceptTextLayout(block: MarkdownBlock, textLayout: TextLayoutResult) {
-            if (block !is MarkdownBlock.CodeBlock) return
-            val sourceLines = blocks2LineRanges[block] ?: return
+            val originalBlock = (block as? LocatableMarkdownBlock)?.originalBlock ?: return
+            if (originalBlock !is MarkdownBlock.CodeBlock) return
+            val sourceLines = block.lines
 
             var y = 0
             val list = mutableListOf<Int>()
 
-            if (block is MarkdownBlock.CodeBlock.FencedCodeBlock) {
+            if (originalBlock is MarkdownBlock.CodeBlock.FencedCodeBlock) {
                 // All source lines in the fenced code block,
                 // beside the first and the last ones, are mapped 1:1 onto preview
                 // code block:
@@ -252,7 +315,7 @@ public abstract class ScrollingSynchronizer {
                 // map the line with closing triple backticks
                 // to the bottommost point of the block in the preview
                 list += y
-            } else if (block is MarkdownBlock.CodeBlock.IndentedCodeBlock) {
+            } else if (originalBlock is MarkdownBlock.CodeBlock.IndentedCodeBlock) {
                 // Indented code blocks don't have the empty last line,
                 // and the empty opening line is not counted:
                 //
