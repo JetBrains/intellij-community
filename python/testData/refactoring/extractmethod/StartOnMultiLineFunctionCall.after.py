@@ -7,9 +7,8 @@ def example_function():
 
 
 def extracted():
-    result = long_function_name(
+    return long_function_name(
         first_argument="value1",
         second_argument="value2",
         third_argument="value3"
     )
-    return result
