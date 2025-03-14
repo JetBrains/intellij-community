@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.trustedProjects
+package com.intellij.ide.trustedProjects.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.impl.TrustedProjectUtil.findAllIndexesOfSymbol
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -36,7 +37,7 @@ import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.math.ceil
 
-internal class TrustedProjectStartupDialog(
+internal class TrustedProjectsStartupDialog(
   project: Project?,
   private val projectPath: Path,
   private val pathsToExclude: List<Path>,

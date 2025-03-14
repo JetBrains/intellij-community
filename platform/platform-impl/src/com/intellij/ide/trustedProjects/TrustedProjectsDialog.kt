@@ -9,6 +9,7 @@ import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
 import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.impl.TrustedProjectsStatistics
+import com.intellij.ide.trustedProjects.impl.TrustedProjectsStartupDialog
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -54,7 +55,7 @@ object TrustedProjectsDialog {
 
     val pathsToExclude = getDefenderExcludePaths(project, projectRoot)
     val dialog = withContext(Dispatchers.EDT) {
-      val dialog = TrustedProjectStartupDialog(
+      val dialog = TrustedProjectsStartupDialog(
         project, projectRoot, pathsToExclude, title, message, trustButtonText, distrustButtonText, cancelButtonText
       )
       dialog.show()
