@@ -34,7 +34,7 @@ interface PluginDescriptorBuilder {
 
   var isUseIdeaClassLoader: Boolean
   var isBundledUpdateAllowed: Boolean
-  var implementationDetail: Boolean
+  var isImplementationDetail: Boolean
   var isRestartRequired: Boolean
   var isLicenseOptional: Boolean
   var isIndependentFromCoreClassLoader: Boolean
