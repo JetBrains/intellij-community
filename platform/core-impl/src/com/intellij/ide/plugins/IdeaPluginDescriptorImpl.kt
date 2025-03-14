@@ -619,13 +619,12 @@ class IdeaPluginDescriptorImpl private constructor(
       val iterator = depends.iterator()
       while (iterator.hasNext()) {
         val item = iterator.next()
-        if (!item.isOptional) {
-          for (a in depends) {
-            if (a.isOptional && a.pluginId == item.pluginId) {
-              a.isOptional = false
-              iterator.remove()
-              break
-            }
+        if (item.isOptional) continue
+        for (a in depends) {
+          if (a.isOptional && a.pluginId == item.pluginId) {
+            a.isOptional = false
+            iterator.remove()
+            break
           }
         }
       }
