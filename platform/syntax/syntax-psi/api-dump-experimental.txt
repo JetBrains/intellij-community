@@ -73,3 +73,7 @@
 - getOffset():I
 - f:getPosition():com.intellij.platform.syntax.lexer.LexerPosition
 - getState():I
+*f:com.intellij.platform.syntax.psi.impl.PsiSyntaxParserRuntimeFactoryImpl
+- com.intellij.platform.syntax.runtime.SyntaxParserRuntimeFactory
+- <init>(com.intellij.lang.Language):V
+- buildParserUtils(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime

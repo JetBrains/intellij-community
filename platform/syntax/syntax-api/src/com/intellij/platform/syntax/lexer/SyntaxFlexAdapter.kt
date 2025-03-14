@@ -1,14 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.syntax.psi.impl
+package com.intellij.platform.syntax.lexer
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.platform.syntax.NoopLogger
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
-import com.intellij.platform.syntax.lexer.FlexLexer
-import com.intellij.platform.syntax.lexer.Lexer
-import com.intellij.platform.syntax.lexer.LexerPosition
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.cancellation.CancellationException
 
 //A copy from com.intellij.lexer.FlexAdapter. Similarly to the FlexLexer class, it is necessary to return SyntaxElementType instead of IElementType
 @ApiStatus.Experimental
@@ -67,11 +64,13 @@ open class SyntaxFlexAdapter(val flex: FlexLexer) : Lexer {
   }
 
   override fun getCurrentPosition(): LexerPosition {
-    TODO("Not yet implemented")
+    val offset = getTokenStart()
+    val intState = getState()
+    return LexerPositionImpl(offset, intState)
   }
 
   override fun restore(position: LexerPosition) {
-    TODO("Not yet implemented")
+    start(getBufferSequence(), position.offset, getBufferEnd(), position.state);
   }
 
   override fun getBufferSequence(): CharSequence {
@@ -93,7 +92,7 @@ open class SyntaxFlexAdapter(val flex: FlexLexer) : Lexer {
       myTokenType = flex.advance()
       myTokenEnd = flex.getTokenEnd()
     }
-    catch (e: ProcessCanceledException) {
+    catch (e: CancellationException) {
       throw e
     }
     catch (e: Throwable) {
@@ -109,6 +108,8 @@ open class SyntaxFlexAdapter(val flex: FlexLexer) : Lexer {
   }
 
   companion object {
-    private val LOG = Logger.getInstance(SyntaxFlexAdapter::class.java)
+    private val LOG = NoopLogger
   }
+  
+  private class LexerPositionImpl(override val offset: Int, override val state: Int) : LexerPosition
 }
