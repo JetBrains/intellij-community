@@ -97,14 +97,16 @@ class IdeaPluginDescriptorImpl private constructor(
   private val category: String? = raw.category
   private val url: String? = raw.url
 
+  private val _pluginDependencies: List<PluginDependencyImpl> = raw.depends
+    .let(::fixDepends)
+    .let(::convertDepends)
+
   /**
    * aka `<depends>` elements from the plugin.xml
    *
    * Note that it's different from [dependenciesV2]
    */
-  val pluginDependencies: List<PluginDependencyImpl> = raw.depends
-    .let(::fixDepends)
-    .let(::convertDepends)
+  val pluginDependencies: List<PluginDependency> get() = _pluginDependencies
 
   @JvmField
   val incompatibilities: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
@@ -240,7 +242,7 @@ class IdeaPluginDescriptorImpl private constructor(
     }
 
     if (isIncomplete == null && moduleName == null) {
-      processOldDependencies(descriptor = this, context, pathResolver, pluginDependencies, dataLoader)
+      processOldDependencies(descriptor = this, context, pathResolver, _pluginDependencies, dataLoader)
     }
   }
 
@@ -339,7 +341,7 @@ class IdeaPluginDescriptorImpl private constructor(
       visitedFiles.add(configFile)
       val subDescriptor = descriptor.createSub(raw, configFile, context, module = null)
       if (subDescriptor.isIncomplete == null) {
-        subDescriptor.processOldDependencies(subDescriptor, context, pathResolver, subDescriptor.pluginDependencies, dataLoader)
+        subDescriptor.processOldDependencies(subDescriptor, context, pathResolver, subDescriptor._pluginDependencies, dataLoader)
       }
       dependency.setSubDescriptor(subDescriptor)
       visitedFiles.clear() // TODO: shouldn't it be removeLast instead?

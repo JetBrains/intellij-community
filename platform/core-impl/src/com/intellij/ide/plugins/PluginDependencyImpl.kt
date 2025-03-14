@@ -2,12 +2,12 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class PluginDependencyImpl internal constructor(override val pluginId: PluginId,
-                                                override val configFile: String?,
-                                                override val isOptional: Boolean) : PluginDependency {
+internal class PluginDependencyImpl internal constructor(
+  override val pluginId: PluginId,
+  override val configFile: String?,
+  override val isOptional: Boolean,
+) : PluginDependency {
   @Transient
   private var subDescriptor: IdeaPluginDescriptorImpl? = null
 
