@@ -172,7 +172,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   override fun getDescriptorPath(): String? = descriptorPath
 
-  override fun getDependencies(): List<IdeaPluginDependency> = dependenciesV1
+  override fun getDependencies(): List<PluginDependency> = dependenciesV1
 
   override fun getPluginPath(): Path = path
 
