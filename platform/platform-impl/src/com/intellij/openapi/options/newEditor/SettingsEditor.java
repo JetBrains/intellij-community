@@ -667,7 +667,11 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   private void checkModifiedInternal(Configurable configurable) {
     if (configurable.isModified()) {
-      filter.context.fireModifiedAdded(configurable, null);
+      if (myIsModal || editor.getConfigurable() == configurable) {
+        filter.context.fireModifiedAdded(configurable, null);
+      } else {
+        configurable.reset();
+      }
     }
     else if (!filter.context.getErrors().containsKey(configurable)) {
       filter.context.fireModifiedRemoved(configurable, null);
