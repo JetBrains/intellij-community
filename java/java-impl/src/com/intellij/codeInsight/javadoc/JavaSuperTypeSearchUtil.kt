@@ -1,0 +1,130 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.javadoc
+
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.javadoc.PsiDocTagValue
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+object JavaSuperTypeSearchUtil {
+
+  /**
+   * Performs automatic supertype search as described in the
+   * [JavaDoc Documentation Comment Specification](https://docs.oracle.com/en/java/javase/22/docs/specs/javadoc/doc-comment-spec.html#inheritdoc).
+   */
+  fun <T> automaticSupertypeSearch(
+    psiClass: PsiClass,
+    method: PsiMethod,
+    target: PsiDocTagValue?,
+    locator: JavaDocInfoGenerator.DocTagLocator<T>,
+  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+    return searchInDelegate(method, target, locator)
+           ?: search(psiClass, method, target, locator, false)
+  }
+
+  private fun <T> searchInDelegate(
+    method: PsiMethod,
+    target: PsiDocTagValue?,
+    locator: JavaDocInfoGenerator.DocTagLocator<T>,
+  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+    val delegateMethod = DocumentationDelegateProvider.findDocumentationDelegate(method) as? PsiMethod
+    if (delegateMethod != null) {
+      val delegateClass = delegateMethod.containingClass
+      if (delegateClass != null) {
+        val searchInDelegate = search(delegateClass, delegateMethod, target, locator)
+        if (searchInDelegate != null) return searchInDelegate
+      }
+    }
+    return null
+  }
+  
+  private fun <T> search(
+    psiClass: PsiClass,
+    method: PsiMethod,
+    target: PsiDocTagValue?,
+    locator: JavaDocInfoGenerator.DocTagLocator<T>,
+    checkClass: Boolean = true,
+  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+    return recursivePhase(psiClass, method, target?.text, locator, checkClass = checkClass)
+           ?: finalPhase(psiClass, method, target?.text, locator)
+  }
+
+  /**
+   * Finds the supertype recursively using the following rules:
+   * - first, visit the direct superclass
+   * - then, visit superinterfaces in the listed order
+   * - skip [java.lang.Object]
+   */
+  private fun <T> recursivePhase(
+    psiClass: PsiClass,
+    method: PsiMethod,
+    explicitSuper: String?,
+    loc: JavaDocInfoGenerator.DocTagLocator<T>,
+    visited: MutableSet<PsiClass> = mutableSetOf(),
+    checkClass: Boolean = true,
+  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+    if (psiClass.qualifiedName == "java.lang.Object") return null
+    if (visited.contains(psiClass)) return null
+
+    visited.add(psiClass)
+
+    // Check class
+    var target: Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? = null
+    if (checkClass) target = matchClass(psiClass, method, explicitSuper, loc)
+    if (target != null) return target
+
+    // Check superclass
+    val superClass = psiClass.superClass
+    if (superClass != null) {
+      target = recursivePhase(superClass, method, explicitSuper, loc, visited)
+      if (target != null) return target
+    }
+
+    // Check interfaces
+    target = (psiClass.implementsListTypes + psiClass.extendsListTypes)
+      .mapNotNull { type -> type.resolve() }
+      .firstNotNullOfOrNull { type -> recursivePhase(type, method, explicitSuper, loc, visited) }
+
+    return target
+  }
+
+  private fun <T> matchClass(
+    psiClass: PsiClass,
+    method: PsiMethod,
+    explicitSuper: String?,
+    loc: JavaDocInfoGenerator.DocTagLocator<T>,
+  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+    if (explicitSuper != null && explicitSuper != psiClass.name && explicitSuper != psiClass.qualifiedName) {
+      return null
+    }
+
+    val matchedMethod = psiClass.findMethodBySignature(method, false) ?: return null
+    val tag: T = loc.find(matchedMethod, JavaDocInfoGenerator.getDocComment(matchedMethod)) ?: return null
+
+    val provider = object : JavaDocInfoGenerator.InheritDocProvider<T> {
+      override fun getInheritDoc(target: PsiDocTagValue?): com.intellij.openapi.util.Pair<T?, JavaDocInfoGenerator.InheritDocProvider<T?>?>? {
+        return JavaDocInfoGenerator.findInheritDocTag(method, loc, target)
+      }
+      override fun getElement(): PsiClass = psiClass
+    }
+
+    return tag to provider
+  }
+
+  /**
+   * Searches for a match in [java.lang.Object] if the supertype has not been found.
+   */
+  private fun <T> finalPhase(
+    psiClass: PsiClass,
+    method: PsiMethod,
+    explicitSuper: String?,
+    loc: JavaDocInfoGenerator.DocTagLocator<T>,
+  ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
+    val javaLangObject = JavaPsiFacade.getInstance(psiClass.project)
+                           .findClass("java.lang.Object", psiClass.resolveScope)
+                         ?: return null
+    return matchClass(javaLangObject, method, explicitSuper, loc)
+  }
+}
