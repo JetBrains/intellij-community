@@ -119,18 +119,6 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
     private VirtualFileGetter(VirtualFile file) { virtualFile = file; }
 
     @Override
-    public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) return false;
-      VirtualFileGetter getter = (VirtualFileGetter)o;
-      return Objects.equals(virtualFile, getter.virtualFile);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(virtualFile);
-    }
-
-    @Override
     public VirtualFile get() {
       return virtualFile;
     }
@@ -140,18 +128,6 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
     private final LightVirtualFile virtualFile;
 
     private LightVirtualFileCopyGetter(LightVirtualFile file) { virtualFile = file; }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) return false;
-      LightVirtualFileCopyGetter getter = (LightVirtualFileCopyGetter)o;
-      return Objects.equals(virtualFile, getter.virtualFile);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(virtualFile);
-    }
 
     @Override
     public VirtualFile get() {
