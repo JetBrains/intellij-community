@@ -616,19 +616,30 @@ class IdeaPluginDescriptorImpl private constructor(
 
     /** https://youtrack.jetbrains.com/issue/IDEA-206274 */
     private fun fixDepends(depends: MutableList<PluginDependency>): List<PluginDependency> {
-      val iterator = depends.iterator()
-      while (iterator.hasNext()) {
-        val item = iterator.next()
+      val UNCHANGED = 0.toByte()
+      val REMOVED = 1.toByte()
+      var elemState: ByteArray? = null
+      fun getState(index: Int) = elemState?.get(index) ?: UNCHANGED
+      fun setState(index: Int, value: Byte) {
+        if (elemState == null) {
+          elemState = ByteArray(depends.size) { UNCHANGED }
+        }
+        elemState[index] = value
+      }
+      for ((index, item) in depends.withIndex()) {
         if (item.isOptional) continue
         for (a in depends) {
           if (a.isOptional && a.pluginId == item.pluginId) {
             a.isOptional = false
-            iterator.remove()
+            setState(index, REMOVED)
             break
           }
         }
       }
-      return depends
+      if (elemState == null) {
+        return depends
+      }
+      return depends.filterIndexed { index, _ -> getState(index) != REMOVED }
     }
 
     private fun sortExtensions(rawMap: Map<String, List<ExtensionDescriptor>>): Map<String, List<ExtensionDescriptor>> {
