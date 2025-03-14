@@ -36,7 +36,7 @@ public class JavaParserDefinition implements ParserDefinition {
   }
 
   public static @NotNull Lexer createLexer(@NotNull LanguageLevel level) {
-    return new JavaLexer(level);
+    return new LexerAdapter(JavaSyntaxDefinition.createLexer(level), getJavaElementTypeConverter());
   }
 
   /** @return A lexer which handles JEP-467 bracket escapes when parsing Java types */
