@@ -6,8 +6,6 @@ import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.wsl.WSLUtil
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
@@ -18,7 +16,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.callback.OpenExternalSystemSettingsCallback
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.project.Project
@@ -97,7 +94,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     taskNotificationListener: ExternalSystemTaskNotificationListener,
     project: Project
   ): SdkInfo? {
-    val settings = project.lock { GradleSettings.getInstance(it) }
+    val settings = GradleSettings.getInstance(project)
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath) ?: return null
 
     // Projects using Daemon JVM criteria with a compatible Gradle version will skip any
@@ -117,9 +114,9 @@ class LocalGradleExecutionAware : GradleExecutionAware {
   ): SdkInfo? {
     val originalGradleJvm = projectSettings.gradleJvm
 
-    val provider = project.lock { getGradleJvmLookupProvider(it, projectSettings) }
+    val provider = getGradleJvmLookupProvider(project, projectSettings)
 
-    var sdkInfo = project.lock { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, projectSettings.gradleJvm) }
+    val sdkInfo = provider.nonblockingResolveGradleJvmInfo(project, projectSettings.externalProjectPath, projectSettings.gradleJvm)
     if (sdkInfo is SdkInfo.Resolved) return sdkInfo
 
     waitForGradleJvmResolving(provider, task, taskNotificationListener)
@@ -131,7 +128,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       projectSettings.gradleJvm = originalGradleJvm ?: ExternalSystemJdkUtil.USE_PROJECT_JDK
     }
 
-    return project.lock { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, projectSettings.gradleJvm) }
+    return provider.nonblockingResolveGradleJvmInfo(project, projectSettings.externalProjectPath, projectSettings.gradleJvm)
   }
 
   private fun checkGradleJvmInfo(
@@ -194,21 +191,6 @@ class LocalGradleExecutionAware : GradleExecutionAware {
         override var projectRootOnTarget: String = ""
       }
     else null
-
-  /**
-   * Critical execution section.
-   * An explicit WriteAction is required to prevent the project from disposing.
-   */
-  private fun <R> Project.lock(action: (Project) -> R): R {
-    return invokeAndWaitIfNeeded {
-      runWriteAction {
-        when (isDisposed) {
-          true -> throw ProcessCanceledException()
-          else -> action(this)
-        }
-      }
-    }
-  }
 
   private fun jdkConfigurationException(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) key: String): ExternalSystemJdkException {
     val errorMessage = GradleBundle.message(key)
