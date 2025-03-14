@@ -49,7 +49,7 @@ internal class EditorsCollector :  ApplicationUsagesCollector() {
 
   private val VISUAL_STUDIO_VERSIONS_INSTALLED: EventId1<List<String>> = EDITORS_GROUP.registerEvent(
     "visual.studio.versions.installed",
-    EventFields.StringList("versions", emptyList())
+    EventFields.StringListValidatedByRegexp("versions", "{regexp#version}")
   )
 
   override suspend fun getMetricsAsync(): Set<MetricEvent> {
