@@ -61,7 +61,7 @@ class ClassLoaderConfigurator(
       mainToClassPath.put(pluginId, MainInfo(classLoader = it))
     }
 
-    if (mainDescriptor.dependenciesV1.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
+    if (mainDescriptor.dependencies.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
       // dynamically enabled optional dependency module in old format
       // based on what's happening in [configureDependenciesInOldFormat]
       assert(moduleDescriptor.pluginClassLoader == null) {
@@ -238,7 +238,7 @@ class ClassLoaderConfigurator(
   }
 
   private fun configureDependenciesInOldFormat(module: IdeaPluginDescriptorImpl, mainDependentClassLoader: ClassLoader) {
-    for (dependency in module.dependenciesV1) {
+    for (dependency in module.dependencies) {
       val subDescriptor = dependency.subDescriptor ?: continue
       if (!isKotlinPlugin(module.pluginId) &&
           isKotlinPlugin(dependency.pluginId) &&
@@ -306,7 +306,7 @@ class ClassLoaderConfigurator(
 
   private fun setPluginClassLoaderForModuleAndOldSubDescriptors(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader) {
     rootDescriptor.pluginClassLoader = classLoader
-    for (dependency in rootDescriptor.dependenciesV1) {
+    for (dependency in rootDescriptor.dependencies) {
       val subDescriptor = dependency.subDescriptor
       if (subDescriptor != null && pluginSet.isPluginEnabled(dependency.pluginId)) {
         setPluginClassLoaderForModuleAndOldSubDescriptors(subDescriptor, classLoader)
