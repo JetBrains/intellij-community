@@ -6,6 +6,7 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
+import com.intellij.util.text.CharSequenceSubSequence
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -63,6 +64,14 @@ object SyntaxBuilderUtil {
     for (marker in markers) {
       marker?.drop()
     }
+  }
+
+  fun SyntaxTreeBuilder.rawTokenText(index: Int): CharSequence {
+    return CharSequenceSubSequence(
+      baseSequence = text,
+      start = rawTokenTypeStart(index),
+      end = rawTokenTypeStart(index + 1)
+    )
   }
 
   /**

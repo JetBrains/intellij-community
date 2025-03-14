@@ -55,6 +55,7 @@
 - f:expect(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,java.util.Set):Z
 - sf:hasProperBraceBalance(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.CancellationProvider):Z
 - f:parseBlockLazy(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- f:rawTokenText(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I):java.lang.CharSequence
 *c:com.intellij.platform.syntax.util.parser.SyntaxTreeBuilderAdapter
 - com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 - <init>(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):V
