@@ -112,7 +112,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
 
       /* if the plugin containing the module is incompatible with some other plugins, make sure that the module is processed after that plugins (and all their required modules) 
          to ensure that the proper module is disabled in case of package conflict */
-      for (incompatibility in main.incompatibilities) {
+      for (incompatibility in main.incompatibleWith) {
         val incompatibleDescriptor = moduleMap.get(incompatibility.idString)
         if (incompatibleDescriptor != null) {
           additionalEdgesForCurrentModule.add(incompatibleDescriptor)
@@ -195,7 +195,7 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
     }
   }
 
-  for (moduleId in rootDescriptor.incompatibilities) {
+  for (moduleId in rootDescriptor.incompatibleWith) {
     idMap.get(moduleId.idString)?.let {
       dependenciesCollector.add(it)
     }

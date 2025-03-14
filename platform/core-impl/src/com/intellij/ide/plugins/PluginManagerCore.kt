@@ -489,7 +489,7 @@ object PluginManagerCore {
     if (explicitlyEnabled == null && shouldLoadPlugins) {
       for (essentialId in essentialPlugins) {
         val essentialPlugin = idMap[essentialId] ?: continue
-        for (incompatibleId in essentialPlugin.incompatibilities) {
+        for (incompatibleId in essentialPlugin.incompatibleWith) {
           val incompatiblePlugin = idMap[incompatibleId] ?: continue
           if (incompatiblePlugin.isEnabled) {
             incompatiblePlugin.isEnabled = false

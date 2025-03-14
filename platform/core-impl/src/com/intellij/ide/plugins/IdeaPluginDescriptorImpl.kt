@@ -101,7 +101,7 @@ class IdeaPluginDescriptorImpl private constructor(
     .let(::fixDepends)
     .let(::convertDepends)
 
-  val incompatibilities: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
+  val incompatibleWith: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
 
   @Transient
   @JvmField
