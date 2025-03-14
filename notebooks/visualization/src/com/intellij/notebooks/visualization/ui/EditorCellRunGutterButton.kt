@@ -41,7 +41,7 @@ class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: 
   private fun showRunButton() = try { cell.setGutterAction(currentAction) } catch(_: Exception) {}
   private fun hideRunButton() = cell.setGutterAction(DummyEmptyAction())
 
-  inner class RunCellGutterAction(private val cell: EditorCell) : AnAction(AllIcons.RunConfigurations.TestState.Run), ActionRemoteBehaviorSpecification.BackendOnly {
+  inner class RunCellGutterAction(private val cell: EditorCell) : AnAction(AllIcons.Actions.Execute), ActionRemoteBehaviorSpecification.BackendOnly {
     override fun actionPerformed(e: AnActionEvent) {
       val cellLineOffset = cell.interval.lines.first
       editor.caretModel.moveToOffset(editor.document.getLineStartOffset(cellLineOffset))
