@@ -42,6 +42,7 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
         public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
           clearCache();
         }
+
         @Override
         public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
           clearCache();
@@ -66,14 +67,36 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
   }
 
   private @NotNull CodeStyleCachedValueProvider getOrCreateCachedValueProvider(@NotNull VirtualFile virtualFile) {
-    synchronized(this) {
+    synchronized (this) {
       String key = getFileKey(virtualFile);
-      FileData existing = getFileData(key);
-      FileData fileData = existing != null ? existing : createFileData(key);
-      SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
-      CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
-      if (provider == null || provider.isExpired()) {
-        Supplier<VirtualFile> fileSupplier; // all values must correctly implement equals and hashCode IJPL-150378
+      FileData fileData = getFileData(key);
+      CodeStyleCachedValueProvider provider = null;
+      boolean needsFreshFileData = false;
+      if (fileData == null) {
+        needsFreshFileData = true;
+      }
+      else {
+        SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
+        provider = providerRef != null ? providerRef.get() : null;
+        if (provider == null || provider.isExpired()) {
+          needsFreshFileData = true;
+        }
+        else {
+          Supplier<VirtualFile> supplier = provider.getFileSupplier();
+          // IJPL-165316 Check whether it is a different VirtualFile at the same URL
+          if (supplier instanceof VirtualFileGetter
+              && !((VirtualFileGetter)supplier).virtualFile.equals(virtualFile)) {
+            needsFreshFileData = true;
+          }
+          // Do not recompute for LightVirtualFiles.
+          // Since we create copies to avoid leaks via PSI, the equality check always fails,
+          // but recomputing on every access might affect performance significantly.
+          // We assume that the computed settings do not depend on `virtualFile` itself.
+        }
+      }
+      if (needsFreshFileData) {
+        fileData = createFileData(key, fileData);
+        Supplier<VirtualFile> fileSupplier;
         if (virtualFile instanceof LightVirtualFile) {
           LightVirtualFile copy = getCopy((LightVirtualFile)virtualFile);
           // create a new copy each time
@@ -165,10 +188,10 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
   public synchronized @NotNull UserDataHolder getDataHolder(@NotNull VirtualFile virtualFile) {
     String key = getFileKey(virtualFile);
     FileData stored = getFileData(key);
-    return stored != null ? stored : createFileData(key);
+    return stored != null ? stored : createFileData(key, stored);
   }
 
-  private synchronized @Nullable FileData getFileData(@NotNull String path) {
+  private @Nullable FileData getFileData(@NotNull String path) {
     final FileData fileData = myFileDataCache.get(path);
     if (fileData != null) {
       fileData.update();
@@ -178,9 +201,18 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
     return fileData;
   }
 
-  private synchronized @NotNull FileData createFileData(@NotNull String path) {
+  /**
+   * Create a new FileData object and associate it with {@code path}.
+   *
+   * @param existingData the result of calling {@code getDataHolder(path)} within a same synchronized block
+   */
+  private @NotNull FileData createFileData(@NotNull String path, @Nullable FileData existingData) {
+    if (existingData != null) {
+      myFileDataCache.remove(path);
+      myRemoveQueue.remove(existingData);
+    }
     FileData newData = new FileData();
-    if (myFileDataCache.size() >= MAX_CACHE_SIZE) {
+    if (existingData == null && myFileDataCache.size() >= MAX_CACHE_SIZE) {
       FileData fileData = myRemoveQueue.poll();
       if (fileData != null) {
         myFileDataCache.values().remove(fileData);
