@@ -14,7 +14,9 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.RecentsManager
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
@@ -36,21 +38,20 @@ sealed interface K2MoveTargetModel {
 
     fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
-    open class SourceDirectory(
+    @ApiStatus.Internal
+    abstract class SourceDirectoryChooser(
         override var pkgName: FqName,
         override var directory: PsiDirectory
     ) : K2MoveTargetModel {
         private val initialDirectory = directory
 
-        override fun toDescriptor(): K2MoveTargetDescriptor.Directory = K2MoveTargetDescriptor.Directory(pkgName, directory)
-
         protected lateinit var pkgChooser: PackageNameReferenceEditorCombo
 
         protected lateinit var destinationChooser: KotlinDestinationFolderComboBox
 
-        override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+        protected fun Panel.installPkgChooser(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = directory.project
-            panel.row(KotlinBundle.message("label.text.package")) {
+            row(KotlinBundle.message("label.text.package")) {
                 pkgChooser = cell(
                     PackageNameReferenceEditorCombo(
                         "",
@@ -63,7 +64,7 @@ sealed interface K2MoveTargetModel {
                 }
                 pkgChooser.prependItem(pkgName.asString())
             }
-            panel.row(KotlinBundle.message("label.text.destination")) {
+            row(KotlinBundle.message("label.text.destination")) {
                 destinationChooser = cell(object : KotlinDestinationFolderComboBox() {
                     override fun getTargetPackage(): String {
                         return pkgChooser.text
@@ -100,6 +101,10 @@ sealed interface K2MoveTargetModel {
             destinationChooser.setData(project, directory, { s -> onError(s, destinationChooser) }, pkgChooser.childComponent)
         }
 
+        override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+            panel.installPkgChooser(onError, revalidateButtons)
+        }
+
         private companion object {
             const val RECENT_PACKAGE_KEY = "K2MoveDeclarationsDialog.RECENT_PACKAGE_KEY"
 
@@ -107,50 +112,63 @@ sealed interface K2MoveTargetModel {
         }
     }
 
-    class File(fileName: String, pkg: FqName, directory: PsiDirectory) : SourceDirectory(pkg, directory) {
-        var fileName: String = fileName
-            private set
+    open class SourceDirectory(
+        pkgName: FqName,
+        directory: PsiDirectory
+    ) : SourceDirectoryChooser(pkgName, directory) {
+        override fun toDescriptor(): K2MoveTargetDescriptor.Directory = K2MoveTargetDescriptor.Directory(pkgName, directory)
+    }
 
+    @ApiStatus.Internal
+    abstract class FileChooser(fileName: String, pkg: FqName, directory: PsiDirectory) : SourceDirectoryChooser(pkg, directory) {
+        var fileName: String = fileName
+            protected set
+
+        protected lateinit var fileChooser: TextFieldWithBrowseButton
+        protected fun Row.installFileChooser(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+            val project = directory.project
+            fileChooser = cell(TextFieldWithBrowseButton()).align(AlignX.FILL).component
+            fileChooser.text = fileName
+            fileChooser.addActionListener {
+                val dialog = KotlinFileChooserDialog(
+                    KotlinBundle.message("text.choose.containing.file"),
+                    project,
+                    project.projectScope().restrictToKotlinSources(),
+                    null
+                )
+                dialog.showDialog()
+                val selectedFile = if (dialog.isOK) dialog.selected else null
+                if (selectedFile != null) {
+                    fileChooser.text = selectedFile.name
+                    pkgChooser.prependItem(selectedFile.packageFqName.asString())
+                    ReadAction.nonBlocking<VirtualFile> {
+                        ProjectFileIndex.getInstance(project).getSourceRootForFile(selectedFile.virtualFile)
+                    }.finishOnUiThread(ModalityState.stateForComponent(destinationChooser)) { root ->
+                        destinationChooser.selectRoot(project, root)
+                    }.submit(AppExecutorUtil.getAppExecutorService())
+                }
+            }
+            fileChooser.addDocumentListener(object : DocumentAdapter() {
+                override fun textChanged(e: DocumentEvent) {
+                    fileName = fileChooser.text
+                    if (!fileName.isValidKotlinFile()) {
+                        onError(KotlinBundle.message("refactoring.move.non.kotlin.file"), fileChooser)
+                    } else {
+                        onError(null, fileChooser)
+                    }
+                    revalidateButtons()
+                }
+            })
+        }
+    }
+
+    class File(fileName: String, pkg: FqName, directory: PsiDirectory) : FileChooser(fileName, pkg, directory) {
         override fun toDescriptor(): K2MoveTargetDescriptor.File = K2MoveTargetDescriptor.File(fileName, pkgName, directory)
 
-        private lateinit var fileChooser: TextFieldWithBrowseButton
-
         override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
-            super.buildPanel(panel, onError, revalidateButtons)
-            val project = directory.project
-            panel.row(KotlinBundle.message("label.text.file")) {
-                fileChooser = cell(TextFieldWithBrowseButton()).align(AlignX.FILL).component
-                fileChooser.text = fileName
-                fileChooser.addActionListener {
-                    val dialog = KotlinFileChooserDialog(
-                        KotlinBundle.message("text.choose.containing.file"),
-                        project,
-                        project.projectScope().restrictToKotlinSources(),
-                        null
-                    )
-                    dialog.showDialog()
-                    val selectedFile = if (dialog.isOK) dialog.selected else null
-                    if (selectedFile != null) {
-                        fileChooser.text = selectedFile.name
-                        pkgChooser.prependItem(selectedFile.packageFqName.asString())
-                        ReadAction.nonBlocking<VirtualFile> {
-                            ProjectFileIndex.getInstance(project).getSourceRootForFile(selectedFile.virtualFile)
-                        }.finishOnUiThread(ModalityState.stateForComponent(destinationChooser)) { root ->
-                            destinationChooser.selectRoot(project, root)
-                        }.submit(AppExecutorUtil.getAppExecutorService())
-                    }
-                }
-                fileChooser.addDocumentListener(object : DocumentAdapter() {
-                    override fun textChanged(e: DocumentEvent) {
-                        fileName = fileChooser.text
-                        if (!fileName.isValidKotlinFile()) {
-                            onError(KotlinBundle.message("refactoring.move.non.kotlin.file"), fileChooser)
-                        } else {
-                            onError(null, fileChooser)
-                        }
-                        revalidateButtons()
-                    }
-                })
+            panel.installPkgChooser(onError, revalidateButtons)
+            panel.row {
+                installFileChooser(onError, revalidateButtons)
             }
         }
     }
