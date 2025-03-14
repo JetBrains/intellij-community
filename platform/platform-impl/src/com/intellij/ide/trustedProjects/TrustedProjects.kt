@@ -96,17 +96,25 @@ object TrustedProjects {
 
   /**
    * Checks that IDEA is loaded with a safe environment.
-   * In this mode, all projects are trusted automatically.
+   * Therefore, the trusted check isn't needed in this mode.
+   * I.e., all projects are automatically trusted in this mode.
    */
   @ApiStatus.Internal
   fun isTrustedCheckDisabled(): Boolean {
-    return java.lang.Boolean.getBoolean("idea.trust.all.projects") ||
-           application.isUnitTestMode ||
-           application.isHeadlessEnvironment
+    if (java.lang.Boolean.getBoolean("idea.trust.all.projects")) {
+      return true
+    }
+    val isHeadlessMode = application.isUnitTestMode || application.isHeadlessEnvironment
+    if (isHeadlessMode && System.getProperty("idea.trust.headless.disabled", "true").toBoolean()) {
+      return true
+    }
+    return false
   }
 
   private fun isTrustedCheckDisabledForProduct(): Boolean {
-    return java.lang.Boolean.getBoolean("idea.trust.disabled") ||
-           isTrustedCheckDisabled()
+    if (java.lang.Boolean.getBoolean("idea.trust.disabled")) {
+      return true
+    }
+    return isTrustedCheckDisabled()
   }
 }

@@ -17,6 +17,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.utils.vfs.createDirectory
@@ -30,6 +31,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
+@SystemProperty("idea.trust.headless.disabled", "false")
 abstract class TrustedProjectsHeavyTestCase {
 
   @TestDisposable
