@@ -129,7 +129,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   internal val implementationDetail: Boolean = raw.implementationDetail
 
-  internal val isRestartRequired: Boolean = raw.isRestartRequired
+  private val isRestartRequired: Boolean = raw.isRestartRequired
 
   val packagePrefix: String? = raw.`package`
 
