@@ -378,12 +378,9 @@ private fun findCurrentContext(): Triple<DebuggerManagerThreadImpl, PrioritizedT
 
 /**
  * Executes [action] in debugger manager thread and returns a future.
- * **This method can only be called in debugger manager thread.**
- * Use [invokeCommandAsCompletableFuture] with [SuspendContextImpl] param if you are not.
+ * **This method can only be called in the debugger manager thread.**
  */
-@ApiStatus.Internal
-@ApiStatus.Experimental
-fun <T> invokeCommandAsCompletableFuture(block: suspend CoroutineScope.() -> T): CompletableFuture<T> {
+internal fun <T> invokeCommandAsCompletableFuture(block: suspend CoroutineScope.() -> T): CompletableFuture<T> {
   val (managerThread, priority, suspendContext) = findCurrentContext()
   val scope = suspendContext?.coroutineScope ?: managerThread.coroutineScope
   return scope.future {
@@ -394,19 +391,6 @@ fun <T> invokeCommandAsCompletableFuture(block: suspend CoroutineScope.() -> T):
       withDebugContext(managerThread, priority, block)
     }
   }
-}
-
-/**
- * Executes [block] in debugger manager thread as a [SuspendContextCommandImpl] and returns a future.
- */
-@ApiStatus.Internal
-@ApiStatus.Experimental
-fun <T> invokeCommandAsCompletableFuture(
-  suspendContext: SuspendContextImpl,
-  priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
-  block: suspend CoroutineScope.() -> T,
-): CompletableFuture<T> = suspendContext.coroutineScope.future {
-  withDebugContext(suspendContext, priority, block)
 }
 
 /**
