@@ -32,8 +32,8 @@ import sun.font.FontUtilities;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.*;
 import javax.swing.FocusManager;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
@@ -63,8 +63,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
@@ -549,12 +549,12 @@ public final class UIUtil {
 
   /**
    * Computes the minimum size the component must have to keep the given number of characters
-   *
+   * <p>
    * Same as {@code computeTextComponentMinimumSize(preferredSize, text, fontMetrics, 4)}.
    *
-   * @param preferredSize     the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
-   * @param text              the currently set text
-   * @param fontMetrics       the current font metrics
+   * @param preferredSize the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
+   * @param text          the currently set text
+   * @param fontMetrics   the current font metrics
    * @return the minimum size the component has to have to keep the given number of characters
    */
   public static int computeTextComponentMinimumSize(
@@ -568,18 +568,19 @@ public final class UIUtil {
   /**
    * Computes the minimum size the component must have to keep the given number of characters
    * <p>
-   *   Intended to be used for simple {@code JLabel}-like text components.
-   *   Often they provide the preferred size, but not the minimum size.
-   *   This function can be used to roughly compute the minimum size based on the preferred one.
-   *   The returned size will be reduced by the difference between the full text width and
-   *   the width of the text contracted to just the {@code nCharactersToKeep} first characters plus {@code "..."}
-   *   that's usually added by such components when the text doesn't fit.
+   * Intended to be used for simple {@code JLabel}-like text components.
+   * Often they provide the preferred size, but not the minimum size.
+   * This function can be used to roughly compute the minimum size based on the preferred one.
+   * The returned size will be reduced by the difference between the full text width and
+   * the width of the text contracted to just the {@code nCharactersToKeep} first characters plus {@code "..."}
+   * that's usually added by such components when the text doesn't fit.
    * </p>
    * <p>
-   *   Note that, due to various factors, the result may be off by a few pixels which is enough to gain or lose an extra character.
-   *   Because of fractional font metrics, fractional scaling, complicated calculations, rounding errors and other such things
-   *   it's hard to make strict guarantees here.
+   * Note that, due to various factors, the result may be off by a few pixels which is enough to gain or lose an extra character.
+   * Because of fractional font metrics, fractional scaling, complicated calculations, rounding errors and other such things
+   * it's hard to make strict guarantees here.
    * </p>
+   *
    * @param preferredSize     the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
    * @param text              the currently set text
    * @param fontMetrics       the current font metrics
@@ -2582,7 +2583,7 @@ public final class UIUtil {
       if (!builder.isEmpty()) {
         builder.append(' ');
       }
-      builder.append(StringUtil.removeHtmlTags(candidate).trim());
+      builder.append(StringUtil.removeHtmlTags(candidate, true).trim());
     }
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();
