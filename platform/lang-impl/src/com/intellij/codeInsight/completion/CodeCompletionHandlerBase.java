@@ -259,12 +259,11 @@ public class CodeCompletionHandlerBase {
       lookup.setCancelOnOtherWindowOpen(true);
     }
     lookup.setLookupFocusDegree(autopopup ? LookupFocusDegree.UNFOCUSED : LookupFocusDegree.FOCUSED);
-    System.out.println("Lookup created isCompletion: " + lookup.isCompletion());
     return lookup;
   }
 
   @ApiStatus.Internal
-  public void doComplete(CompletionInitializationContextImpl initContext, boolean hasModifiers, boolean isValidContext, long startingTime) {
+  protected void doComplete(CompletionInitializationContextImpl initContext, boolean hasModifiers, boolean isValidContext, long startingTime) {
     Editor editor = initContext.getEditor();
     CompletionAssertions.checkEditorValid(editor);
 
@@ -805,14 +804,14 @@ public class CodeCompletionHandlerBase {
   }
 
   @ApiStatus.Internal
-  public static void clearCaretMarkers(@NotNull Editor editor) {
+  protected static void clearCaretMarkers(@NotNull Editor editor) {
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       caret.putUserData(CARET_PROCESSED, null);
     }
   }
 
   @ApiStatus.Internal
-  public static void markCaretAsProcessed(@NotNull Caret caret) {
+  protected static void markCaretAsProcessed(@NotNull Caret caret) {
     caret.putUserData(CARET_PROCESSED, Boolean.TRUE);
   }
 
@@ -834,7 +833,7 @@ public class CodeCompletionHandlerBase {
   }
 
   @ApiStatus.Internal
-  public static int calcSyncTimeOut(long startTime) {
+  protected static int calcSyncTimeOut(long startTime) {
     return (int)Math.max(300, ourAutoInsertItemTimeout - (System.currentTimeMillis() - startTime));
   }
 
