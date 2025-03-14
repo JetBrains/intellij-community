@@ -3,10 +3,9 @@ package com.intellij.notification
 
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.impl.ApplicationNotificationsModel
-import com.intellij.notification.impl.NotificationsToolWindowFactory
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
@@ -28,29 +27,22 @@ object ActionCenter {
   val toolwindowName: @Nls String
     get() = IdeBundle.message("toolwindow.stripe.Notifications")
 
+  @RequiresEdt
   @JvmStatic
   fun showLog(project: Project) {
-    getToolWindow(project)?.show()
+    project.service<NotificationsLogController>().show()
   }
 
+  @RequiresEdt
   @JvmStatic
   @JvmOverloads
   fun activateLog(project: Project, focus: Boolean = true) {
-    getToolWindow(project)?.activate(null, focus)
+    project.service<NotificationsLogController>().activate(focus)
   }
 
+  @RequiresEdt
   @JvmStatic
   fun toggleLog(project: Project) {
-    val toolWindow = getToolWindow(project) ?: return
-    if (toolWindow.isVisible) {
-      toolWindow.hide()
-    }
-    else {
-      toolWindow.activate(null)
-    }
-  }
-
-  private fun getToolWindow(project: Project): ToolWindow? {
-    return ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
+    project.service<NotificationsLogController>().toggle()
   }
 }

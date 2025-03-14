@@ -1098,6 +1098,8 @@
     <toolWindow id="Notifications" anchor="right" secondary="true"
                 icon="AllIcons.Toolwindows.Notifications"
                 factoryClass="com.intellij.notification.impl.NotificationsToolWindowFactory"/>
+    <projectService serviceInterface="com.intellij.notification.NotificationsLogController"
+                    serviceImplementation="com.intellij.notification.impl.NotificationsLogToolWindowController"/>
 
     <toolWindow id="Meet New UI" anchor="right" secondary="false" icon="AllIcons.Toolwindows.MeetNewUi"
                 factoryClass="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiToolWindowFactory"/>
