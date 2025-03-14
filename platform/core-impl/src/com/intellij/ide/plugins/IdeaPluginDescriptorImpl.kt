@@ -125,7 +125,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
 
-  val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
+  private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
 
   internal val implementationDetail: Boolean = raw.implementationDetail
 
