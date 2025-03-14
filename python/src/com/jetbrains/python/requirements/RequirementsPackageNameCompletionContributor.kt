@@ -9,12 +9,9 @@ import com.jetbrains.python.requirements.psi.SimpleName
 class RequirementsPackageNameCompletionContributor : CompletionContributor() {
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    val position = parameters.position
-    val parent = position.parent
-    val project = position.project
+    if (parameters.position.parent !is SimpleName) return
+    val sdk = getPythonSdk(parameters.originalFile) ?: return
 
-    if (parent is SimpleName) {
-      completePackageNames(project, result)
-    }
+    completePackageNames(parameters.position.project, sdk, result)
   }
 }
