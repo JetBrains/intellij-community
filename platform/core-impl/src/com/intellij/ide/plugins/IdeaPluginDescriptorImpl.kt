@@ -44,8 +44,8 @@ internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String =
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl private constructor(
   raw: RawPluginDescriptor,
-  private val path: Path,
-  private val isBundled: Boolean,
+  path: Path,
+  isBundled: Boolean,
   id: PluginId?,
   override val moduleName: String?,
   override val moduleLoadingRule: ModuleLoadingRule? = null,
@@ -121,10 +121,13 @@ class IdeaPluginDescriptorImpl private constructor(
   override val dependenciesV2: ModuleDependenciesDescriptor = raw.dependencies.let(::convertDependencies)
   val packagePrefix: String? = raw.`package`
 
-  val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
-  private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
-  private val isImplementationDetail: Boolean = raw.isImplementationDetail
   private val isRestartRequired: Boolean = raw.isRestartRequired
+  private val isImplementationDetail: Boolean = raw.isImplementationDetail
+  private val isBundled: Boolean = isBundled
+  private val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
+  val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+
+  private val path: Path = path
 
   private var isEnabled = true
 
