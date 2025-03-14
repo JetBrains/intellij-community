@@ -158,7 +158,7 @@ data class PluginManagerState internal constructor(
 internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescriptorImpl): Boolean {
   return !descriptor.isBundled &&
          descriptor.packagePrefix == null &&
-         !descriptor.implementationDetail &&
+         !descriptor.isImplementationDetail &&
          descriptor.content.modules.isEmpty() &&
          descriptor.dependenciesV2.modules.isEmpty() &&
          descriptor.dependenciesV2.plugins.isEmpty() &&
