@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
@@ -13,19 +14,37 @@ class KotlinQuickFixesList @ForKtQuickFixesListBuilder constructor(
     private val quickFixes: Map<KClass<out KaDiagnosticWithPsi<*>>, List<KotlinQuickFixFactory<*>>>
 ) {
     fun KaSession.getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> {
+        val fixes = getQuickFixesWithCatchingFor(diagnostic)
+        return fixes
+            .mapTo(mutableListOf()) { it.getOrThrow() }
+    }
+
+    fun KaSession.getQuickFixesWithCatchingFor(diagnostic: KaDiagnosticWithPsi<*>): Sequence<Result<IntentionAction>> {
         val factories = quickFixes[diagnostic.diagnosticClass]
-            ?: return emptyList()
+            ?: return emptySequence()
 
         return factories.asSequence()
             .map { @Suppress("UNCHECKED_CAST") (it as KotlinQuickFixFactory<KaDiagnosticWithPsi<*>>) }
-            .flatMap {
-                with(it) {
-                    createQuickFixes(diagnostic)
+            .map { factory ->
+                with(factory) {
+                    runCatching { createQuickFixes(diagnostic).map { it.asIntention() } }
+                        .recoverCatching { throwable ->
+                            when (throwable) {
+                                is ProcessCanceledException -> throw throwable
+                                else -> throw ComputingQuickfixesError("Error while creating quickfixes by ${factory}", throwable)
+                            }
+                        }
                 }
+            }.flatMap { r ->
+                r.fold(
+                    onSuccess = { actions -> actions.map { Result.success(it) }.asSequence() },
+                    onFailure = { sequenceOf(Result.failure(it)) },
+                )
             }
-            .map { it.asIntention() }
-            .toList()
+
     }
+
+    class ComputingQuickfixesError(message: String, cause: Throwable) : IllegalStateException(message, cause)
 
     companion object {
         @OptIn(ForKtQuickFixesListBuilder::class)
@@ -54,7 +73,7 @@ class KtQuickFixesListBuilder private constructor() {
     ) {
         for (factory in factories) {
             registerFactory(diagnosticClass) { diagnostic: DIAGNOSTIC ->
-                diagnostic.psi.takeIf (PsiElement::isWritable)?.let(factory::createQuickFix) ?: emptyList()
+                diagnostic.psi.let(factory::createQuickFix) ?: emptyList()
             }
         }
     }

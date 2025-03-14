@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
+import com.intellij.codeInsight.intention.CommonIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -21,6 +22,10 @@ class KotlinQuickFixService {
 
     fun KaSession.getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
         with(list) { getQuickFixesFor(diagnostic) }
+
+    fun KaSession.getQuickFixesWithCatchingFor(diagnostic: KaDiagnosticWithPsi<*>): Sequence<Result<IntentionAction>> =
+        with(list) { getQuickFixesWithCatchingFor(diagnostic) }
+
 
     fun KaSession.getImportQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<KotlinImportQuickFixAction<*>> =
         with(importOnTheFlyList) { getQuickFixesFor(diagnostic).filterIsInstance<KotlinImportQuickFixAction<*>>() }
