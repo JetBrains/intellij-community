@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil.getPathDirs
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
@@ -55,6 +56,7 @@ class EelLocalExecApi : EelExecApi {
                               .setDirectory(builder.workingDirectory?.toString())
                               .setInitialColumns(p.columns)
                               .setInitialRows(p.rows)
+                              .setSpawnProcessUsingJdkOnMacIntel(Registry.`is`("run.processes.using.pty.helper.on.mac.intel", true))
                               .start())
           }
           EelExecApi.RedirectStdErr, null -> {
