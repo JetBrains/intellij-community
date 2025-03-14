@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.librarySource.KaLibrarySourceModuleImpl
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.InternalKaModuleConstructor
 import org.jetbrains.kotlin.idea.base.platforms.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.CommonizerNativeTargetsCompat.commonizerNativeTargetsCompat
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.safeRead
@@ -26,7 +27,7 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.konan.file.File as KonanFile
 
-internal class KaLibraryModuleImpl(
+internal class KaLibraryModuleImpl @InternalKaModuleConstructor constructor(
     override val entityId: LibraryId,
     override val project: Project,
 ) : KaLibraryEntityBasedLibraryModuleBase() {
