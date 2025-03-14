@@ -14,7 +14,7 @@ public abstract class FacetManager implements FacetModel {
   public static final Topic<FacetManagerListener> FACETS_TOPIC = new Topic<>(FacetManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public static FacetManager getInstance(@NotNull Module module) {
-    return module.getComponent(FacetManager.class);
+    return FacetManagerFactory.getInstance(module.getProject()).getFacetManager(module);
   }
 
   /**
