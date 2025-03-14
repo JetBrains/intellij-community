@@ -3,15 +3,19 @@ package com.jetbrains.performancePlugin.remotedriver.fixtures
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
+import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRendererReader
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.computeOnEdt
+import org.assertj.swing.core.BasicComponentFinder
 import org.assertj.swing.core.Robot
 import org.assertj.swing.driver.BasicJTreeCellReader
 import org.assertj.swing.driver.CellRendererReader
 import org.assertj.swing.fixture.JTreeFixture
 import java.awt.Component
+import java.awt.Container
 import java.awt.Point
+import javax.swing.Icon
 import javax.swing.JTree
 
 open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeFixture(robot, component) {
@@ -69,6 +73,16 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
     computeOnEdt {
       TreeUtil.promiseExpandAll(component).blockingGet(timeoutMs)
     }
+  }
+
+  fun collectIconsAtRow(row: Int): List<Icon> {
+    val rowComponent = getComponentAtRow(row)
+    if (rowComponent is Container) {
+      return BasicComponentFinder.finderWithCurrentAwtHierarchy().findAll(rowComponent) {
+        ReflectionUtil.getMethod(it.javaClass,"getIcon") != null
+      }.mapNotNull { ReflectionUtil.getMethod(it.javaClass,"getIcon")!!.invoke(it) as? Icon }
+    }
+    return emptyList()
   }
 
   fun getComponentAtRow(row: Int): Component {
