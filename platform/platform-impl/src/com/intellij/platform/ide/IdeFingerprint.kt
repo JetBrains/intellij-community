@@ -12,6 +12,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.limits.FileSizeLimit
+import com.intellij.util.indexing.FileBasedIndexExtension
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -27,6 +28,19 @@ fun ideFingerprint(debugHelperToken: Int = 0): IdeFingerprint {
   return if (debugHelperToken == 0) fingerprint.value else computeIdeFingerprint(debugHelperToken = debugHelperToken)
 }
 
+/**
+ * Fingerprint (=hash) of current IDE installation.
+ * It used to skip the scanning/indexing process altogether if nothing has changed from previous IDE session.
+ *
+ * The defining property of the fingerprint is:
+ * 'if (fingerprint is unchanged) AND (files on disk are not changed) => it should be no reason to update indexes'.
+ * I.e. fingerprint should include all the reasons to update indexes _other_ than file(s) content change.
+ *
+ * Current algorithm to define the fingerprint (i.e. params to include/not include in the fingerprint) is not
+ * fundamental, it is just a heuristical attempt to list all the things that could affect the indexing process.
+ * The current list contains plugins versions, app build version, [FileSizeLimit]s used, and so on. The list may
+ * need to be extended in the future.
+ */
 @Internal
 @JvmInline
 value class IdeFingerprint(private val value: Long) {
@@ -70,6 +84,14 @@ private fun computeIdeFingerprint(debugHelperToken: Int): IdeFingerprint {
         addPluginFingerprint(plugin = plugin, hasher = hasher)
       }
     }
+  }
+
+  //RC: we include IDE/plugins versions AND explicit indexes versions into the fingerprint -- because index.version
+  //    could change without code change, by sys-properties or other env conditions change.
+  //    E.g. sharding: # shards could be changed with system properties, and could change automatically if #CPU changed.
+  //MAYBE RC: use com.intellij.util.indexing.FbiSnapshot -- it is a 'index version hash' thing developed for other (but similar) purposes?
+  FileBasedIndexExtension.EXTENSION_POINT_NAME.extensionList.forEach {
+    hasher.putInt(it.version)
   }
 
   hasher.putInt(debugHelperToken)
