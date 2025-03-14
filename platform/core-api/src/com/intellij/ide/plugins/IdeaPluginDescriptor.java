@@ -14,7 +14,7 @@ import java.util.List;
  */
 public interface IdeaPluginDescriptor extends PluginDescriptor {
   /**
-   * aka `<depends>` elements from the plugin.xml
+   * aka {@code <depends>} elements from the plugin.xml
    */
   @NotNull List<IdeaPluginDependency> getDependencies();
 
