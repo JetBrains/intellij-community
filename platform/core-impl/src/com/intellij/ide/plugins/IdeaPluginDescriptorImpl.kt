@@ -618,6 +618,7 @@ class IdeaPluginDescriptorImpl private constructor(
     private fun fixDepends(depends: MutableList<PluginDependency>): List<PluginDependency> {
       val UNCHANGED = 0.toByte()
       val REMOVED = 1.toByte()
+      val NON_OPTIONAL = 2.toByte()
       var elemState: ByteArray? = null
       fun getState(index: Int) = elemState?.get(index) ?: UNCHANGED
       fun setState(index: Int, value: Byte) {
@@ -626,11 +627,12 @@ class IdeaPluginDescriptorImpl private constructor(
         }
         elemState[index] = value
       }
+      fun isOptional(index: Int) = depends[index].isOptional && getState(index) == UNCHANGED
       for ((index, item) in depends.withIndex()) {
-        if (item.isOptional) continue
-        for (a in depends) {
-          if (a.isOptional && a.pluginId == item.pluginId) {
-            a.isOptional = false
+        if (isOptional(index)) continue
+        for ((candidateIndex, candidate) in depends.withIndex()) {
+          if (isOptional(candidateIndex) && candidate.pluginId == item.pluginId) {
+            setState(candidateIndex, NON_OPTIONAL)
             setState(index, REMOVED)
             break
           }
@@ -639,7 +641,14 @@ class IdeaPluginDescriptorImpl private constructor(
       if (elemState == null) {
         return depends
       }
-      return depends.filterIndexed { index, _ -> getState(index) != REMOVED }
+      return depends.mapIndexedNotNull { index, _ ->
+        when (getState(index)) {
+          UNCHANGED -> depends[index]
+          REMOVED -> null
+          NON_OPTIONAL -> PluginDependency(depends[index].pluginId, depends[index].configFile, false)
+          else -> throw IllegalStateException("Unknown state ${getState(index)}")
+        }
+      }
     }
 
     private fun sortExtensions(rawMap: Map<String, List<ExtensionDescriptor>>): Map<String, List<ExtensionDescriptor>> {
