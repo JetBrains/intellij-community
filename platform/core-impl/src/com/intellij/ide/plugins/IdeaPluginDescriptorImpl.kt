@@ -242,7 +242,7 @@ class IdeaPluginDescriptorImpl private constructor(
     }
 
     if (isIncomplete == null && moduleName == null) {
-      processOldDependencies(descriptor = this, context, pathResolver, _pluginDependencies, dataLoader)
+      processOldDependencies(descriptor = this, context, pathResolver, dataLoader)
     }
   }
 
@@ -284,10 +284,9 @@ class IdeaPluginDescriptorImpl private constructor(
   private fun processOldDependencies(descriptor: IdeaPluginDescriptorImpl,
                                      context: DescriptorListLoadingContext,
                                      pathResolver: PathResolver,
-                                     dependencies: List<PluginDependencyImpl>,
                                      dataLoader: DataLoader) {
     var visitedFiles: MutableList<String>? = null
-    for (dependency in dependencies) {
+    for (dependency in _pluginDependencies) {
       // context.isPluginIncomplete must be not checked here as another version of plugin maybe supplied later from another source
       if (context.isPluginDisabled(dependency.pluginId)) {
         if (!dependency.isOptional && isIncomplete == null) {
@@ -341,7 +340,7 @@ class IdeaPluginDescriptorImpl private constructor(
       visitedFiles.add(configFile)
       val subDescriptor = descriptor.createSub(raw, configFile, context, module = null)
       if (subDescriptor.isIncomplete == null) {
-        subDescriptor.processOldDependencies(subDescriptor, context, pathResolver, subDescriptor._pluginDependencies, dataLoader)
+        subDescriptor.processOldDependencies(subDescriptor, context, pathResolver, dataLoader)
       }
       dependency.setSubDescriptor(subDescriptor)
       visitedFiles.clear() // TODO: shouldn't it be removeLast instead?
