@@ -47,8 +47,8 @@ class IdeaPluginDescriptorImpl private constructor(
   path: Path,
   isBundled: Boolean,
   id: PluginId?,
-  override val moduleName: String?,
-  override val moduleLoadingRule: ModuleLoadingRule? = null,
+  moduleName: String?,
+  moduleLoadingRule: ModuleLoadingRule? = null,
   override val useCoreClassLoader: Boolean = false,
   override val isIndependentFromCoreClassLoader: Boolean = false,
   private val descriptorPath: String? = null
@@ -81,6 +81,10 @@ class IdeaPluginDescriptorImpl private constructor(
 
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name: String = raw.name ?: id?.idString ?: raw.id!! // if it throws, it throws on `id` above
+
+  override val moduleName: String? = moduleName
+  override val moduleLoadingRule: ModuleLoadingRule? = moduleLoadingRule
+
   private var version: String? = raw.version
   private val sinceBuild: String? = raw.sinceBuild
   private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater( raw.untilBuild, raw.name ?: raw.id)
