@@ -6,7 +6,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -29,21 +28,38 @@ import static com.intellij.lang.java.syntax.JavaElementTypeConverterKt.getJavaEl
 public class JavaParserDefinition implements ParserDefinition {
   public static final IFileElementType JAVA_FILE = new JavaFileElementType();
 
+  /**
+   * @deprecated Use {@link JavaSyntaxDefinition#createLexer(LanguageLevel)} instead.
+   */
+  @Deprecated
   @Override
   public @NotNull Lexer createLexer(@Nullable Project project) {
     LanguageLevel level = project != null ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel() : LanguageLevel.HIGHEST;
     return createLexer(level);
   }
 
+  /**
+   * @deprecated Use {@link JavaSyntaxDefinition#createLexer(LanguageLevel)} instead.
+   */
+  @Deprecated
   public static @NotNull Lexer createLexer(@NotNull LanguageLevel level) {
     return new LexerAdapter(JavaSyntaxDefinition.createLexer(level), getJavaElementTypeConverter());
   }
 
-  /** @return A lexer which handles JEP-467 bracket escapes when parsing Java types */
+  /**
+   * @return A lexer which handles JEP-467 bracket escapes when parsing Java types
+   *
+   * @deprecated Use {@link JavaSyntaxDefinition#createLexerWithMarkdownEscape(LanguageLevel)} instead.
+   */
+  @Deprecated
   public static @NotNull Lexer createLexerWithMarkdownEscape(@NotNull LanguageLevel level) {
     return new LexerAdapter(JavaSyntaxDefinition.createLexerWithMarkdownEscape(level), getJavaElementTypeConverter());
   }
 
+  /**
+   * @deprecated Use {@link JavaSyntaxDefinition#createDocLexer(LanguageLevel)} instead.
+   */
+  @Deprecated
   public static @NotNull Lexer createDocLexer(@NotNull LanguageLevel level) {
     return new LexerAdapter(JavaSyntaxDefinition.createDocLexer(level), getJavaElementTypeConverter());
   }

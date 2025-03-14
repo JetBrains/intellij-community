@@ -11,6 +11,11 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.java.syntax.JavaElementTypeConverterKt.getJavaElementTypeConverter;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.JavaSyntaxDefinition#createLexer(LanguageLevel)}
+ */
+@Deprecated
 public final class JavaLexer extends LexerAdapter {
   public JavaLexer(@NotNull LanguageLevel level) {
     super(new com.intellij.java.syntax.lexer.JavaLexer(level), getJavaElementTypeConverter());
