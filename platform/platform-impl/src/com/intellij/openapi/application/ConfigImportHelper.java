@@ -251,9 +251,13 @@ public final class ConfigImportHelper {
         if (currentlyDisabledPlugins != null) {
           try {
             Path newDisablePluginsFile = newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
-            Set<String> newDisabledPlugins = new LinkedHashSet<>(Files.readAllLines(newDisablePluginsFile));
+            Set<String> newDisabledPlugins = new LinkedHashSet<>();
+            if (newDisablePluginsFile.toFile().isFile()) {
+              newDisabledPlugins.addAll(Files.readAllLines(newDisablePluginsFile, CharsetToolkit.getPlatformCharset()));
+            }
             newDisabledPlugins.addAll(currentlyDisabledPlugins);
             Files.write(newDisablePluginsFile, newDisabledPlugins, CharsetToolkit.getPlatformCharset());
+            log.info("Disabled plugins file updated with " + newDisabledPlugins.size() + " plugins");
           }
           catch (IOException e) {
             log.warn("Couldn't write disabled plugins file", e);
