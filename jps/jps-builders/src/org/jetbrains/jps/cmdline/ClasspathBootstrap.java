@@ -38,8 +38,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,6 +79,11 @@ public final class ClasspathBootstrap {
     "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
     "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
     "jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED"
+  };
+
+  private static final String[] FORBIDDEN_JARS = {
+    "app.jar",
+    "app-client.java"
   };
 
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
@@ -124,10 +128,17 @@ public final class ClasspathBootstrap {
       if (LOG.isTraceEnabled()) {
         LOG.trace(pathString + " added to classpath to include " + aClass.getName());
       }
-      if (pathString.endsWith("app.jar") && path.getFileName().toString().equals("app.jar")) {
-        if (path.getParent().equals(Paths.get(PathManager.getLibPath()))) {
-          LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
-        }
+      assertPathDoesNotContainTheWholeWorld(pathString, path, aClass);
+    }
+  }
+
+  private static void assertPathDoesNotContainTheWholeWorld(@NotNull String pathString, @NotNull Path path, @NotNull Class<?> aClass) {
+    for (String jarName : FORBIDDEN_JARS) {
+      if (pathString.endsWith(jarName) &&
+          path.getFileName().toString().equals(jarName) &&
+          path.getParent().equals(Paths.get(PathManager.getLibPath()))
+      ) {
+        LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
       }
     }
   }
