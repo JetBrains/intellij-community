@@ -22,3 +22,6 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
    */
   val miscExtensions: Map<String, List<ExtensionDescriptor>>
 }
+
+internal val IdeaPluginDescriptorEx.isRequiredContentModule: Boolean
+  get() = moduleLoadingRule?.required == true

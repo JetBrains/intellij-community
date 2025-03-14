@@ -700,9 +700,6 @@ class IdeaPluginDescriptorImpl private constructor(
   }
 }
 
-internal val IdeaPluginDescriptorImpl.isRequiredContentModule: Boolean
-  get() = moduleLoadingRule?.required == true
-
 // don't expose user home in error messages
 internal fun pluginPathToUserString(file: Path): String =
   file.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")
