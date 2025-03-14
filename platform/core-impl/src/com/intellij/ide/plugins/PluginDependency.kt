@@ -4,7 +4,7 @@ package com.intellij.ide.plugins
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface PluginDependencyEx : IdeaPluginDependency {
+interface PluginDependency : IdeaPluginDependency {
   val configFile: String?
   fun getSubDescriptor(): IdeaPluginDescriptorImpl?
 }
