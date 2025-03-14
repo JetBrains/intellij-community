@@ -38,8 +38,16 @@ fun <T> runDumbAnalyze(useSiteElement: KtElement, fallback: T, action: KaSession
 }.executeSynchronously()
 
 @ApiStatus.Internal
-inline fun <T> dumbAction(project: Project, fallback: T, action: () -> T): T {
-    if (DumbService.isDumb(project)) return fallback
+suspend inline fun <T> dumbAction(project: Project, fallback: T, action: () -> T): T =
+    internalDumbAction(fallback, { readAction { DumbService.isDumb(project) } }, action)
+
+@ApiStatus.Internal
+inline fun <T> runDumbAction(project: Project, fallback: T, action: () -> T): T =
+    internalDumbAction(fallback, { runReadAction { DumbService.isDumb(project) } }, action)
+
+@ApiStatus.Internal
+inline fun <T> internalDumbAction(fallback: T, isDumb: () -> Boolean, action: () -> T): T {
+    if (isDumb()) return fallback
     return try {
         action()
     } catch (_: IndexNotReadyException) {
@@ -61,6 +69,6 @@ inline fun <T> runSmartReadActionIfUnderProgressElseDumb(project: Project, defau
             .inSmartMode(project)
             .executeSynchronously()
     } else {
-        dumbAction(project, default, action)
+        runDumbAction(project, default, action)
     }
 }

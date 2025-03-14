@@ -38,8 +38,8 @@ import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
-import org.jetbrains.kotlin.idea.debugger.base.util.dumbAction
 import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
+import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAction
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
@@ -90,7 +90,7 @@ private class K2DfaAssistProvider : DfaAssistProvider {
     ): Value? {
         if (anchor !is KtElement) return null
         if ((dfaVar.descriptor as? KtBaseDescriptor)?.isInlineClassReference() == true) return null
-        return dumbAction(anchor.project, null) {
+        return runDumbAction(anchor.project, null) {
             getJdiValueInner(proxy, dfaVar, anchor)
         }
     }
