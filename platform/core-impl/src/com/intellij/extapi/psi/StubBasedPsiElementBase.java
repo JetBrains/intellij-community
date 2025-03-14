@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.extapi.psi;
 
@@ -331,7 +331,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public @NotNull IStubElementType getElementType() {
     if (!(myElementType instanceof IStubElementType)) {
       throw new ClassCastException("Don't use #getElementType method. It is deprecated.\n" +
-                                   "Implement and use #getIElementType with the help of #getElementTypeImpl" +
+                                   "Implement and use #getIElementType with the help of #getElementTypeImpl.\n" +
                                    "Not a stub type: " + myElementType + " in " + getClass());
     }
     return (IStubElementType<?, ?>)myElementType;

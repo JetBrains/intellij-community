@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface StubElement<T extends PsiElement> extends Stub {
   /**
-   * @deprecated Use {@link #getElementType()} instead
+   * @deprecated Use {@link #getElementType()} or {@link #getStubSerializer()} instead
    */
   @Deprecated
   @Override
