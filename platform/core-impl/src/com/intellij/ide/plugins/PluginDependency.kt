@@ -6,14 +6,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PluginDependency internal constructor(override val pluginId: PluginId,
-                                            val configFile: String?,
-                                            override val isOptional: Boolean) : IdeaPluginDependency {
+                                            override val configFile: String?,
+                                            override val isOptional: Boolean) : PluginDependencyEx {
   @Transient
   private var subDescriptor: IdeaPluginDescriptorImpl? = null
 
-  fun getSubDescriptor(): IdeaPluginDescriptorImpl? = subDescriptor
+  override fun getSubDescriptor(): IdeaPluginDescriptorImpl? = subDescriptor
 
-  fun setSubDescriptor(subDescriptor: IdeaPluginDescriptorImpl?) {
+  internal fun setSubDescriptor(subDescriptor: IdeaPluginDescriptorImpl?) {
     this.subDescriptor = subDescriptor
   }
 
