@@ -4,6 +4,7 @@ import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.rdTarget
 import com.intellij.driver.sdk.withRetries
@@ -11,14 +12,12 @@ import org.intellij.lang.annotations.Language
 import java.awt.Point
 import kotlin.time.Duration.Companion.seconds
 
-fun Finder.bookmarksToolWindow(@Language("xpath") xpath: String? = null) =
-  x(xpath ?: "//div[@class='InternalDecoratorImpl'][.//div[@class='BookmarksView']]", BookmarksToolWindowUiComponent::class.java)
+fun Finder.bookmarksToolWindow(action: BookmarksToolWindowUiComponent.() -> Unit = {}) =
+  x(BookmarksToolWindowUiComponent::class.java) { byAccessibleName("Bookmarks Tool Window") }.apply(action)
 
 class BookmarksToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
 
-  val bookmarksTree by lazy {
-    tree().apply { replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class, rdTarget = component.rdTarget)) }
-  }
+  val bookmarksTree = accessibleTree()
 
   fun rightClickOnBookmarkWithText(text: String, fullMatch: Boolean = true) = bookmarksTree.apply {
     rightClickRow(findBookmarkWithText(text, fullMatch).row)
