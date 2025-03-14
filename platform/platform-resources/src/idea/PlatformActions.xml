@@ -1262,7 +1262,12 @@
             class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsAction"
             text="Create All Services And Extensions"/>
     <action id="PerformGC" internal="true" class="com.intellij.internal.PerformGCAction"/>
+
     <action id="ShowTrustProjectDialog" class="com.intellij.ide.trustedProjects.impl.ShowTrustProjectDialogAction"/>
+    <group id="Internal.Trust" popup="true">
+      <action id="TrustProject" internal="true" class="com.intellij.ide.trustedProjects.impl.YesTrustAction"/>
+      <action id="UntrustProject" internal="true" class="com.intellij.ide.trustedProjects.impl.NoTrustAction"/>
+    </group>
 
     <group id="Internal" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true">
@@ -1277,10 +1282,6 @@
       </group>
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
-      <group id="Internal.Trust" popup="true">
-        <action id="TrustProject" internal="true" class="com.intellij.internal.YesTrustAction"/>
-        <action id="UntrustProject" internal="true" class="com.intellij.internal.NoTrustAction"/>
-      </group>
       <group id="Internal.WorkspaceModel" popup="true">
         <action id="PrintModulesAndEntitySources" internal="true"
                 class="com.intellij.internal.PrintModulesAndEntitySources"
