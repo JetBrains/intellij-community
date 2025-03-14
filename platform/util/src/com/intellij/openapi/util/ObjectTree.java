@@ -246,4 +246,13 @@ public final class ObjectTree {
       }
     }
   }
+
+  @TestOnly
+  void cleanUpAfterTest() {
+    synchronized (getTreeLock()) {
+      myObject2ParentNode.clear();
+      myDisposedObjects.clear();
+      myRootNode.clean();
+    }
+  }
 }

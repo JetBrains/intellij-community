@@ -256,4 +256,11 @@ public final class Disposer {
   public static void clearDisposalTraces() {
     ourTree.clearDisposedObjectTraces();
   }
+
+
+  @TestOnly
+  @ApiStatus.Internal
+  public static void cleanUpAfterTest() {
+    ourTree.cleanUpAfterTest();
+  }
 }

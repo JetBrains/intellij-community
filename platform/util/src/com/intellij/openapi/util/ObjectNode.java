@@ -143,6 +143,11 @@ public final class ObjectNode {
     return childNode;
   }
 
+  @TestOnly
+  void clean() {
+    myChildren = EMPTY;
+  }
+
   // must not override hasCode/equals because ObjectNode must have identity semantics
 
   private static final class MapNodeChildren implements NodeChildren {
