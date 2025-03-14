@@ -3,9 +3,10 @@ package org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.InternalKaModuleConstructor
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 
-internal class KaSourceModuleImpl(
+internal class KaSourceModuleImpl @InternalKaModuleConstructor constructor(
     override val entityId: ModuleId,
     override val kind: KaSourceModuleKind,
     override val project: Project,

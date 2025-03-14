@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLib
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibrarySdkModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSourceModuleBase
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSourceModuleForOutsiderImpl
-import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSourceModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.symbolicId
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
@@ -48,6 +47,10 @@ import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 internal class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectStructureProvider() {
     override val self: IDEProjectStructureProvider get() = this
+
+    private val cache by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        K2IDEProjectStructureProviderCache.getInstance(project)
+    }
 
     override fun getNotUnderContentRootModule(project: Project): KaNotUnderContentRootModule {
         return KaNotUnderContentRootModuleImpl(file = null, project)
@@ -68,7 +71,7 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
             }
         }
 
-        if (fileSystemItem != null) {
+        if (fileSystemItem != null && cache.isItSafeToCacheModules()) {
             if (psiFile !is KtFile || psiFile.danglingFileResolutionMode == null) {
                 return cachedKaModule(fileSystemItem, useSiteModule)
             }
@@ -104,7 +107,7 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
             )
         }
 
-        is ModuleCandidate.Sdk -> listOf(KaLibrarySdkModuleImpl(project, data.sdkId))
+        is ModuleCandidate.Sdk -> listOf(cache.cachedKaSdkModule(data.sdkId))
         is ModuleCandidate.FixedModule -> listOf(data.module)
     }
 
@@ -112,7 +115,7 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
         is SourceRootEntity -> {
             val kind = entity.getKind() ?: return emptyList()
             listOf(
-                KaSourceModuleImpl(entity.contentRoot.module.symbolicId, kind, project)
+                cache.cachedKaSourceModule(entity.contentRoot.module.symbolicId, kind)
             )
         }
 
@@ -125,7 +128,7 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
         }
 
         is SdkEntity -> {
-            val module = KaLibrarySdkModuleImpl(project, entity.symbolicId)
+            val module = cache.cachedKaSdkModule(entity.symbolicId)
             when (fileKind) {
                 WorkspaceFileKind.EXTERNAL_SOURCE -> listOfNotNull(module.librarySources)
                 else -> listOf(module)
@@ -165,7 +168,7 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
 
     override fun getKaSourceModule(moduleEntity: ModuleEntity, kind: KaSourceModuleKind): KaSourceModule? {
         if (moduleEntity.sourceRoots.any { it.getKind() == kind }) {
-            return KaSourceModuleImpl(moduleEntity.symbolicId, kind, project)
+            return cache.cachedKaSourceModule(moduleEntity.symbolicId, kind)
         }
         return null
     }
@@ -200,11 +203,11 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
         for (factory in K2KaModuleFactory.Companion.EP_NAME.extensionList) {
             factory.createSpecialLibraryModule(libraryEntity, project)?.let { return listOf(it) }
         }
-        return listOf(KaLibraryModuleImpl(libraryEntity.symbolicId, project))
+        return listOf(cache.cachedKaLibraryModule(libraryEntity.symbolicId))
     }
 
     override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule {
-        return KaLibrarySdkModuleImpl(project, sdk.symbolicId)
+        return cache.cachedKaSdkModule(sdk.symbolicId)
     }
 
     override fun getKaLibraryModuleSymbolicId(libraryModule: KaLibraryModule): LibraryId {
@@ -262,16 +265,19 @@ private fun <T> cachedKaModule(
         val virtualFile: VirtualFile? = anchorElement.virtualFile
         val isLibraryFile =
             virtualFile?.let { RootKindMatcher.matches(project, it, RootKindFilter.libraryFiles) } ?: false
+        val cache = K2IDEProjectStructureProviderCache.getInstance(project)
         val dependencies = if (isLibraryFile) {
             arrayOf(
                 ProjectRootModificationTracker.getInstance(project),
-                JavaLibraryModificationTracker.getInstance(project)
+                JavaLibraryModificationTracker.getInstance(project),
+                cache.getCacheSdkAndLibrariesTracker(),
             )
         } else {
             arrayOf(
                 ProjectRootModificationTracker.getInstance(project),
                 JavaLibraryModificationTracker.getInstance(project),
-                KotlinModificationTrackerFactory.getInstance(project).createProjectWideSourceModificationTracker()
+                KotlinModificationTrackerFactory.getInstance(project).createProjectWideSourceModificationTracker(),
+                cache.getCacheSourcesTracker(),
             )
         }
         CachedValueProvider.Result.create(
