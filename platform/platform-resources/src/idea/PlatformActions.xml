@@ -1262,7 +1262,7 @@
             class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsAction"
             text="Create All Services And Extensions"/>
     <action id="PerformGC" internal="true" class="com.intellij.internal.PerformGCAction"/>
-    <action id="ShowTrustProjectDialog" class="com.intellij.ide.impl.ShowTrustProjectDialogAction"/>
+    <action id="ShowTrustProjectDialog" class="com.intellij.ide.trustedProjects.impl.ShowTrustProjectDialogAction"/>
 
     <group id="Internal" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true">

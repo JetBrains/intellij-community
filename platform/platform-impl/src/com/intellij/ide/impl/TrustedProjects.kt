@@ -6,11 +6,6 @@ package com.intellij.ide.impl
 
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
-import com.intellij.ide.trustedProjects.TrustedProjectsListener
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ThreeState
@@ -73,21 +68,3 @@ fun isTrustedCheckDisabled(): Boolean {
 
 @ApiStatus.Internal // Used in MPS
 const val TRUSTED_PROJECTS_HELP_TOPIC: String = "Project_security"
-
-private class ShowTrustProjectDialogAction : DumbAwareAction() {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-  override fun update(e: AnActionEvent) {
-    val project = e.project
-    e.presentation.isEnabledAndVisible = project != null && !project.isDefault && !TrustedProjects.isProjectTrusted(project)
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    if (TrustedProjectsDialog.confirmLoadingUntrustedProject(project)) {
-      ApplicationManager.getApplication().messageBus
-        .syncPublisher(TrustedProjectsListener.TOPIC)
-        .onProjectTrusted(project)
-    }
-  }
-}
