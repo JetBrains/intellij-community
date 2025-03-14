@@ -217,6 +217,19 @@ class PluginSetLoadingTest {
     assertThat(errors).hasSizeGreaterThan(0)
     assertThat(errors[0].get().toString()).contains("conflicts with", "bar.module", "foo.module", "package prefix")
   }
+  
+  @Test
+  fun `package prefix collision in plugin explicitly marked as incompatible`() {
+    PluginBuilder.empty().id("foo")
+      .module("foo.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .incompatibleWith("bar")
+      .build(pluginsDirPath.resolve("foo"))
+    PluginBuilder.empty().id("bar")
+      .module("bar.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginsDirPath.resolve("bar"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
+  }
 
   @Test
   fun `package prefix collision prevents plugin from loading - same plugin`() {

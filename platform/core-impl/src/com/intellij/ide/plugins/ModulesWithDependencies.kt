@@ -109,6 +109,15 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
       if (!module.isRequiredContentModule) {
         dependenciesCollector.add(main)
       }
+
+      /* if the plugin containing the module is incompatible with some other plugins, make sure that the module is processed after that plugins (and all their required modules) 
+         to ensure that the proper module is disabled in case of package conflict */
+      for (incompatibility in main.incompatibilities) {
+        val incompatibleDescriptor = moduleMap.get(incompatibility.idString)
+        if (incompatibleDescriptor != null) {
+          additionalEdgesForCurrentModule.add(incompatibleDescriptor)
+        }
+      }
     }
 
     if (!additionalEdgesForCurrentModule.isEmpty()) {
