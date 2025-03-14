@@ -6,6 +6,7 @@ import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 object ExternalSystemTrustedProjectDialog {
@@ -29,7 +30,7 @@ object ExternalSystemTrustedProjectDialog {
     return confirmLoadingUntrustedProjectAsync(project, listOf(systemId))
   }
 
-  private suspend fun confirmLoadingUntrustedProjectAsync(
+  suspend fun confirmLoadingUntrustedProjectAsync(
     project: Project,
     systemIds: Collection<ProjectSystemId>
   ): Boolean {
@@ -44,8 +45,7 @@ object ExternalSystemTrustedProjectDialog {
   }
 
   @JvmStatic
-  @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use async method instead")
+  @ApiStatus.Obsolete
   fun confirmLoadingUntrustedProject(
     project: Project,
     systemId: ProjectSystemId
@@ -54,8 +54,7 @@ object ExternalSystemTrustedProjectDialog {
   }
 
   @JvmStatic
-  @Suppress("DEPRECATION")
-  @Deprecated("Use async method instead")
+  @ApiStatus.Obsolete
   fun confirmLoadingUntrustedProject(
     project: Project,
     systemIds: Collection<ProjectSystemId>
