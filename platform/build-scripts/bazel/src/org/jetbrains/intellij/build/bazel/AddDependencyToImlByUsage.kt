@@ -51,6 +51,7 @@ internal class AddDependencyToImlByUsage {
         //"intellij.platform.projectModel.impl",
         //"intellij.platform.projectModel",
         //"intellij.platform.util",
+        //"intellij.platform.util.kmp",
         //"intellij.platform.util.ui",
         //"intellij.platform.util.ex",
         //"intellij.platform.core.impl",
