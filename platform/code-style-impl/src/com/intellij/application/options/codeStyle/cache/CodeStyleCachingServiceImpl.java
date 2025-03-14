@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.*;
@@ -66,7 +67,9 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
 
   private @NotNull CodeStyleCachedValueProvider getOrCreateCachedValueProvider(@NotNull VirtualFile virtualFile) {
     synchronized(this) {
-      FileData fileData = getOrCreateFileData(getFileKey(virtualFile));
+      String key = getFileKey(virtualFile);
+      FileData existing = getFileData(key);
+      FileData fileData = existing != null ? existing : createFileData(key);
       SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
       CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
       if (provider == null || provider.isExpired()) {
@@ -159,18 +162,23 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
 
 
   @Override
-  public @NotNull UserDataHolder getDataHolder(@NotNull VirtualFile virtualFile) {
-    return getOrCreateFileData(getFileKey(virtualFile));
+  public synchronized @NotNull UserDataHolder getDataHolder(@NotNull VirtualFile virtualFile) {
+    String key = getFileKey(virtualFile);
+    FileData stored = getFileData(key);
+    return stored != null ? stored : createFileData(key);
   }
 
-  private synchronized @NotNull FileData getOrCreateFileData(@NotNull String path) {
-    if (myFileDataCache.containsKey(path)) {
-      final FileData fileData = myFileDataCache.get(path);
+  private synchronized @Nullable FileData getFileData(@NotNull String path) {
+    final FileData fileData = myFileDataCache.get(path);
+    if (fileData != null) {
       fileData.update();
       myRemoveQueue.remove(fileData);
       myRemoveQueue.add(fileData);
-      return fileData;
     }
+    return fileData;
+  }
+
+  private synchronized @NotNull FileData createFileData(@NotNull String path) {
     FileData newData = new FileData();
     if (myFileDataCache.size() >= MAX_CACHE_SIZE) {
       FileData fileData = myRemoveQueue.poll();
