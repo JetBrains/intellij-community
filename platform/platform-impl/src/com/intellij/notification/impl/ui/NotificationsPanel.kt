@@ -314,7 +314,6 @@ internal class NotificationsPanel(private val project: Project, parentDisposable
   }
 
   override fun dispose() {
-    ApplicationNotificationsModel.unregister(project)
     searchUpdateAlarm.cancel()
   }
 

@@ -5,10 +5,12 @@ package com.intellij.notification.impl
 
 import com.intellij.notification.impl.ui.NotificationsPanel
 import com.intellij.notification.impl.widget.IdeNotificationArea
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -48,6 +50,7 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.setContentUiType(ToolWindowContentUiType.TABBED, null)
     val component = NotificationsPanel(project, toolWindow.disposable)
     ApplicationNotificationsModel.register(project, component)
+    Disposer.register(component, Disposable { ApplicationNotificationsModel.unregister(project) })
 
     project.messageBus.connect(component).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       private var wasVisible = false
