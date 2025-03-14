@@ -87,6 +87,8 @@ internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPa
   editorToolbar.minimumSize = JBUI.size(10, editorToolbar.minimumSize.height)
   editorToolbar.border = JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBColor.border()),
                                                JBUI.Borders.customLineRight(JBColor.border()))
+  toolbar.targetComponent = editorToolbar
+
   return panel {
     row {
       cell(editorToolbar).resizableColumn()
