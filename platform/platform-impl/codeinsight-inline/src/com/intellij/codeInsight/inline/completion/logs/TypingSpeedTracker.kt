@@ -18,6 +18,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import com.intellij.platform.ml.feature.FeatureDeclaration as OldFeatureDeclaration
+import com.intellij.codeInsight.inline.completion.logs.statistics.TimeBetweenTypingComponent
+import com.intellij.codeInsight.inline.completion.logs.statistics.UserStatisticConstants.MAX_TYPING_INTERVAL
 
 @ApiStatus.Internal
 @Service
@@ -35,6 +37,9 @@ class TypingSpeedTracker {
         val alpha = decayingFactor(duration, decayDuration)
         typingSpeeds[decayDuration] = alpha * typingSpeed + (1 - alpha) * lastSpeed
       }
+
+      if (duration < MAX_TYPING_INTERVAL.inWholeMilliseconds)
+        TimeBetweenTypingComponent.getInstance().fireTypingPerformed(duration)
     }
     lastTypingTimestamp = currentTimestamp
   }
