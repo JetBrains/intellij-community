@@ -20,7 +20,7 @@ private const val ZED_ID = ".zed"
 private const val VISUAL_STUDIO_ID = "VisualStudio"
 
 internal class EditorsCollector :  ApplicationUsagesCollector() {
-  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 5)
+  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 6)
 
   override fun getGroup(): EventLogGroup = EDITORS_GROUP
 
@@ -30,7 +30,8 @@ internal class EditorsCollector :  ApplicationUsagesCollector() {
     CURSOR_ID,
     WINDSURF_ID,
     ECLIPSE_ID,
-    ZED_ID
+    ZED_ID,
+    VISUAL_STUDIO_ID
   )
 
   private val CONFIG_EXISTS: EventId1<String> = EDITORS_GROUP.registerEvent(
