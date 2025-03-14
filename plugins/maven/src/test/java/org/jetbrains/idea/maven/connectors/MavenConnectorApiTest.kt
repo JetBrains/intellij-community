@@ -71,7 +71,8 @@ class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
     map.register(MavenId("test:m1:1"), m1.toNioPath().toFile())
     map.register(MavenId("test:m2:1"), m2.toNioPath().toFile())
     map.register(MavenId("test:project:1"), mavenProject.toNioPath().toFile())
-    val executionResults = embedder.resolveProject(mapOf(mavenProject to null, m1 to null, m2 to null),
+    val executionResults = embedder.resolveProject(listOf(mavenProject),
+                                                   mapOf(mavenProject to null, m1 to null, m2 to null),
                                                    mapOf(),
                                                    MavenExplicitProfiles(listOf("test"), emptyList()),
                                                    MockReporter(),

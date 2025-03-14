@@ -57,6 +57,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   suspend fun resolveProject(
+    filesToResolve: List<VirtualFile>,
     pomToDependencyHash: Map<VirtualFile, String?>,
     pomDependencies: Map<VirtualFile, Set<File>>,
     explicitProfiles: MavenExplicitProfiles,
@@ -83,7 +84,9 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
     val serverWorkspaceMap = convertWorkspaceMap(workspaceMap)
 
+    val toResolve = filesToResolve.mapNotNull { file -> transformer.toRemotePath(file.getPath())?.let { File(it) } }
     val request = ProjectResolutionRequest(
+      toResolve,
       pomHashMap,
       explicitProfiles.enabledProfiles,
       explicitProfiles.disabledProfiles,

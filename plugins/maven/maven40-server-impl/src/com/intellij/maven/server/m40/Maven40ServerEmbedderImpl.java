@@ -357,6 +357,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenServerUtil.checkToken(token);
     String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
     MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.from(longRunningTaskInput.getTelemetryContext());
+    List<File> filesToResolve = request.getFilesToResolve();
     PomHashMap pomHashMap = request.getPomHashMap();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
@@ -369,6 +370,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         updateSnapshots,
         myImporterSpy,
         task,
+        filesToResolve,
         pomHashMap,
         activeProfiles,
         inactiveProfiles,

@@ -169,10 +169,12 @@ class MavenProjectResolver(private val myProject: Project) {
     progressReporter.text(MavenProjectBundle.message("maven.resolving.pom", text))
     val explicitProfiles = tree.explicitProfiles
     val projects = tree.projects
+    val filesToResolve = mavenProjects.map { tree.findRootProject(it) }.map { it.file }.distinct()
     val pomDependencies = projects
       .associate { it.file to it.dependencies.filter { it.file.path.endsWith(MavenConstants.POM_XML) }.map { it.file }.toSet() }
       .filterValues { it.isNotEmpty() }
     val resultsAndProblems = resolveProjectsInEmbedder(
+      filesToResolve,
       embedder,
       pomToDependencyHash,
       pomDependencies,
@@ -320,6 +322,7 @@ class MavenProjectResolver(private val myProject: Project) {
   }
 
   private suspend fun resolveProjectsInEmbedder(
+    filesToResolve: List<VirtualFile>,
     embedder: MavenEmbedderWrapper,
     pomToDependencyHash: Map<VirtualFile, String?>,
     pomDependencies: Map<VirtualFile, Set<File>>,
@@ -337,6 +340,7 @@ class MavenProjectResolver(private val myProject: Project) {
       val executionResults = tracer.spanBuilder("resolveProjectInEmbedder")
         .useWithScope {
           embedder.resolveProject(
+            filesToResolve,
             pomToDependencyHash,
             pomDependencies,
             explicitProfiles,
@@ -470,6 +474,7 @@ class MavenProjectResolver(private val myProject: Project) {
   ): Collection<MavenProjectResolverResult> {
     return runBlockingMaybeCancellable {
       resolveProjectsInEmbedder(
+        files.toList(),
         embedder,
         files.associateWith { null },
         mapOf(),
