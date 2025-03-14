@@ -7,10 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PluginDependency internal constructor(override val pluginId: PluginId,
                                             val configFile: String?,
-                                            isOptional: Boolean) : IdeaPluginDependency {
-  override var isOptional: Boolean = isOptional
-    internal set
-
+                                            override val isOptional: Boolean) : IdeaPluginDependency {
   @Transient
   @JvmField var subDescriptor: IdeaPluginDescriptorImpl? = null
 
