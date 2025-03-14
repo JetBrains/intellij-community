@@ -5,7 +5,7 @@ import org.jetbrains.jewel.foundation.code.MimeType
 
 public sealed interface MarkdownBlock {
     @GenerateDataFunctions
-    public class BlockQuote(public val children: List<MarkdownBlock>) : MarkdownBlock {
+    public class BlockQuote(override val children: List<MarkdownBlock>) : MarkdownBlock, WithChildBlocks {
         public constructor(vararg children: MarkdownBlock) : this(children.toList())
 
         override fun equals(other: Any?): Boolean {
@@ -109,8 +109,8 @@ public sealed interface MarkdownBlock {
         override fun toString(): String = "HtmlBlock(content='$content')"
     }
 
-    public sealed interface ListBlock : MarkdownBlock {
-        public val children: List<ListItem>
+    public sealed interface ListBlock : MarkdownBlock, WithChildBlocks {
+        override val children: List<ListItem>
         public val isTight: Boolean
 
         @GenerateDataFunctions
@@ -196,7 +196,7 @@ public sealed interface MarkdownBlock {
     }
 
     @GenerateDataFunctions
-    public class ListItem(public val children: List<MarkdownBlock>) : MarkdownBlock {
+    public class ListItem(override val children: List<MarkdownBlock>) : MarkdownBlock, WithChildBlocks {
         public constructor(vararg children: MarkdownBlock) : this(children.toList())
 
         override fun equals(other: Any?): Boolean {

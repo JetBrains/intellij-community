@@ -640,6 +640,41 @@ public class ScrollingSynchronizerTest {
     }
 
     @OptIn(ExperimentalTestApi::class)
+    @Test
+    public fun `identical items`() {
+        val markdown =
+            """
+                |Items:
+                |- item
+                |
+                |Another items:
+                |- item
+                        """
+                .trimMargin()
+        doTest(markdown) { scrollState, synchronizer ->
+            synchronizer.scrollToLine(1)
+            val l1Top = scrollState.value
+            assertTrue(l1Top > 0)
+
+            synchronizer.scrollToLine(2)
+            val sl1Top = scrollState.value
+            assertTrue(sl1Top > l1Top)
+
+            synchronizer.scrollToLine(3)
+            val emptyTop = scrollState.value
+            assertTrue(emptyTop == sl1Top)
+
+            synchronizer.scrollToLine(4)
+            val l2Top = scrollState.value
+            assertTrue(l2Top > emptyTop)
+
+            synchronizer.scrollToLine(4)
+            val sl2Top = scrollState.value
+            assertTrue(sl2Top == l2Top)
+        }
+    }
+
+    @OptIn(ExperimentalTestApi::class)
     private fun doTest(
         firstRun: String,
         secondRun: String,
