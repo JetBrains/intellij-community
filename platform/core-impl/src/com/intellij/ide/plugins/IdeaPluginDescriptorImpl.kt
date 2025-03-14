@@ -226,7 +226,7 @@ class IdeaPluginDescriptorImpl private constructor(
     }
 
     if (isIncomplete == null && moduleName == null) {
-      initializeV1Dependencies(descriptor = this, context, pathResolver, dataLoader)
+      initializeV1Dependencies(context, pathResolver, dataLoader)
     }
   }
 
@@ -265,8 +265,7 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 
-  private fun initializeV1Dependencies(descriptor: IdeaPluginDescriptorImpl,
-                                       context: DescriptorListLoadingContext,
+  private fun initializeV1Dependencies(context: DescriptorListLoadingContext,
                                        pathResolver: PathResolver,
                                        dataLoader: DataLoader) {
     var visitedFiles: MutableList<String>? = null
@@ -281,12 +280,12 @@ class IdeaPluginDescriptorImpl private constructor(
 
       // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
       val configFile = dependency.configFile ?: continue
-      if (pathResolver.isFlat && context.checkOptionalConfigShortName(configFile, descriptor)) {
+      if (pathResolver.isFlat && context.checkOptionalConfigShortName(configFile, this)) {
         continue
       }
 
-      if (isKotlinPlugin(dependency.pluginId) && isIncompatibleWithKotlinPlugin(descriptor)) {
-        LOG.warn("Plugin ${descriptor} depends on Kotlin plugin via `${configFile}` " +
+      if (isKotlinPlugin(dependency.pluginId) && isIncompatibleWithKotlinPlugin(this)) {
+        LOG.warn("Plugin ${this} depends on Kotlin plugin via `${configFile}` " +
                  "but the plugin is not compatible with the Kotlin plugin in the  ${if (isKotlinPluginK1Mode()) "K1" else "K2"} mode. " +
                  "So, the `${configFile}` was not loaded")
         continue
@@ -302,7 +301,7 @@ class IdeaPluginDescriptorImpl private constructor(
       }
 
       if (raw == null) {
-        val message = "Plugin $descriptor misses optional descriptor $configFile"
+        val message = "Plugin $this misses optional descriptor $configFile"
         if (context.isMissingSubDescriptorIgnored) {
           LOG.info(message)
           if (resolveError != null) {
@@ -319,12 +318,12 @@ class IdeaPluginDescriptorImpl private constructor(
         visitedFiles = context.visitedFiles
       }
 
-      checkCycle(descriptor, configFile, visitedFiles)
+      checkCycle(this, configFile, visitedFiles)
 
       visitedFiles.add(configFile)
-      val subDescriptor = descriptor.createSub(raw, configFile, context, module = null)
+      val subDescriptor = createSub(raw, configFile, context, module = null)
       if (subDescriptor.isIncomplete == null) {
-        subDescriptor.initializeV1Dependencies(subDescriptor, context, pathResolver, dataLoader)
+        subDescriptor.initializeV1Dependencies(context, pathResolver, dataLoader)
       }
       dependency.setSubDescriptor(subDescriptor)
       visitedFiles.clear() // TODO: shouldn't it be removeLast instead?
