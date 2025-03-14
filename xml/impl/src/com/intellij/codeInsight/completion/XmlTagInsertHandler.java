@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -212,14 +213,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
 
-    XmlAttributeDescriptor[] attributes;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
-      attributes = descriptor.getAttributesDescriptors(tag);
-    }
-    else {
-      // Try not to block EDT for a long time
-      attributes = ProgressIndicatorUtils.withTimeout(500, () -> descriptor.getAttributesDescriptors(tag));
-    }
+    XmlAttributeDescriptor[] attributes = getAttributesDescriptors(descriptor, tag);
 
     if (attributes == null || attributes.length == 0) {
       return null;
@@ -289,14 +283,14 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     }
     else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
       if (WebEditorOptions.getInstance().isAutomaticallyStartAttribute() &&
-          (descriptor.getAttributesDescriptors(tag).length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
+          (getAttributesDescriptors(descriptor, tag).length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
         completeAttribute(tag.getContainingFile(), template);
         return true;
       }
     }
     else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR || completionChar == Lookup.REPLACE_SELECT_CHAR) {
       if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && isHtmlCode && HtmlUtil.isSingleHtmlTag(tag, true)) {
-        if (hasOwnAttributes(descriptor, tag)) {
+        if (runWithTimeoutOrNull(() -> hasOwnAttributes(descriptor, tag)) == Boolean.TRUE) {
           template.addEndVariable();
         }
         template.addTextSegment(HtmlUtil.isHtmlTag(tag) ? ">" : closeTag(tag));
@@ -410,12 +404,12 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static boolean hasOwnAttributes(XmlElementDescriptor descriptor, XmlTag tag) {
-    return ContainerUtil.find(descriptor.getAttributesDescriptors(tag),
+    return ContainerUtil.find(getAttributesDescriptors(descriptor, tag),
                               attr -> attr instanceof HtmlAttributeDescriptorImpl && HtmlUtil.isOwnHtmlAttribute(attr)) != null;
   }
 
   private static boolean canHaveAttributes(XmlElementDescriptor descriptor, XmlTag context) {
-    XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(context);
+    XmlAttributeDescriptor[] attributes = getAttributesDescriptors(descriptor, context);
     int required = WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes() ?
                    ArraysKt.count(attributes, (attribute) -> attribute.isRequired() && context.getAttribute(attribute.getName()) == null) :
                    0;
@@ -430,4 +424,17 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     final String ns = tag.getNamespace();
     return XmlUtil.XHTML_URI.equals(ns) || XmlUtil.HTML_URI.equals(ns);
   }
+
+  private static XmlAttributeDescriptor[] getAttributesDescriptors(XmlElementDescriptor descriptor, XmlTag tag) {
+    var result = runWithTimeoutOrNull(() -> descriptor.getAttributesDescriptors( tag));
+    return result != null ? result : XmlAttributeDescriptor.EMPTY;
+  }
+
+  public static <T> @Nullable T runWithTimeoutOrNull(Computable<@NotNull T> block) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode())
+      return block.get();
+    else
+      return ProgressIndicatorUtils.withTimeout(250, block);
+  }
+
 }
