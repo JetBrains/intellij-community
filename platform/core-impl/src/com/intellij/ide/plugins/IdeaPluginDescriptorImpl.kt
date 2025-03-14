@@ -97,7 +97,7 @@ class IdeaPluginDescriptorImpl private constructor(
   private val category: String? = raw.category
   private val url: String? = raw.url
 
-  private val _pluginDependencies: List<PluginDependencyImpl> = raw.depends
+  private val dependenciesV1: List<PluginDependencyImpl> = raw.depends
     .let(::fixDepends)
     .let(::convertDepends)
 
@@ -106,7 +106,7 @@ class IdeaPluginDescriptorImpl private constructor(
    *
    * Note that it's different from [dependenciesV2]
    */
-  val pluginDependencies: List<PluginDependency> get() = _pluginDependencies
+  val pluginDependencies: List<PluginDependency> get() = dependenciesV1
 
   @JvmField
   val incompatibilities: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
@@ -286,7 +286,7 @@ class IdeaPluginDescriptorImpl private constructor(
                                        pathResolver: PathResolver,
                                        dataLoader: DataLoader) {
     var visitedFiles: MutableList<String>? = null
-    for (dependency in _pluginDependencies) {
+    for (dependency in dependenciesV1) {
       // context.isPluginIncomplete must be not checked here as another version of plugin maybe supplied later from another source
       if (context.isPluginDisabled(dependency.pluginId)) {
         if (!dependency.isOptional && isIncomplete == null) {
