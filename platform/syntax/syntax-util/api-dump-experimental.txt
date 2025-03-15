@@ -16,6 +16,19 @@
 - start(java.lang.CharSequence):V
 - start(java.lang.CharSequence,I,I):V
 - start(java.lang.CharSequence,I,I,I):V
+*c:com.intellij.platform.syntax.util.lexer.FlexAdapter
+- com.intellij.platform.syntax.util.lexer.LexerBase
+- <init>(com.intellij.platform.syntax.util.lexer.FlexLexer):V
+- advance():V
+- getBufferEnd():I
+- getBufferSequence():java.lang.CharSequence
+- f:getFlex():com.intellij.platform.syntax.util.lexer.FlexLexer
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- pf:locateToken():V
+- start(java.lang.CharSequence,I,I,I):V
 *:com.intellij.platform.syntax.util.lexer.FlexLexer
 - a:advance():com.intellij.platform.syntax.SyntaxElementType
 - a:getTokenEnd():I
