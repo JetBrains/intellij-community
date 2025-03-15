@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,23 +100,10 @@ public final class ReplaceMultiplyWithShiftIntention extends MCIntention {
     final PsiExpression lhs = expression.getLOperand();
     final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
     final IElementType tokenType = expression.getOperationTokenType();
-    final String operatorString;
-    if (tokenType.equals(JavaTokenType.ASTERISK)) {
-      operatorString = "<<";
-    }
-    else {
-      operatorString = ">>";
-    }
-    final String lhsText;
-    if (ParenthesesUtils.getPrecedence(lhs) >
-        ParenthesesUtils.SHIFT_PRECEDENCE) {
-      lhsText = '(' + lhs.getText() + ')';
-    }
-    else {
-      lhsText = lhs.getText();
-    }
-    String expString =
-      lhsText + operatorString + ShiftUtils.getLogBase2(rhs);
+    final String operatorString = tokenType.equals(JavaTokenType.ASTERISK) ? "<<" : ">>";
+    final String lhsText = PsiTypes.intType().equals(lhs.getType()) && PsiTypes.longType().equals(expression.getType())
+                           ? "((long)" + lhs.getText() + ')' : lhs.getText();
+    String expString = lhsText + operatorString + ShiftUtils.getLogBase2(rhs);
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpression) {
       if (!(parent instanceof PsiParenthesizedExpression) &&

@@ -37,26 +37,16 @@ final class ShiftUtils {
     if (value instanceof Double || value instanceof Float) {
       return false;
     }
-    int intValue = ((Number)value).intValue();
-    if (intValue <= 0) {
-      return false;
-    }
-    while (intValue % 2 == 0) {
-      intValue >>= 1;
-    }
-    return intValue == 1;
+    long v = ((Number)value).longValue();
+    return v > 0 && (v & (v - 1)) == 0; // https://graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
   }
 
-  public static int getLogBase2(PsiExpression rhs) {
+  public static long getLogBase2(PsiExpression rhs) {
     final PsiLiteralExpression literal = (PsiLiteralExpression)rhs;
     final Object value = literal.getValue();
-    int intValue = ((Number)value).intValue();
-    int log = 0;
-    while (intValue % 2 == 0) {
-      intValue >>= 1;
-      log++;
-    }
-    return log;
+    assert value != null;
+    long v = ((Number)value).longValue();
+    return 63 - Long.numberOfLeadingZeros(v);
   }
 
   public static boolean isIntegral(PsiType lhsType) {
