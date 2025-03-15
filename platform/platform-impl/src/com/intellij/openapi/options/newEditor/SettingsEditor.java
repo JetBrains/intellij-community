@@ -55,6 +55,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.createWrapperPanel;
@@ -79,6 +80,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final History myHistory = new History(this);
   private volatile boolean myNavigatingNow = false;
   private final boolean myIsModal;
+  private final Map<Configurable, Boolean> myLeaveState = new ConcurrentHashMap<>();
 
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
@@ -198,7 +200,12 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           }
           loadingDecorator.startLoading(false);
         }
-        checkModified(oldConfigurable);
+        if (oldConfigurable != null) {
+          checkModified(oldConfigurable);
+          if (!myIsModal) {
+            myLeaveState.put(oldConfigurable, oldConfigurable.isModified());
+          }
+        }
         Promise<? super Object> result = editor.select(configurable);
         result.onSuccess(it -> {
           updateController(configurable);
@@ -280,6 +287,16 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           SettingsEditor.this.filter.context.fireReset(configurable);
         }
         checkModified(configurable);
+      }
+
+      @Override
+      void postUpdateCurrent(Configurable configurable) {
+        if (!myIsModal && configurable != null) {
+          Boolean leaveState = myLeaveState.remove(configurable);
+          if (leaveState == Boolean.FALSE) {
+            configurable.reset();
+          }
+        }
       }
 
       @Override
