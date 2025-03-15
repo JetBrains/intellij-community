@@ -2,17 +2,17 @@
 
 package org.jetbrains.jps.dependency.impl
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import androidx.collection.MutableScatterMap
+import androidx.collection.MutableScatterSet
 import kotlinx.collections.immutable.PersistentSet
 import org.h2.mvstore.MVMap
 import org.jetbrains.jps.dependency.BackDependencyIndex
-import org.jetbrains.jps.dependency.MultiMaplet
 import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
 import org.jetbrains.jps.dependency.storage.EnumeratedStringDataType
 import org.jetbrains.jps.dependency.storage.EnumeratedStringSetValueDataType
+import org.jetbrains.jps.dependency.storage.MultiMapletEx
 import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
 
 abstract class BackDependencyIndexImpl protected constructor(
@@ -20,7 +20,7 @@ abstract class BackDependencyIndexImpl protected constructor(
   mapletFactory: MvStoreContainerFactory,
   isInMemory: Boolean,
 ) : BackDependencyIndex {
-  private val map: MultiMaplet<ReferenceID, ReferenceID>
+  private val map: MultiMapletEx<ReferenceID, ReferenceID>
 
   init {
     if (isInMemory) {
@@ -31,7 +31,7 @@ abstract class BackDependencyIndexImpl protected constructor(
         .keyType(EnumeratedStringDataType(mapletFactory.getStringEnumerator(), JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer))
         .valueType(EnumeratedStringSetValueDataType(mapletFactory.getStringEnumerator(), JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer))
       @Suppress("UNCHECKED_CAST")
-      map = mapletFactory.openMap(name, mapBuilder) as MultiMaplet<ReferenceID, ReferenceID>
+      map = mapletFactory.openMap(name, mapBuilder) as MultiMapletEx<ReferenceID, ReferenceID>
     }
   }
 
@@ -39,7 +39,7 @@ abstract class BackDependencyIndexImpl protected constructor(
    * @param node to be indexed
    * @return direct dependencies for the given node, which should be indexed by this index
    */
-  protected abstract fun getIndexedDependencies(node: Node<*, *>): Sequence<ReferenceID>
+  protected abstract fun processIndexedDependencies(node: Node<*, *>, processor: (node: ReferenceID) -> Unit)
 
   final override fun getName(): String = name
 
@@ -49,13 +49,13 @@ abstract class BackDependencyIndexImpl protected constructor(
 
   final override fun indexNode(node: Node<*, *>) {
     val nodeId = node.referenceID
-    for (referentId in getIndexedDependencies(node)) {
-      map.appendValue(referentId, nodeId)
+    processIndexedDependencies(node) {
+      map.appendValue(it, nodeId)
     }
   }
 
   final override fun integrate(deletedNodes: Iterable<Node<*, *>>, updatedNodes: Iterable<Node<*, *>>, deltaIndex: BackDependencyIndex) {
-    val depsToRemove = Object2ObjectOpenHashMap<ReferenceID, ObjectOpenHashSet<ReferenceID>>()
+    val depsToRemove = MutableScatterMap<ReferenceID, MutableScatterSet<ReferenceID>>()
 
     for (node in deletedNodes) {
       collectDepsToRemove(node, depsToRemove)
@@ -75,17 +75,23 @@ abstract class BackDependencyIndexImpl protected constructor(
     }
 
     val deltaMap = deltaIndex.map
-    val iterator = if (depsToRemove.isEmpty()) {
-      deltaMap.keys.iterator()
+    val sequence = if (depsToRemove.isEmpty()) {
+      deltaMap.keys.asSequence()
     }
     else {
-      ((deltaMap.keys.asSequence() + depsToRemove.keys).distinct()).iterator()
+      sequence {
+        yieldAll(deltaMap.keys)
+        depsToRemove.forEachKey {
+          yield(it)
+        }
+      }
+        .distinct()
     }
-    for (id in iterator) {
+    for (id in sequence) {
       val toRemove = depsToRemove.get(id)
       val toAdd = deltaMap.get(id)
-      if (!toRemove.isNullOrEmpty()) {
-        toRemove.removeAll(toAdd as Set<*>)
+      if (toRemove != null && !toRemove.isEmpty()) {
+        toRemove.removeAll(toAdd)
         if (toRemove.isNotEmpty()) {
           map.removeValues(id, toRemove)
         }
@@ -94,10 +100,12 @@ abstract class BackDependencyIndexImpl protected constructor(
     }
   }
 
-  private fun collectDepsToRemove(node: Node<*, *>, depsToRemove: MutableMap<ReferenceID, ObjectOpenHashSet<ReferenceID>>) {
+  private fun collectDepsToRemove(node: Node<*, *>, depsToRemove: MutableScatterMap<ReferenceID, MutableScatterSet<ReferenceID>>) {
     val nodeId = node.referenceID
-    for (referentId in getIndexedDependencies(node)) {
-      depsToRemove.computeIfAbsent(referentId) { ObjectOpenHashSet() }.add(nodeId)
+    processIndexedDependencies(node) { id ->
+      depsToRemove.compute(id) { key, value ->
+        (value ?: MutableScatterSet()).also { it.add(nodeId) }
+      }
     }
   }
 }
@@ -106,8 +114,14 @@ class NodeDependenciesIndex(
   mapletFactory: MvStoreContainerFactory,
   isInMemory: Boolean,
 ) : BackDependencyIndexImpl("node-backward-dependencies", mapletFactory, isInMemory) {
-  override fun getIndexedDependencies(node: Node<*, *>): Sequence<ReferenceID> {
-    val nodeId = node.referenceID
-    return node.usages().filter { nodeId != it.elementOwner }.map { it.elementOwner }.distinct()
+  override fun processIndexedDependencies(node: Node<*, *>, processor: (ReferenceID) -> Unit) {
+    val referentId = node.referenceID
+    val visited = MutableScatterSet<ReferenceID>()
+    for (usage in node.getUsages()) {
+      val id = usage.elementOwner
+      if (id != referentId && visited.add(id)) {
+        processor(id)
+      }
+    }
   }
 }

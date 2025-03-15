@@ -3,10 +3,14 @@
 
 package org.jetbrains.bazel.jvm
 
+import androidx.collection.ScatterSet
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentHashSetOf
 
 val emptyStringArray: Array<String> = emptyArray<String>()
 
@@ -23,15 +27,7 @@ fun <T> slowEqualsAwareHashStrategy(): Hash.Strategy<T> {
 
 fun <T : Any> linkedSet(): ObjectLinkedOpenCustomHashSet<T> = ObjectLinkedOpenCustomHashSet(slowEqualsAwareHashStrategy())
 
-fun <T : Any> linkedSet(expectedSize: Int): ObjectLinkedOpenCustomHashSet<T> {
-  return ObjectLinkedOpenCustomHashSet(expectedSize, slowEqualsAwareHashStrategy())
-}
-
 fun <T : Any> linkedSet(collection: Collection<T>): ObjectLinkedOpenCustomHashSet<T> {
-  return ObjectLinkedOpenCustomHashSet(collection, slowEqualsAwareHashStrategy())
-}
-
-fun <T : Any> linkedSet(collection: Array<T>): ObjectLinkedOpenCustomHashSet<T> {
   return ObjectLinkedOpenCustomHashSet(collection, slowEqualsAwareHashStrategy())
 }
 
@@ -65,3 +61,38 @@ fun <T> Set<T>.concat(collection: Collection<T>): Set<T> {
   }
   return this + collection
 }
+
+fun <V : Any> PersistentSet<V>.removeAll(values: ScatterSet<V>): PersistentSet<V> {
+  if (values.isEmpty()) {
+    return this
+  }
+  return mutate { builder ->
+    values.forEach { builder.remove(it) }
+  }
+}
+
+fun <V : Any> ScatterSet<V>.toPersistentHashSet(): PersistentSet<V> {
+  return persistentHashSetOf<V>().mutate { builder ->
+    forEach { builder.add(it) }
+  }
+}
+
+inline fun <T> ScatterSet<T>.filterToList(predicate: (T) -> Boolean): List<T> {
+  val result = ArrayList<T>()
+  forEach {
+    if (predicate(it)) {
+      result.add(it)
+    }
+  }
+  return result.ifEmpty { kotlin.collections.emptyList() }
+}
+
+//inline fun <T> Iterable<T>.filterToScatterSet(predicate: (T) -> Boolean): ScatterSet<T> {
+//  val result = MutableScatterSet<T>()
+//  for (element in this) {
+//    if (predicate(element)) {
+//      result.add(element)
+//    }
+//  }
+//  return result
+//}

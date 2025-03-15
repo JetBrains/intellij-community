@@ -7,6 +7,8 @@ kt_jvm_library(
     deps = [
       "@lib//:kotlin-stdlib",
       "@lib//:fastutil-min",
+      "@lib//:kotlinx-collections-immutable",
+      "//:collection",
     ],
     visibility = ["//visibility:public"],
 )

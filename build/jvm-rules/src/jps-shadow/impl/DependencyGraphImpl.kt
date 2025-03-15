@@ -2,8 +2,11 @@
 
 package org.jetbrains.jps.dependency.impl
 
+import androidx.collection.MutableScatterMap
+import androidx.collection.MutableScatterSet
+import androidx.collection.ScatterSet
+import androidx.collection.emptyScatterSet
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.collections.immutable.PersistentSet
@@ -17,7 +20,6 @@ import org.jetbrains.jps.dependency.DifferentiateContext
 import org.jetbrains.jps.dependency.DifferentiateParameters
 import org.jetbrains.jps.dependency.DifferentiateResult
 import org.jetbrains.jps.dependency.Graph
-import org.jetbrains.jps.dependency.MultiMaplet
 import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.NodeSource
 import org.jetbrains.jps.dependency.ReferenceID
@@ -26,12 +28,12 @@ import org.jetbrains.jps.dependency.diff.Difference
 import org.jetbrains.jps.dependency.java.DiffCapableHashStrategy
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy
 import org.jetbrains.jps.dependency.java.SubclassesIndex
-import org.jetbrains.jps.dependency.java.deepDiffForSets
-import org.jetbrains.jps.dependency.java.diffForSets
+import org.jetbrains.jps.dependency.java.notLazyDeepDiffForSets
+import org.jetbrains.jps.dependency.java.notLazyDiffForSets
 import org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy
+import org.jetbrains.jps.dependency.storage.MultiMapletEx
 import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
 import java.util.function.Predicate
-
 
 private val differentiateStrategies = arrayOf(KotlinSourceOnlyDifferentiateStrategy(), GeneralJvmDifferentiateStrategy())
 
@@ -115,8 +117,9 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
     }
     else if (delta is DeltaImpl) {
       val result = ObjectOpenCustomHashSet<Node<*, *>>(DiffCapableHashStrategy)
-      for (nodes in delta.sourceToNodesMap.values) {
-        result.addAll(nodes)
+      delta.sourceToNodesMap.forEachValue { nodes ->
+        result.ensureCapacity(nodes.size)
+        nodes.forEach { result.add(it) }
       }
       result
     }
@@ -148,11 +151,11 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
     val diffContext = object : DifferentiateContext {
       private val ANY_CONSTRAINT = Predicate<Node<*, *>> { true }
 
-      val compiledSources = if (deltaSources is Set<*>) deltaSources else ObjectOpenHashSet(deltaSources.iterator())
-      val deleted = deletedNodes.mapTo(hashSet(deletedNodes.size)) { it.referenceID }
-      val affectedUsages = Object2ObjectOpenHashMap<Usage, Predicate<Node<*, *>>>()
-      val usageQueries = ObjectOpenHashSet<Predicate<Node<*, *>>>()
-      val affectedSources = ObjectOpenHashSet<NodeSource>()
+      @JvmField val compiledSources = if (deltaSources is Set<*>) deltaSources else ObjectOpenHashSet(deltaSources.iterator())
+      @JvmField val deleted = deletedNodes.mapTo(hashSet(deletedNodes.size)) { it.referenceID }
+      @JvmField val affectedUsages = MutableScatterMap<Usage, Predicate<Node<*, *>>>()
+      @JvmField val usageQueries = MutableScatterSet<Predicate<Node<*, *>>>()
+      @JvmField val affectedSources = MutableScatterSet<NodeSource>()
 
       override fun getParams(): DifferentiateParameters = params
 
@@ -244,8 +247,11 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
       }
     }
 
-    val scopeNodes = diffContext.affectedUsages.keys.asSequence().map { it.elementOwner }.distinct()
-    val candidates = scopeNodes.asSequence()
+    val candidates = sequence {
+      diffContext.affectedUsages.forEachKey { yield(it) }
+    }
+      .map { it.elementOwner }
+      .distinct()
       .flatMap { getDependingNodes(it) }
       .filterTo(hashSet()) { !dependingOnDeleted.contains(it) }
     for (depSrc in candidates.asSequence().flatMap { getSources(it) }.distinct()) {
@@ -292,12 +298,12 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
     // do not include sources that were already compiled
     affectedSources.removeAll(allProcessedSources)
     // ensure sources explicitly marked by strategies are affected, even if these sources were compiled initially
-    affectedSources.addAll(diffContext.affectedSources)
+    diffContext.affectedSources.forEach { affectedSources.add(it) }
 
     if (!delta.isSourceOnly) {
       // complete affected file set with source-delta dependencies
       val affectedSourceDelta = createDelta(
-        compiledSources = affectedSources.filterTo(ObjectOpenHashSet()) { params.belongsToCurrentCompilationChunk().test(it) },
+        compiledSources = affectedSources.filterTo(ObjectOpenHashSet(affectedSources.size)) { params.belongsToCurrentCompilationChunk().test(it) },
         deletedSources = emptySet(),
         isSourceOnly = true,
       )
@@ -324,7 +330,7 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
 
     // handle deleted nodes and sources
     if (diffResult.deletedNodes.any()) {
-      val differentiatedSources = hashSet<NodeSource>()
+      val differentiatedSources = MutableScatterSet<NodeSource>()
       if (!params.isCompiledWithErrors) {
         differentiatedSources.addAll(delta.baseSources)
       }
@@ -333,19 +339,11 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
 
       // the set of deleted nodes includes ones corresponding to deleted sources
       for (deletedNode in diffResult.deletedNodes) {
-        @Suppress("UNCHECKED_CAST")
-        val nodeSources = ObjectOpenHashSet(nodeToSourcesMap.get(deletedNode.referenceID) as Collection<NodeSource>)
-        nodeSources.removeAll(differentiatedSources)
-        if (nodeSources.isEmpty()) {
-          nodeToSourcesMap.remove(deletedNode.referenceID)
-        }
-        else {
-          nodeToSourcesMap.put(deletedNode.referenceID, nodeSources)
-        }
+        nodeToSourcesMap.removeValues(deletedNode.referenceID, differentiatedSources)
       }
     }
     for (deletedSource in delta.deletedSources) {
-      sourceToNodesMap.remove(deletedSource)
+      sourceToNodesMap.remove((deletedSource as PathSource).pathHash)
     }
 
     val updatedNodes = delta.sources.flatMapTo(ObjectOpenCustomHashSet(DiffCapableHashStrategy)) { getNodes(it) }
@@ -357,29 +355,34 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
     updateSourceToNodeSetMap(delta, nodeToSourcesMap)
 
     if (delta is DeltaImpl) {
-      for ((source, nodes) in delta.sourceToNodesMap.object2ObjectEntrySet().fastIterator()) {
-        updateSourceToNodeSetMapByDiff(map = sourceToNodesMap, key = source, dataAfter = nodes) { past, now -> deepDiffForNodes(past, now) }
+      delta.sourceToNodesMap.forEach { source, nodes ->
+        updateSourceToNodeSetMapByDiff(
+          map = sourceToNodesMap,
+          key = (source as PathSource).pathHash,
+          dataAfter = nodes,
+        ) { past, now -> deepDiffForNodes(past, now) }
       }
     }
     else {
       for (deltaSource in delta.sources) {
-        @Suppress("UNCHECKED_CAST")
-        val dataAfter = delta.getNodes(deltaSource) as Collection<Node<*, Difference>>
+        require(delta.getNodes(deltaSource).none()) {
+          "Expected that SourceDelta.getNodes() always returns an empty list"
+        }
 
         updateSourceToNodeSetMapByDiff(
           map = sourceToNodesMap,
-          key = deltaSource,
-          dataAfter = dataAfter
+          key = (deltaSource as PathSource).pathHash,
+          dataAfter = emptyScatterSet()
         ) { past, now -> deepDiffForNodes(past, now) }
       }
     }
   }
 }
 
-private fun updateSourceToNodeSetMap(delta: Delta, nodeToSourcesMap: MultiMaplet<ReferenceID, NodeSource>) {
+private fun updateSourceToNodeSetMap(delta: Delta, nodeToSourcesMap: MultiMapletEx<ReferenceID, NodeSource>) {
   val deltaNodes = delta.sources.asSequence().flatMap { delta.getNodes(it) }.map { it.referenceID }
   val visited = hashSet<ReferenceID>()
-  val sourcesAfter = ObjectOpenHashSet<NodeSource>()
+  val sourcesAfter = MutableScatterSet<NodeSource>()
   for (nodeId in deltaNodes) {
     if (!visited.add(nodeId)) {
       continue
@@ -393,23 +396,26 @@ private fun updateSourceToNodeSetMap(delta: Delta, nodeToSourcesMap: MultiMaplet
     @Suppress("UNCHECKED_CAST")
     sourcesAfter.addAll(delta.getSources(nodeId) as Collection<NodeSource>)
 
-    updateSourceToNodeSetMapByDiff(map = nodeToSourcesMap, key = nodeId, dataAfter = sourcesAfter) { past, now -> diffForSets(past, now) }
+    updateSourceToNodeSetMapByDiff(map = nodeToSourcesMap, key = nodeId, dataAfter = sourcesAfter) { past, now -> notLazyDiffForSets(past, now) }
   }
 }
 
 private fun deepDiffForNodes(
   past: Collection<Node<*, *>>,
-  now: Collection<Node<*, *>>
-): Difference.Specifier<Node<*, *>, Difference> {
+  now: ScatterSet<Node<*, *>>
+): Difference.Specifier<Node<*, *>, Difference>? {
   @Suppress("UNCHECKED_CAST")
-  return deepDiffForSets(past as Collection<Node<*, Difference>>, now as Collection<Node<*, Difference>>) as Difference.Specifier<Node<*, *>, Difference>
+  return notLazyDeepDiffForSets(
+    past as Collection<Node<*, Difference>>,
+    now as ScatterSet<Node<*, Difference>>,
+  ) as Difference.Specifier<Node<*, *>, Difference>?
 }
 
 private inline fun <K : Any, V : Any> updateSourceToNodeSetMapByDiff(
-  map: MultiMaplet<K, V>,
+  map: MultiMapletEx<K, V>,
   key: K,
-  dataAfter: Collection<V>,
-  diffComparator: (PersistentSet<V>, Collection<V>) -> Difference.Specifier<V, *>,
+  dataAfter: ScatterSet<V>,
+  diffComparator: (PersistentSet<V>, ScatterSet<V>) -> Difference.Specifier<V, *>?,
 ) {
   @Suppress("UNCHECKED_CAST")
   val dataBefore = map.get(key) as PersistentSet<V>
@@ -417,7 +423,7 @@ private inline fun <K : Any, V : Any> updateSourceToNodeSetMapByDiff(
   val afterEmpty = dataAfter.isEmpty()
   if (beforeEmpty || afterEmpty) {
     if (!afterEmpty) {
-      // so, before is empty
+      // so, before is empty - put instead of appendValues (put is more performant)
       map.put(key, dataAfter)
     }
     else if (!beforeEmpty) {
@@ -425,7 +431,7 @@ private inline fun <K : Any, V : Any> updateSourceToNodeSetMapByDiff(
     }
   }
   else {
-    val diff = diffComparator(dataBefore, dataAfter)
+    val diff = diffComparator(dataBefore, dataAfter) ?: return
     if (!diff.unchanged()) {
       if (diff.removed().none() && diff.changed().none()) {
         map.appendValues(key, diff.added())

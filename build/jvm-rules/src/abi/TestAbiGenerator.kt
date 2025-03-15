@@ -15,12 +15,12 @@ internal object TestAbiGenerator {
       val data = zip.getInputStream(zip.getEntry(zipName)).use { it.readAllBytes() }
 
       val classesToBeDeleted = HashSet<String>()
-      val bytes = createAbiForKotlin(HashSet(), JarContentToProcess(
-        name = zipName.toByteArray(),
-        data = data,
-        isKotlinModuleMetadata = false,
-        isKotlin = true,
-      ))
+      //val bytes = createAbiForKotlin(HashSet(), JarContentToProcess(
+      //  name = zipName.toByteArray(),
+      //  data = data,
+      //  isKotlinModuleMetadata = false,
+      //  isKotlin = true,
+      //))
       //val classNode = ClassNode()
       //ClassReader(bytes).accept(classNode, 0)
     }

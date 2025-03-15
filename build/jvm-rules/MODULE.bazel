@@ -352,6 +352,19 @@ http_file(
     downloaded_file_path = "fury-core-0.10.0-sources.jar",
 )
 
+http_file(
+    name = "collection-jvm",
+    url = "https://dl.google.com/android/maven2/androidx/collection/collection-jvm/1.5.0/collection-jvm-1.5.0.jar",
+    sha256 = "70b35924e4babcdffa37d0e575ee039c56a2d97123342624c48b603233704341",
+    downloaded_file_path = "collection-jvm-1.5.0.jar",
+)
+http_file(
+    name = "collection-jvm-sources",
+    url = "https://dl.google.com/android/maven2/androidx/collection/collection-jvm/1.5.0/collection-jvm-1.5.0-sources.jar",
+    sha256 = "bcc6197ec5fb349e86ae3ba6c94b164d3a9ac5a03d9f9c235d7c4eb24e5878b3",
+    downloaded_file_path = "collection-jvm-1.5.0-sources.jar",
+)
+
 ### auto-generated section `libraries` end
 
 # Test Libraries

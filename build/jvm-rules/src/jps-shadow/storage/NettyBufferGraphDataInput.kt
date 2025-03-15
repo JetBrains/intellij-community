@@ -8,8 +8,7 @@ import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.impl.doReadGraphElement
 import org.jetbrains.jps.dependency.impl.doReadGraphElementCollection
 
-@Suppress("SpellCheckingInspection")
-internal val predefinedStrings = ArrayList<String>(listOf(
+internal val predefinedStringArray = arrayOf(
   "",
   "<init>",
   "Ljava/lang/String;",
@@ -31,7 +30,9 @@ internal val predefinedStrings = ArrayList<String>(listOf(
   "Z",
   "[B",
   "<T:Ljava/lang/Object;>Ljava/lang/Object;"
-))
+)
+
+private val predefinedStrings = ArrayList<String>(predefinedStringArray.asList())
 
 class NettyBufferGraphDataInput(private val buffer: ByteBuf) : GraphDataInput {
   @Suppress("UNCHECKED_CAST")

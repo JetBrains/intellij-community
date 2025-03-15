@@ -1,20 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.jps.dependency.storage
 
+import androidx.collection.MutableObjectIntMap
 import io.netty.buffer.ByteBuf
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.GraphDataOutput
 
-private val predefinedMap = Object2IntOpenHashMap<String>().also {
-  for ((i, s) in predefinedStrings.withIndex()) {
-    it.put(s, i)
-  }
-  it.defaultReturnValue(-1)
-}
-
 class NettyBufferGraphDataOutput(private val buffer: ByteBuf) : GraphDataOutput {
-  private val strings = predefinedMap.clone()
+  private val strings = MutableObjectIntMap<String>(predefinedStringArray.size * 2).also {
+    for ((i, s) in predefinedStringArray.withIndex()) {
+      it.set(s, i)
+    }
+  }
 
   override fun <T : ExternalizableGraphElement> writeGraphElement(element: T) {
     doWriteGraphElement(this, element)
@@ -72,7 +71,7 @@ class NettyBufferGraphDataOutput(private val buffer: ByteBuf) : GraphDataOutput 
   }
 
   override fun writeUTF(s: String) {
-    val index = strings.getInt(s)
+    val index = strings.getOrDefault(s, -1)
     if (index >= 0) {
       writeUInt29(buffer, index shl 1)
     }
@@ -80,7 +79,7 @@ class NettyBufferGraphDataOutput(private val buffer: ByteBuf) : GraphDataOutput 
       val bytes = s.toByteArray()
       writeUInt29(buffer, (bytes.size shl 1) or 1)
       buffer.writeBytes(bytes)
-      strings.put(s, strings.size)
+      strings.set(s, strings.size)
     }
   }
 }

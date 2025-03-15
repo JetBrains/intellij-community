@@ -1,15 +1,18 @@
-package org.jetbrains.jps.dependency.java
+package org.jetbrains.jps.dependency.java.nodeBuilder
 
 import org.jetbrains.jps.dependency.NodeBuilder
+import org.jetbrains.jps.dependency.java.ClassUsage
+import org.jetbrains.jps.dependency.java.JVMFlags
+import org.jetbrains.jps.dependency.java.ModulePackage
+import org.jetbrains.jps.dependency.java.ModuleRequires
 import org.jetbrains.org.objectweb.asm.ModuleVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
-import org.jetbrains.org.objectweb.asm.Opcodes.API_VERSION
 
 internal class ModuleCrawler(
-  private val moduleRequires: MutableSet<ModuleRequires>,
-  private val moduleExports: MutableSet<ModulePackage>,
+  private val moduleRequires: MutableList<ModuleRequires>,
+  private val moduleExports: MutableList<ModulePackage>,
   private val nodeBuilder: NodeBuilder,
-) : ModuleVisitor(API_VERSION) {
+) : ModuleVisitor(Opcodes.API_VERSION) {
   override fun visitMainClass(mainClass: String) {
     nodeBuilder.addUsage(ClassUsage(mainClass))
   }

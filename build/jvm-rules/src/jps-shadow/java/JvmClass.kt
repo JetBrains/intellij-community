@@ -35,32 +35,32 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
     flags: JVMFlags,
     signature: String?,
     fqName: String,
-    outFilePath: String,
+    outFilePathHash: Long,
     superFqName: String?,
     outerFqName: String?,
-    interfaces: Iterable<String>,
-    fields: Iterable<JvmField>?,
-    methods: Iterable<JvmMethod>?,
+    interfaces: Collection<String>,
+    fields: Collection<JvmField>,
+    methods: Collection<JvmMethod>,
     annotations: Iterable<ElementAnnotation>,
-    annotationTargets: Iterable<ElemType>?,
+    annotationTargets: Collection<ElemType>,
     retentionPolicy: RetentionPolicy?,
-    usages: Iterable<Usage>,
-    metadata: Iterable<JvmMetadata<*, *>>
+    usages: Collection<Usage>,
+    metadata: Collection<JvmMetadata<*, *>>
   ) : super(
     flags = flags,
     signature = signature,
     name = fqName,
-    outFilePath = outFilePath,
+    outFilePathHash = outFilePathHash,
     annotations = annotations,
     usages = usages,
     metadata = metadata,
   ) {
     this.superFqName = if (superFqName == null || OBJECT_CLASS_NAME == superFqName) "" else superFqName
     this.outerFqName = outerFqName ?: ""
-    this.interfaces = interfaces as Collection<String>
-    this.fields = fields as Collection<JvmField>
-    this.methods = methods as Collection<JvmMethod>
-    this.annotationTargets = annotationTargets as Collection<ElemType>
+    this.interfaces = interfaces
+    this.fields = fields
+    this.methods = methods
+    this.annotationTargets = annotationTargets
     this.retentionPolicy = retentionPolicy
   }
 
@@ -82,6 +82,7 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
 
   override fun write(out: GraphDataOutput) {
     super.write(out)
+
     out.writeUTF(outerFqName)
     out.writeUTF(superFqName)
     out.writeCollection(interfaces) { writeUTF(it) }

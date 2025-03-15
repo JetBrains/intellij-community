@@ -7,6 +7,4 @@ interface Node<T : Node<T, D>, D : Difference> : DiffCapable<T, D>, Externalizab
   val referenceID: ReferenceID
 
   fun getUsages(): Iterable<Usage>
-
-  fun usages(): Sequence<Usage>
 }

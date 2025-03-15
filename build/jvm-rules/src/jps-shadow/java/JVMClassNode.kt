@@ -2,8 +2,8 @@
 
 package org.jetbrains.jps.dependency.java
 
-import com.dynatrace.hash4j.hashing.Hashing
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import androidx.collection.MutableScatterMap
+import com.intellij.util.containers.toArray
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.emptySet
@@ -28,15 +28,15 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
     flags: JVMFlags,
     signature: String?,
     name: String,
-    outFilePath: String,
+    outFilePathHash: Long,
     annotations: Iterable<ElementAnnotation>,
-    usages: Iterable<Usage>,
-    metadata: Iterable<JvmMetadata<*, *>>
+    usages: Collection<Usage>,
+    metadata: Collection<JvmMetadata<*, *>>
   ) : super(flags, signature, name, annotations) {
     referenceID = JvmNodeReferenceID(name)
-    outFilePathHash = Hashing.xxh3_64().hashBytesToLong(outFilePath.toByteArray())
-    this.usages = usages as Collection<Usage>
-    this.metadata = (metadata as java.util.Collection<JvmMetadata<*, *>>).toArray(emptyMetadata)
+    this.outFilePathHash = outFilePathHash
+    this.usages = usages
+    this.metadata = metadata.toArray(emptyMetadata)
   }
 
   constructor(input: GraphDataInput) : super(input) {
@@ -68,8 +68,8 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
 
   override fun write(out: GraphDataOutput) {
     super.write(out)
-    out.writeRawLong(outFilePathHash)
 
+    out.writeRawLong(outFilePathHash)
     out.writeUsages(usages)
 
     out.writeInt(metadata.size)
@@ -79,8 +79,6 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
   }
 
   final override fun getUsages(): Iterable<Usage> = usages
-
-  final override fun usages(): Sequence<Usage> = usages.asSequence()
 
   @Suppress("unused")
   fun getMetadata(): Iterable<JvmMetadata<*, *>> = if (metadata.isEmpty()) emptyList() else Iterable { metadata.iterator() }
@@ -149,7 +147,7 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
     private val past: T
       get() = myPast!!
 
-    private val metadataDiffCache = Object2ObjectOpenHashMap<Class<out JvmMetadata<*, *>>, Specifier<*, *>>()
+    private val metadataDiffCache = MutableScatterMap<Class<out JvmMetadata<*, *>>, Specifier<*, *>>()
     private val usageDiff by lazy(LazyThreadSafetyMode.NONE) { diff(past.usages, usages) }
 
     override fun unchanged(): Boolean {
@@ -166,11 +164,17 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
 
     private fun <MT : JvmMetadata<MT, MD>, MD : Difference> isMetadataChanged(metadata: Array<MT>): Boolean {
       for (m in metadata) {
-        if (!metadataDiffCache.computeIfAbsent(m.javaClass) {
+        val diff = metadataDiffCache.compute(m.javaClass) { k, v ->
+          if (v == null) {
             @Suppress("UNCHECKED_CAST")
-            val metaClass = it as Class<MT>
+            val metaClass = k as Class<MT>
             deepDiff(past.filterMetadata(metaClass), filterMetadata(metaClass))
-          }.unchanged()) {
+          }
+          else {
+            v
+          }
+        }
+        if (diff.unchanged()) {
           return true
         }
       }
@@ -179,8 +183,8 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
 
     fun <MT : JvmMetadata<MT, MD>, MD : Difference> metadata(metaClass: Class<MT>): Specifier<MT, MD> {
       @Suppress("UNCHECKED_CAST")
-      return metadataDiffCache.computeIfAbsent(metaClass) {
-        deepDiff(past.filterMetadata(it as Class<MT>), filterMetadata(it))
+      return metadataDiffCache.compute(metaClass) { k, v ->
+        v ?: deepDiff(past.filterMetadata(k as Class<MT>), filterMetadata(k))
       } as Specifier<MT, MD>
     }
   }

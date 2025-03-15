@@ -1,15 +1,13 @@
-@file:Suppress("ReplaceGetOrSet")
-
-package org.jetbrains.jps.dependency.java
+package org.jetbrains.jps.dependency.java.nodeBuilder
 
 import org.jetbrains.bazel.jvm.emptyStringArray
+import org.jetbrains.jps.dependency.java.KotlinMeta
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor
-import org.jetbrains.org.objectweb.asm.Opcodes.API_VERSION
-import java.util.ArrayList
+import org.jetbrains.org.objectweb.asm.Opcodes
 
 internal class KotlinMetadataCrawler(
   private val resultConsumer: (KotlinMeta) -> Unit,
-) : AnnotationVisitor(API_VERSION) {
+) : AnnotationVisitor(Opcodes.API_VERSION) {
   private var kind = -1
   private var version: IntArray? = null
   private var data1: Array<String>? = null
@@ -32,7 +30,7 @@ internal class KotlinMetadataCrawler(
   }
 
   override fun visitArray(name: String): AnnotationVisitor {
-    return object : AnnotationVisitor(API_VERSION) {
+    return object : AnnotationVisitor(Opcodes.API_VERSION) {
       private val values = ArrayList<String>()
 
       override fun visit(name: String?, value: Any?) {
@@ -69,5 +67,3 @@ internal class KotlinMetadataCrawler(
     ))
   }
 }
-
-

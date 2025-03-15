@@ -1,29 +1,39 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("UnstableApiUsage", "SSBasedInspection", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("UnstableApiUsage", "SSBasedInspection", "ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.bazel.jvm.jps.storage
 
+import androidx.collection.ScatterSet
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.mutate
-import org.h2.mvstore.MVMap
-import org.jetbrains.jps.dependency.MultiMaplet
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.collections.immutable.plus
 import kotlinx.collections.immutable.toPersistentHashSet
-import org.jetbrains.bazel.jvm.emptySet
+import org.h2.mvstore.MVMap
+import org.jetbrains.bazel.jvm.removeAll
+import org.jetbrains.bazel.jvm.toPersistentHashSet
 import org.jetbrains.jps.dependency.diff.Difference
+import org.jetbrains.jps.dependency.storage.MultiMapletEx
 import java.util.function.BiFunction
-import kotlin.collections.addAll
 
 internal class MvStoreMultiMaplet<K : Any, V : Any>(
   private val map: MVMap<K, PersistentSet<V>>,
-) : MultiMaplet<K, V> {
+) : MultiMapletEx<K, V> {
   override fun containsKey(key: K): Boolean {
     return map.containsKey(key)
   }
 
   override fun get(key: K): Collection<V> {
     return map.get(key) ?: return persistentHashSetOf()
+  }
+
+  override fun put(key: K, values: ScatterSet<V>) {
+    if (values.isEmpty()) {
+      map.remove(key)
+    }
+    else {
+      map.operate(key, values.toPersistentHashSet(), ReplaceValuesDecisionMaker)
+    }
   }
 
   override fun put(key: K, values: Iterable<V>) {
@@ -45,9 +55,7 @@ internal class MvStoreMultiMaplet<K : Any, V : Any>(
   }
 
   override fun appendValues(key: K, values: Iterable<V>) {
-    if (values.count() > 0) {
-      map.operate(key, null, AddValuesToSetDecisionMaker(values))
-    }
+    map.operate(key, null, AddValuesToSetDecisionMaker(values))
   }
 
   override fun removeValue(key: K, value: V) {
@@ -58,14 +66,14 @@ internal class MvStoreMultiMaplet<K : Any, V : Any>(
     map.operate(key, null, RemoveValuesDecisionMaker(values))
   }
 
+  override fun removeValues(key: K, values: ScatterSet<V>) {
+    if (!values.isEmpty()) {
+      map.operate(key, null, RemoveValuesAsScatterSetDecisionMaker(values))
+    }
+  }
+
   override fun getKeys(): Iterable<K> {
     return map.keys
-  }
-
-  override fun close() {
-  }
-
-  override fun flush() {
   }
 
   override fun update(
@@ -74,6 +82,12 @@ internal class MvStoreMultiMaplet<K : Any, V : Any>(
     diffComparator: BiFunction<in Iterable<V>, in Iterable<V>, Difference.Specifier<out V, *>>,
   ) {
     throw UnsupportedOperationException("Use updateByDiff")
+  }
+
+  override fun close() {
+  }
+
+  override fun flush() {
   }
 }
 
@@ -152,8 +166,8 @@ private class RemoveValueDecisionMaker<V>(private val toRemove: V) : MVMap.Decis
   }
 }
 
-private class RemoveValuesDecisionMaker<V>(private val toRemove: Iterable<V>) : MVMap.DecisionMaker<Set<V>>() {
-  override fun decide(existingValue: Set<V>?, providedValue: Set<V>?): MVMap.Decision {
+private class RemoveValuesDecisionMaker<V>(private val toRemove: Iterable<V>) : MVMap.DecisionMaker<PersistentSet<V>>() {
+  override fun decide(existingValue: PersistentSet<V>?, providedValue: PersistentSet<V>?): MVMap.Decision {
     if (existingValue.isNullOrEmpty() || toRemove.all { !existingValue.contains(it) }) {
       return MVMap.Decision.ABORT
     }
@@ -163,27 +177,33 @@ private class RemoveValuesDecisionMaker<V>(private val toRemove: Iterable<V>) : 
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Set<V>> selectValue(existingValue: T?, providedValue: T?): T? {
-    if (existingValue !is PersistentSet<*>) {
-      return persistentHashSetOf<V>().mutate {
-        it.addAll(existingValue as Collection<V>)
-        for (v in toRemove) {
-          it.remove(v)
-        }
-      } as T
-    }
-
-    val m = existingValue as PersistentSet<V>
+  override fun <T : PersistentSet<V>> selectValue(existingValue: T, providedValue: T?): T? {
     if (toRemove is Collection<*>) {
-      return m.removeAll(toRemove as Collection<V>) as T
+      return existingValue.removeAll(toRemove as Collection<V>) as T
     }
     else {
-      return m.mutate {
+      return existingValue.mutate {
         for (v in toRemove) {
           it.remove(v)
         }
       } as T
     }
+  }
+}
+
+private class RemoveValuesAsScatterSetDecisionMaker<V  : Any>(private val toRemove: ScatterSet<V>) : MVMap.DecisionMaker<PersistentSet<V>>() {
+  override fun decide(existingValue: PersistentSet<V>?, providedValue: PersistentSet<V>?): MVMap.Decision {
+    if (existingValue.isNullOrEmpty() || toRemove.all { !existingValue.contains(it) }) {
+      return MVMap.Decision.ABORT
+    }
+    else {
+      return MVMap.Decision.PUT
+    }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun <T : PersistentSet<V>> selectValue(existingValue: T, providedValue: T?): T? {
+    return existingValue.removeAll(toRemove) as T
   }
 }
 

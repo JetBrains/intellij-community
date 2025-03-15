@@ -61,3 +61,7 @@
       version: 1.47.0
     - id: org.apache.fury:fury-core
       version: 0.10.0
+- url: https://dl.google.com/android/maven2
+  libs:
+    - id: androidx.collection:collection-jvm
+      version: 1.5.0

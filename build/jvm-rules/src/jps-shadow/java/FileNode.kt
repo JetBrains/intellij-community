@@ -2,11 +2,9 @@
 
 package org.jetbrains.jps.dependency.java
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.Node
-import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.Usage
 import org.jetbrains.jps.dependency.diff.DiffCapable
 import org.jetbrains.jps.dependency.diff.Difference
@@ -33,8 +31,6 @@ class FileNode : Node<FileNode, Difference> {
   }
 
   override fun getUsages(): Iterable<Usage> = usages
-
-  override fun usages(): Sequence<Usage> = usages.asSequence()
 
   override fun write(out: GraphDataOutput) {
     referenceID.write(out)

@@ -79,66 +79,6 @@ internal object HashValue128KeyDataType : DataType<HashValue128> {
   }
 }
 
-private val emptyInts = arrayOfNulls<Int>(0)
-
-internal object IntDataType : DataType<Int> {
-  override fun getMemory(obj: Int) = Int.SIZE_BYTES
-
-  override fun isMemoryEstimationAllowed(): Boolean = true
-
-  override fun write(buff: WriteBuffer, data: Int) {
-    buff.putVarInt(data)
-  }
-
-  override fun write(buff: WriteBuffer, storage: Any?, len: Int) {
-    @Suppress("UNCHECKED_CAST")
-    storage as Array<Int>
-    for (i in 0 until len) {
-      buff.putVarInt(storage[i])
-    }
-  }
-
-  override fun read(buff: ByteBuffer): Int = readVarInt(buff)
-
-  override fun read(buff: ByteBuffer, storage: Any?, len: Int) {
-    @Suppress("UNCHECKED_CAST")
-    storage as Array<Int>
-    for (i in 0 until len) {
-      storage[i] = readVarInt(buff)
-    }
-  }
-
-  override fun createStorage(size: Int): Array<Int?> {
-    return if (size == 0) emptyInts else arrayOfNulls(size)
-  }
-
-  override fun compare(one: Int, two: Int): Int {
-    return one.compareTo(two)
-  }
-
-  override fun binarySearch(keyObj: Int, storageObj: Any, size: Int, initialGuess: Int): Int {
-    var high = size - 1
-    // the cached index minus one, so that for the first time (when cachedCompare is 0), the default value is used
-    var x = initialGuess - 1
-    if (x < 0 || x > high) {
-      x = high ushr 1
-    }
-    @Suppress("UNCHECKED_CAST")
-    storageObj as Array<Int?>
-    var low = 0
-    while (low <= high) {
-      val midVal = storageObj[x]!!
-      when {
-        keyObj > midVal -> low = x + 1
-        keyObj < midVal -> high = x - 1
-        else -> return x
-      }
-      x = (low + high) ushr 1
-    }
-    return -(low + 1)
-  }
-}
-
 internal object ModernStringDataType : DataType<String> {
   override fun createStorage(size: Int): Array<String?> = if (size == 0) ArrayUtilRt.EMPTY_STRING_ARRAY else arrayOfNulls(size)
 

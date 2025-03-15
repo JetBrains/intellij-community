@@ -11,7 +11,6 @@ import org.jetbrains.jps.dependency.writeCollection
 import org.jetbrains.jps.javac.Iterators
 import org.jetbrains.org.objectweb.asm.Type
 import java.util.function.Predicate
-import kotlin.collections.map
 import kotlin.jvm.JvmField
 
 class JvmMethod : ProtoMember, DiffCapable<JvmMethod, JvmMethod.Diff> {
@@ -78,7 +77,7 @@ class JvmMethod : ProtoMember, DiffCapable<JvmMethod, JvmMethod.Diff> {
   fun createUsageQuery(owner: JvmNodeReferenceID): Predicate<Node<*, *>> {
     val thisMethodName = name
     return Predicate { node ->
-      node.usages().any { it is MethodUsage && owner == it.getElementOwner() && it.name == thisMethodName }
+      node.getUsages().any { it is MethodUsage && owner == it.getElementOwner() && it.name == thisMethodName }
     }
   }
 

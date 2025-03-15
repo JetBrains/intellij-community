@@ -2,12 +2,14 @@
 
 package org.jetbrains.jps.dependency.java
 
+import androidx.collection.ScatterSet
 import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.collections.immutable.PersistentSet
 import org.jetbrains.bazel.jvm.emptySet
+import org.jetbrains.bazel.jvm.filterToList
 import org.jetbrains.jps.dependency.diff.DiffCapable
 import org.jetbrains.jps.dependency.diff.Difference
 import org.jetbrains.jps.dependency.diff.Difference.Specifier
@@ -79,6 +81,35 @@ internal fun <D : Difference, T : DiffCapable<T, D>> deepDiffForSets(
   }
 }
 
+internal fun <D : Difference, T : DiffCapable<T, D>> notLazyDeepDiffForSets(
+  past: Collection<T>,
+  now: ScatterSet<out T>,
+): Specifier<T, D>? {
+  val pastSameSet = past.toCollection(ObjectOpenCustomHashSet(past.size, DiffCapableHashStrategy))
+  val nowSameSet = ObjectOpenCustomHashSet<T>(now.size, DiffCapableHashStrategy)
+  now.forEach {
+    nowSameSet.add(it)
+  }
+
+  val added = computeCustomCollectionDiff(nowSameSet, pastSameSet)
+  val removed = computeCustomCollectionDiff(pastSameSet, nowSameSet)
+  val changed = computeChanged(pastSameSet, nowSameSet)
+
+  if (added.isEmpty() && removed.isEmpty() && changed.isEmpty()) {
+    return null
+  }
+
+  return object : Specifier<T, D> {
+    override fun added() = added
+
+    override fun removed() = removed
+
+    override fun changed() = changed
+
+    override fun unchanged(): Boolean = false
+  }
+}
+
 private fun <T> computeCustomCollectionDiff(a: ObjectOpenCustomHashSet<T>, b: ObjectOpenCustomHashSet<T>): Collection<T> {
   return when {
     a.size < SET_THRESHOLD -> a.filterTo(ArrayList()) { !b.contains(it) }
@@ -146,7 +177,7 @@ internal fun <T> diff(past: Collection<T>?, now: Collection<T>?): Specifier<T, D
 private fun <T> computeCollectionDiff(a: Collection<T>, b: Collection<T>): Collection<T> {
   return when {
     a is PersistentSet<T> -> a.removeAll(b)
-    else -> a.filterTo(ArrayList()) { !b.contains(it) }
+    else -> a.filter { !b.contains(it) }
   }
 }
 
@@ -168,6 +199,21 @@ internal fun <T> diffForSets(past: Collection<T>, now: Collection<T>): Specifier
       }
       return isUnchanged
     }
+
+    override fun changed(): Iterable<Difference.Change<T, Difference>> = emptySet()
+  }
+}
+
+internal fun <T> notLazyDiffForSets(past: Collection<T>, now: ScatterSet<T>): Specifier<T, Difference> {
+  val added = now.filterToList { !past.contains(it) }
+  val removed = past.filter { !now.contains(it) }.ifEmpty { emptyList() }
+  val isUnchanged = past == now
+  return object : Specifier<T, Difference> {
+    override fun added() = added
+
+    override fun removed() = removed
+
+    override fun unchanged(): Boolean = isUnchanged
 
     override fun changed(): Iterable<Difference.Change<T, Difference>> = emptySet()
   }

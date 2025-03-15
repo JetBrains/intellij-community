@@ -9,10 +9,12 @@ internal class SubclassesIndex(
   cFactory: MvStoreContainerFactory,
   isInMemory: Boolean,
 ) : BackDependencyIndexImpl("direct-subclasses", cFactory, isInMemory) {
-  override fun getIndexedDependencies(node: Node<*, *>): Sequence<ReferenceID> {
+  override fun processIndexedDependencies(node: Node<*, *>, processor: (ReferenceID) -> Unit) {
     if (node !is JvmClass) {
-      return emptySequence()
+      return
     }
-    return node.superTypes().map { JvmNodeReferenceID(it) }
+    for (id in node.superTypes()) {
+      processor(JvmNodeReferenceID(id))
+    }
   }
 }

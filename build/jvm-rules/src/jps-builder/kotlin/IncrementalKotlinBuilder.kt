@@ -47,7 +47,6 @@ import org.jetbrains.kotlin.build.isModuleMappingFile
 import org.jetbrains.kotlin.build.report.ICReporter
 import org.jetbrains.kotlin.build.report.ICReporter.ReportSeverity
 import org.jetbrains.kotlin.build.report.ICReporterBase
-import org.jetbrains.kotlin.builtins.StandardNames.FqNames.target
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -374,14 +373,7 @@ internal class IncrementalKotlinBuilder(
         )
       }
       else if (generatedFile.outputFile.isModuleMappingFile()) {
-        val tempFile = Files.createTempFile(dataManager.storeFile.parent, "kotlin_module-", "")
-        try {
-          Files.write(tempFile, generatedFile.data)
-          jpsIncrementalCache.saveModuleMappingToCache(sourceFiles = generatedFile.sourceFiles, file = tempFile.toFile())
-        }
-        finally {
-          Files.deleteIfExists(tempFile)
-        }
+        jpsIncrementalCache.saveModuleMappingToCache(sourceFiles = generatedFile.sourceFiles, data = generatedFile.data)
       }
     }
     jpsIncrementalCache.clearCacheForRemovedClasses(changeCollector)

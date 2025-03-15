@@ -2,9 +2,10 @@
 
 package org.jetbrains.jps.dependency.storage
 
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import androidx.collection.IntObjectMap
+import androidx.collection.MutableIntObjectMap
+import androidx.collection.MutableScatterMap
+import androidx.collection.ScatterMap
 import org.jetbrains.jps.dependency.FactoredExternalizableGraphElement
 import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
@@ -28,7 +29,6 @@ import org.jetbrains.jps.dependency.java.ModuleUsage
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
-import kotlin.jvm.java
 
 private val lookup = MethodHandles.lookup()
 
@@ -40,12 +40,15 @@ internal data class ClassInfo(
 )
 
 internal object ClassRegistry {
-  private val classToInfo = Object2ObjectOpenHashMap<Class<*>, ClassInfo>(17, Hash.VERY_FAST_LOAD_FACTOR)
-  private val idToInfo = Int2ObjectOpenHashMap<ClassInfo>(17, Hash.VERY_FAST_LOAD_FACTOR)
+  private val classToInfo: ScatterMap<Class<*>, ClassInfo>
+  private val idToInfo: IntObjectMap<ClassInfo>
 
   init {
     val defaultReadConstructorType = MethodType.methodType(Void.TYPE, GraphDataInput::class.java)
     val factorMethodType = MethodType.methodType(Void.TYPE, JvmNodeReferenceID::class.java, GraphDataInput::class.java)
+
+    val classToInfo = MutableScatterMap<Class<*>, ClassInfo>(17)
+    val idToInfo = MutableIntObjectMap<ClassInfo>(17)
 
     var counter = 0
     fun registerClass(aClass: Class<*>) {
@@ -84,6 +87,9 @@ internal object ClassRegistry {
 
     classToInfo.trim()
     idToInfo.trim()
+
+    this.classToInfo = classToInfo
+    this.idToInfo = idToInfo
 
     require(counter <= 255)
   }

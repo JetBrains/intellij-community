@@ -250,4 +250,11 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "collection",
+    jar = "@collection-jvm//file",
+    source_jar = "@collection-jvm-sources//file",
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `libraries` end

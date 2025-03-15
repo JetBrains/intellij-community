@@ -2,13 +2,11 @@
 
 package org.jetbrains.jps.dependency
 
-import io.netty.buffer.Unpooled.buffer
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import androidx.collection.MutableScatterMap
 import org.jetbrains.bazel.jvm.emptyList
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
-import java.util.*
 
 interface GraphDataInput : DataInput {
   @Throws(IOException::class)
@@ -27,10 +25,8 @@ interface GraphDataInput : DataInput {
 }
 
 interface GraphDataOutput : DataOutput {
-  @Throws(IOException::class)
   fun <T : ExternalizableGraphElement> writeGraphElement(element: T)
 
-  @Throws(IOException::class)
   fun <T : ExternalizableGraphElement> writeGraphElementCollection(elementType: Class<out T>, collection: Iterable<T>)
 
   fun writeRawLong(v: Long)
@@ -55,14 +51,14 @@ interface GraphDataOutput : DataOutput {
         writeGraphElementCollection(usage.javaClass, listOf(usage))
       }
       else -> {
-        val classToItem = Object2ObjectOpenHashMap<Class<out Usage>, MutableList<Usage>>()
+        val classToItem = MutableScatterMap<Class<out Usage>, MutableList<Usage>>()
         for (usage in usages) {
-          classToItem.computeIfAbsent(usage.javaClass) { ArrayList() }.add(usage)
+          classToItem.compute(usage.javaClass) { k, v -> (v ?: ArrayList()).also { it.add(usage) } }
         }
 
         writeInt(classToItem.size)
-        for (entry in classToItem.object2ObjectEntrySet().fastIterator()) {
-          writeGraphElementCollection(entry.key, entry.value)
+        classToItem.forEach { k, v ->
+          writeGraphElementCollection(k, v)
         }
       }
     }

@@ -1,4 +1,8 @@
 {
+  "androidx.collection:collection-jvm:1.5.0": [
+    "70b35924e4babcdffa37d0e575ee039c56a2d97123342624c48b603233704341",
+    "bcc6197ec5fb349e86ae3ba6c94b164d3a9ac5a03d9f9c235d7c4eb24e5878b3"
+  ],
   "com.google.flatbuffers:flatbuffers-java:25.2.10": [
     "587bd6c31cda747587493a113bec8602d3a0b0ca579b2b1b838ef71b19e6525d",
     "202bfdb62bff2f27bf3932a909fa5e45b3070aad3db3bb5a11900ee471a5546b"

@@ -23,6 +23,7 @@ import org.jetbrains.jps.dependency.MapletFactory
 import org.jetbrains.jps.dependency.MultiMaplet
 import org.jetbrains.jps.dependency.Usage
 import org.jetbrains.jps.dependency.impl.MemoryMultiMaplet
+import org.jetbrains.jps.dependency.storage.MultiMapletEx
 import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
 import org.jetbrains.jps.dependency.storage.StringEnumerator
 import org.jetbrains.jps.incremental.RebuildRequestedException
@@ -74,13 +75,13 @@ internal class BazelPersistentMapletFactory private constructor(
 
       val valueType = MVMap.Builder<HashValue128, Int>()
         .keyType(HashValue128KeyDataType)
-        .valueType(IntDataType)
+        .valueType(VarIntDataType)
       val stringHashToIndexMap = executeOrCloseStorage(storageCloser) {
         store.openMap("string-hash-to-index", valueType)
       }
       val indexToStringMap = executeOrCloseStorage(storageCloser) {
         store.openMap("string-index-to-string", MVMap.Builder<Int, String>()
-          .keyType(IntDataType)
+          .keyType(VarIntDataType)
           .valueType(ModernStringDataType)
         )
       }
@@ -126,7 +127,7 @@ internal class BazelPersistentMapletFactory private constructor(
     }
   })
 
-  override fun <K : Any, V : Any> openMap(mapName: String, mapBuilder: MVMap.Builder<K, PersistentSet<V>>): MultiMaplet<K, V> {
+  override fun <K : Any, V : Any> openMap(mapName: String, mapBuilder: MVMap.Builder<K, PersistentSet<V>>): MultiMapletEx<K, V> {
     val map: MVMap<K, PersistentSet<V>> = try {
       store.openMap(mapName, mapBuilder)
     }
@@ -137,7 +138,7 @@ internal class BazelPersistentMapletFactory private constructor(
     return MvStoreMultiMaplet(map)
   }
 
-  override fun <K : Any, V : Any> openInMemoryMap(): MultiMaplet<K, V> = MemoryMultiMaplet(null)
+  override fun <K : Any, V : Any> openInMemoryMap(): MultiMapletEx<K, V> = MemoryMultiMaplet(null)
 
   override fun <K : Any, V : Any> createSetMultiMaplet(
     storageName: String,

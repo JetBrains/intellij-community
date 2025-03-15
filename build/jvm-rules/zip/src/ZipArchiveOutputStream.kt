@@ -113,17 +113,17 @@ class ZipArchiveOutputStream(
     )
   }
 
-  fun writeEntryWithHalfBackedBuffer(name: ByteArray, unwrittenHeaderAndData: ByteBuf) {
+  fun writeEntryWithHalfBackedBuffer(path: ByteArray, unwrittenHeaderAndData: ByteBuf) {
     if (finished) {
       throw IOException("Stream has already been finished")
     }
 
-    val headerSize = 30 + name.size
+    val headerSize = 30 + path.size
     val size = unwrittenHeaderAndData.readableBytes() - headerSize
     val currentWriterIndex = unwrittenHeaderAndData.writerIndex()
     unwrittenHeaderAndData.writerIndex(0)
     writeZipLocalFileHeader(
-      name = name,
+      name = path,
       size = size,
       compressedSize = size,
       crc32 = 0,
@@ -142,7 +142,7 @@ class ZipArchiveOutputStream(
       compressedSize = size,
       method = ZipEntry.STORED,
       crc = 0,
-      name = name,
+      name = path,
       localFileHeaderOffset = localFileHeaderOffset,
       dataOffset = dataOffset,
     )
