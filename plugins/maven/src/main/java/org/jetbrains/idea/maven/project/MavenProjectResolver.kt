@@ -265,10 +265,19 @@ class MavenProjectResolver(private val myProject: Project) {
     embedder.resolveArtifacts(requests, progressReporter, eventHandler)
   }
 
+  private val lineColumnRegex = Regex(":[0-9]+:[0-9]+$")
+
   // trims line and column from file path, e.g., project/pom.xml:12:345 -> project/pom.xml
   private fun trimLineAndColumn(input: String): String {
-    val regex = Regex(":[0-9]+:[0-9]+$")
-    return input.replace(regex, "")
+    // if the input starts with "file://", remove that prefix
+    val withoutFilePrefix = if (input.startsWith("file://")) {
+      input.substring("file://".length)
+    }
+    else {
+      input
+    }
+
+    return withoutFilePrefix.replace(lineColumnRegex, "")
   }
 
   private fun getProblems(results: Collection<MavenProjectResolverResult>, problems: Collection<MavenProjectProblem>): MavenResolveProblemHolder {
