@@ -1,29 +1,19 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
-
-<idea-plugin>
-
-  <!-- Plugin name -->
+<idea-plugin allow-bundled-update="true">
   <id>XPathView</id>
   <name>XPathView + XSLT</name>
   <category>HTML and XML</category>
+  <vendor>JetBrains</vendor>
 
-  <!-- Description -->
   <description><![CDATA[
-    Provides a possibility to evaluate XPath expressions against any XML document
-    opened in IDE. It can also generate and show an XPath expression that matches the current node.
-    <p>
-    Adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
-    expressions and named templates for XSLT documents.</p>
+    <p>Provides a possibility to evaluate XPath expressions against any XML document
+    opened in the IDE. It can also generate and show an XPath expression that matches the current node.</p>
+    <p>Adds syntax highlighting, analysis, completion, navigation and refactoring of XPath
+    expressions and named templates for XSLT documents.
   ]]>
   </description>
 
-  <vendor>JetBrains</vendor>
-
   <depends>com.intellij.modules.xml</depends>
   <resource-bundle>messages.XPathBundle</resource-bundle>
-
-  <!-- wasn't sure if the plugin manager correctly handles dependent plugins -->
-  <!--<depends>XPathLanguage</depends>-->
 
   <extensionPoints>
     <!-- XPath Language -->
@@ -35,7 +25,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-
     <colorSettingsPage implementation="org.intellij.lang.xpath.XPathColorSettingsPage" />
 
     <configurationType implementation="org.intellij.lang.xpath.xslt.run.XsltRunConfigType" />
@@ -208,11 +197,6 @@
     <action id="XPathView.Actions.FindByExpression" class="org.intellij.plugins.xpathView.search.FindByXPathAction">
       <keyboard-shortcut first-keystroke="control alt X" second-keystroke="F" keymap="$default" />
     </action>
-
-    <!-- Toolbar -->
-    <!--<reference ref="XPathView.Actions.Evaluate">-->
-      <!--<add-to-group group-id="MainToolBar" anchor="before" relative-to-action="HelpTopics" />-->
-    <!--</reference>-->
 
     <group id="XPathView.MainMenu.Search">
       <separator />
