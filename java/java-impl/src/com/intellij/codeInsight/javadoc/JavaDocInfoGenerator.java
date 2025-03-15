@@ -3163,6 +3163,68 @@ public class JavaDocInfoGenerator {
     }
   }
 
+  /**
+   * Locates the target of inheritDoc tags without any assumption about their location.
+   */
+  @ApiStatus.Internal
+  public static class AnyInheritDocTagLocator implements DocTagLocator<PsiElement> {
+    private final @NotNull PsiDocTag inheritDocTag;
+    private final @NotNull PsiMethod method;
+
+    public AnyInheritDocTagLocator(@NotNull PsiDocTag inheritDocTag, @NotNull PsiMethod method) {
+      this.inheritDocTag = inheritDocTag;
+      this.method = method;
+    }
+
+    @Override
+    public PsiElement find(PsiDocCommentOwner owner, PsiDocComment comment) {
+      final var parent = inheritDocTag.getParent();
+      if (parent == null) return null;
+
+      final var firstChild = parent.getFirstChild();
+      if (firstChild instanceof PsiDocToken) {
+        // Main description
+        if (((PsiDocToken)firstChild).getTokenType() == JavaDocTokenType.DOC_COMMENT_START) {
+          if (!isEmptyDescription(comment)) {
+            final var elements = comment.getDescriptionElements();
+            return ContainerUtil.find(elements, e -> !(e instanceof PsiWhiteSpace));
+          }
+          return null;
+        }
+
+        // Tag in the description of a @return, @param, or @throws tag
+        switch (firstChild.getText()) {
+          case "@return" -> {
+            return new JavaDocInfoGenerator.ReturnTagLocator().find(owner, comment);
+          }
+          case "@param" -> {
+            final var paramNode = PsiTreeUtil.skipWhitespacesForward(firstChild);
+            if (paramNode == null) return null;
+            final var param = paramNode.getText();
+            if (param.startsWith("<")) {
+              final var parameterList = method.getTypeParameterList();
+              if (parameterList == null) return null;
+              final var i = ContainerUtil.indexOf(parameterList.getTypeParameters(), p -> {
+                final var identifier = p.getNameIdentifier();
+                return identifier != null && identifier.getText().equals(param.substring(1, param.length() - 1));
+              });
+              return typeParameterLocator(i).find(owner, comment);
+            } else {
+              final var i = ContainerUtil.indexOf(method.getParameterList().getParameters(), p -> p.getName().equals(param));
+              return parameterLocator(i).find(owner, comment);
+            }
+          }
+          case "@throws" -> {
+            final var exceptionNode = PsiTreeUtil.skipWhitespacesForward(firstChild);
+            if (exceptionNode == null) return null;
+            final var exceptionName = exceptionNode.getText();
+            return exceptionLocator(exceptionName).find(owner, comment);
+          }
+        }
+      }
+      return null;
+    }
+  }
 
   private class MyVisitor extends JavaElementVisitor {
     private final StringBuilder myBuffer;
