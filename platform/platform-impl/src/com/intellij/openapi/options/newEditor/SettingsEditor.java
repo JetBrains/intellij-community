@@ -63,7 +63,7 @@ import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.
 
 @ApiStatus.Internal
 public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
-  private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
+  static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
   private static final float SPLITTER_PROPORTION_DEFAULT_VALUE = .2f;
 
@@ -80,6 +80,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final History myHistory = new History(this);
   private volatile boolean myNavigatingNow = false;
   private final boolean myIsModal;
+  private final @Nullable ResetConfigurableHandler myResetConfigurableHandler;
   private final Map<Configurable, Boolean> myLeaveState = new ConcurrentHashMap<>();
 
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
@@ -191,6 +192,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           if (!myIsModal) {
             if (!myNavigatingNow && oldConfigurable != null) { // don't add to IdeDocumentHistory if just opened
               IdeDocumentHistory documentHistory = IdeDocumentHistory.getInstance(project);
+              if (myResetConfigurableHandler != null) {
+                myResetConfigurableHandler.scheduleConfigurableReset(oldConfigurable);
+              }
               CommandProcessor.getInstance().executeCommand(project, () -> {
                 documentHistory.onSelectionChanged();
               }, "ConfigurableChange", null);
@@ -371,6 +375,8 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       editor.setPreferredSize(JBUI.size(800, 600));
       add(BorderLayout.CENTER, mySplitter);
     }
+
+    myResetConfigurableHandler = myIsModal ? null:  new ResetConfigurableHandler(project, this.filter.context, editor.coroutineScope, parent);
 
     spotlightPainter = spotlightPainterFactory.createSpotlightPainter(project, editor, this, (painter) -> {
       Configurable currentConfigurable = this.filter.context.getCurrentConfigurable();
