@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,16 +48,33 @@ public class AddAntBuildFileTest extends LightPlatformTestCase {
     assertFalse(event.getPresentation().isEnabledAndVisible());
   }
 
+  @Test
+  public void testDisabledOnMavenProjectFileWithoutNamespace() {
+    final VirtualFile file = VfsTestUtil.createFile(getSourceRoot(), "pom.xml", """
+      <project>
+          <modelVersion>4.0.0</modelVersion>
+          <groupId>com.intellij.lang.ant.config.actions</groupId>
+          <artifactId>test</artifactId>
+          <version>0.1-SNAPSHOT</version>
+      </project>
+      """);
+    final AnActionEvent event = doUpdate(file);
+
+    assertFalse(event.getPresentation().isEnabled());
+    assertFalse(event.getPresentation().isVisible());
+    assertFalse(event.getPresentation().isEnabledAndVisible());
+  }
+
   private @NotNull AnActionEvent doUpdate(VirtualFile file) {
     final AddAntBuildFile action = new AddAntBuildFile();
     final VirtualFile[] files = {file};
     final TestDataProvider provider = new TestDataProvider(getProject());
-    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.PROJECT_VIEW_POPUP, dataId -> {
+    final AnActionEvent event = AnActionEvent.createEvent(action, dataId -> {
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         return files;
       }
       return provider.getData(dataId);
-    });
+    }, null, ActionPlaces.PROJECT_VIEW_POPUP, ActionUiKind.NONE, null);
     action.update(event);
     return event;
   }
