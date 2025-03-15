@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-api-impl-base" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-impl-base-for-ide:2.2.0-ij251-51">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-impl-base-for-ide:2.2.0-ij251-55">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.0-ij251-51/analysis-api-impl-base-for-ide-2.2.0-ij251-51.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.0-ij251-55/analysis-api-impl-base-for-ide-2.2.0-ij251-55.jar">
           <sha256sum>5f680b4d67c822d135732a390194d53c3036dc34732f0502c7b61b286f7bb274</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.0-ij251-51/analysis-api-impl-base-for-ide-2.2.0-ij251-51.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.0-ij251-55/analysis-api-impl-base-for-ide-2.2.0-ij251-55.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.0-ij251-51/analysis-api-impl-base-for-ide-2.2.0-ij251-51-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.2.0-ij251-55/analysis-api-impl-base-for-ide-2.2.0-ij251-55-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
