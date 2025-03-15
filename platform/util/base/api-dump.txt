@@ -623,8 +623,10 @@ f:com.intellij.util.text.SemVer
 - java.lang.Comparable
 - <init>(java.lang.String,I,I,I):V
 - <init>(java.lang.String,I,I,I,java.lang.String):V
+- <init>(java.lang.String,I,I,I,java.lang.String,java.lang.String):V
 - compareTo(com.intellij.util.text.SemVer):I
 - equals(java.lang.Object):Z
+- getBuildMeta():java.lang.String
 - getMajor():I
 - getMinor():I
 - getParsedVersion():java.lang.String
