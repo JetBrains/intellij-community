@@ -12,4 +12,5 @@ interface PsiSyntaxBuilder : UserDataHolder {
 
   fun getTreeBuilt(): ASTNode
   fun getLightTree(): FlyweightCapableTreeStructure<LighterASTNode>
+  fun setDebugMode(value: Boolean)
 }

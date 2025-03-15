@@ -124,6 +124,10 @@ internal class PsiSyntaxBuilderImpl(
     return MyTreeStructure(rootMarker, parentLightTree as? MyTreeStructure)
   }
 
+  override fun setDebugMode(value: Boolean) {
+    builder.setDebugMode(value)
+  }
+
   private fun merge(oldRoot: ASTNode, newRoot: CompositeNode, lastCommittedText: CharSequence): DiffLog {
     val diffLog = DiffLog()
     val builder = ConvertFromTokensToASTBuilder(newRoot, diffLog)
