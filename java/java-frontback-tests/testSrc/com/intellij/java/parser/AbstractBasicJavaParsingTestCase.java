@@ -4,8 +4,10 @@ package com.intellij.java.parser;
 import com.intellij.PathJavaTestUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.parser.BasicJavaParserUtil;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
@@ -14,7 +16,6 @@ import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.function.Consumer;
 
 public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
 
@@ -34,6 +35,7 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     getProject().registerService(WorkspaceModelTopics.class, new WorkspaceModelTopics());
+    addExplicit(LanguageSyntaxDefinitions.getINSTANCE(), JavaLanguage.INSTANCE, myConfigurator.getJavaSyntaxDefinition());
     myConfigurator.setUp(this);
   }
 
@@ -54,7 +56,7 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   }
 
 
-  protected void doParserTest(Consumer<PsiBuilder> parser) {
+  protected void doParserTest(BasicJavaParserUtil.@NotNull ParserWrapper parser) {
     String name = getTestName(false);
     try {
       doParserTest(loadFile(name + "." + myFileExt), parser);
@@ -78,7 +80,7 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
                   DebugUtil.nodeTreeAsElementTypeToString(file.getNode(), !skipSpaces()).trim());
   }
 
-  protected void doParserTest(String text, Consumer<PsiBuilder> parser) {
+  protected void doParserTest(String text, BasicJavaParserUtil.@NotNull ParserWrapper parser) {
     String name = getTestName(false);
     myFile = myConfigurator.createPsiFile(this, name, text, parser);
     try {

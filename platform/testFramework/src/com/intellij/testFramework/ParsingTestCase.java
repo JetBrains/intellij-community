@@ -46,6 +46,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
 
@@ -156,8 +157,13 @@ public abstract class ParsingTestCase extends UsefulTestCase {
         return definition;
       }
     });
-    LanguageParserDefinitions.INSTANCE.clearCache(language);
-    disposeOnTearDown(() -> LanguageParserDefinitions.INSTANCE.clearCache(language));
+    clearCachesOfLanguageExtension(language, LanguageParserDefinitions.INSTANCE);
+  }
+
+  @ApiStatus.Internal
+  public final void clearCachesOfLanguageExtension(Language language, LanguageExtension<?> instance) {
+    instance.clearCache(language);
+    disposeOnTearDown(() -> instance.clearCache(language));
   }
 
   public void configureFromParserDefinition(@NotNull ParserDefinition definition, String extension) {
