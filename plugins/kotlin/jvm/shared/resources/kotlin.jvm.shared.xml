@@ -23,7 +23,12 @@
             text="Kotlin Project Post-Open Activity" internal="true">
       <add-to-group group-id="KotlinInternalGroup"/>
     </action>
+
     <action id="ShowKotlinBytecode" class="org.jetbrains.kotlin.idea.jvm.shared.bytecode.ShowKotlinBytecodeAction">
+      <add-to-group group-id="KotlinToolsGroup"/>
+    </action>
+
+    <action id="ConfigureKotlinInProject" class="org.jetbrains.kotlin.idea.jvm.shared.actions.ConfigureKotlinInProjectAction">
       <add-to-group group-id="KotlinToolsGroup"/>
     </action>
   </actions>

@@ -55,9 +55,6 @@
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 
   <actions>
-    <action id="ConfigureKotlinInProject" class="org.jetbrains.kotlin.idea.jvm.shared.actions.ConfigureKotlinInProjectAction">
-      <add-to-group group-id="KotlinToolsGroup"/>
-    </action>
     <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction">
       <keyboard-shortcut first-keystroke="control alt W" keymap="$default"/>
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
