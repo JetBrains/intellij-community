@@ -22,9 +22,7 @@ import com.intellij.psi.PsiTypes;
 
 final class ShiftUtils {
 
-  private ShiftUtils() {
-    super();
-  }
+  private ShiftUtils() {}
 
   public static boolean isPowerOfTwo(PsiExpression rhs) {
     if (!(rhs instanceof PsiLiteralExpression literal)) {

@@ -39,27 +39,14 @@ public final class ReplaceMultiplyWithShiftIntention extends MCIntention {
     if (element instanceof PsiBinaryExpression exp) {
       final PsiJavaToken sign = exp.getOperationSign();
       final IElementType tokenType = sign.getTokenType();
-      final String operatorString;
-      if (tokenType.equals(JavaTokenType.ASTERISK)) {
-        operatorString = "<<";
-      }
-      else {
-        operatorString = ">>";
-      }
+      final String operatorString = tokenType.equals(JavaTokenType.ASTERISK) ? "<<" : ">>";
       return CommonQuickFixBundle.message("fix.replace.x.with.y", sign.getText(), operatorString);
     }
     else {
-      final PsiAssignmentExpression exp =
-        (PsiAssignmentExpression)element;
+      final PsiAssignmentExpression exp = (PsiAssignmentExpression)element;
       final PsiJavaToken sign = exp.getOperationSign();
       final IElementType tokenType = sign.getTokenType();
-      final String assignString;
-      if (tokenType.equals(JavaTokenType.ASTERISKEQ)) {
-        assignString = "<<=";
-      }
-      else {
-        assignString = ">>=";
-      }
+      final String assignString = tokenType.equals(JavaTokenType.ASTERISKEQ) ? "<<=" : ">>=";
       return CommonQuickFixBundle.message("fix.replace.x.with.y", sign.getText(), assignString);
     }
   }
@@ -75,8 +62,7 @@ public final class ReplaceMultiplyWithShiftIntention extends MCIntention {
       replaceMultiplyOrDivideWithShift((PsiBinaryExpression)element);
     }
     else {
-      replaceMultiplyOrDivideAssignWithShiftAssign(
-        (PsiAssignmentExpression)element);
+      replaceMultiplyOrDivideAssignWithShiftAssign((PsiAssignmentExpression)element);
     }
   }
 
@@ -84,13 +70,7 @@ public final class ReplaceMultiplyWithShiftIntention extends MCIntention {
     final PsiExpression lhs = expression.getLExpression();
     final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getRExpression());
     final IElementType tokenType = expression.getOperationTokenType();
-    final String assignString;
-    if (tokenType.equals(JavaTokenType.ASTERISKEQ)) {
-      assignString = "<<=";
-    }
-    else {
-      assignString = ">>=";
-    }
+    final String assignString = tokenType.equals(JavaTokenType.ASTERISKEQ) ? "<<=" : ">>=";
     CommentTracker commentTracker = new CommentTracker();
     final String expString = commentTracker.text(lhs) + assignString + ShiftUtils.getLogBase2(rhs);
     PsiReplacementUtil.replaceExpression(expression, expString, commentTracker);
@@ -104,13 +84,9 @@ public final class ReplaceMultiplyWithShiftIntention extends MCIntention {
     final String lhsText = PsiTypes.intType().equals(lhs.getType()) && PsiTypes.longType().equals(expression.getType())
                            ? "((long)" + lhs.getText() + ')' : lhs.getText();
     String expString = lhsText + operatorString + ShiftUtils.getLogBase2(rhs);
-    final PsiElement parent = expression.getParent();
-    if (parent instanceof PsiExpression) {
-      if (!(parent instanceof PsiParenthesizedExpression) &&
-          ParenthesesUtils.getPrecedence((PsiExpression)parent) <
-          ParenthesesUtils.SHIFT_PRECEDENCE) {
-        expString = '(' + expString + ')';
-      }
+    if (expression.getParent() instanceof PsiExpression parent && !(parent instanceof PsiParenthesizedExpression) &&
+        ParenthesesUtils.getPrecedence(parent) < ParenthesesUtils.SHIFT_PRECEDENCE) {
+      expString = '(' + expString + ')';
     }
     CommentTracker commentTracker = new CommentTracker();
     commentTracker.markUnchanged(lhs);
