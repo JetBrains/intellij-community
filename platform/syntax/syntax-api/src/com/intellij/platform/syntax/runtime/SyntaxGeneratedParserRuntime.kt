@@ -14,9 +14,11 @@ import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Hook
 import com.intellij.platform.syntax.LimitedPool
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.NoopLogger
+import com.intellij.platform.syntax.SyntaxElementTypeSet
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import com.intellij.platform.syntax.i18n.ResourceBundle;
+import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
@@ -115,7 +117,7 @@ final class SyntaxGeneratedParserRuntime(
   internal val isLanguageCaseSensitive get() = isCaseSensitive
   internal val errorState get() = error
 
-  fun init(parse: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit, extendsSets: Array<Set<SyntaxElementType?>>? = null) {
+  fun init(parse: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit, extendsSets: Array<SyntaxElementTypeSet>? = null) {
     parser = parse
     errorState.initState(this, extendsSets)
   }
@@ -159,7 +161,7 @@ final class SyntaxGeneratedParserRuntime(
     internal var suppressErrors: Boolean = false
     internal var hooks: Hooks<*>? = null
 
-    internal var extendsSets: Array<Set<SyntaxElementType?>>? = null
+    internal var extendsSets: Array<SyntaxElementTypeSet>? = null
     internal var braces: Array<BracePair>? = null
     internal var advanceToken: Parser = TOKEN_ADVANCER
     internal var altMode: Boolean = false
@@ -237,7 +239,7 @@ final class SyntaxGeneratedParserRuntime(
       return false
     }
 
-    fun initState(util: SyntaxGeneratedParserRuntime, extendsSets: Array<Set<SyntaxElementType?>>?) {
+    fun initState(util: SyntaxGeneratedParserRuntime, extendsSets: Array<SyntaxElementTypeSet>?) {
       this.extendsSets = extendsSets
       this.braces = util.braces?.toTypedArray()
     }
@@ -316,8 +318,8 @@ final class SyntaxGeneratedParserRuntime(
 }
 
 @ApiStatus.Experimental
-fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementType?> {
-  return tokenTypes.toSet()
+fun create_token_set_(vararg tokenTypes: SyntaxElementType): SyntaxElementTypeSet {
+  return syntaxElementTypeSetOf(*tokenTypes)
 }
 
 //private val MAX_RECURSION_LEVEL = StringUtil.parseInt(System.getProperty("grammar.kit.gpub.max.level"), 1000)
@@ -468,19 +470,19 @@ fun SyntaxGeneratedParserRuntime.consumeTokenFast(text: String): Boolean {
 }
 
 @ApiStatus.Experimental
-fun SyntaxGeneratedParserRuntime.consumeToken(tokens: Set<SyntaxElementType>): Boolean {
+fun SyntaxGeneratedParserRuntime.consumeToken(vararg tokens: SyntaxElementType): Boolean {
   addVariantSmart(tokens, true)
-  return consumeTokenFast(tokens)
+  return consumeTokenFast(*tokens)
 }
 
 @ApiStatus.Experimental
-fun SyntaxGeneratedParserRuntime.consumeTokenSmart(tokens: Set<SyntaxElementType>): Boolean {
-  return consumeTokenFast(tokens)
+fun SyntaxGeneratedParserRuntime.consumeTokenSmart(vararg tokens: SyntaxElementType): Boolean {
+  return consumeTokenFast(*tokens)
 }
 
 @ApiStatus.Experimental
-fun SyntaxGeneratedParserRuntime.consumeTokenFast(tokens: Set<SyntaxElementType>): Boolean {
-  if (nextTokenIsFast(tokens)) {
+fun SyntaxGeneratedParserRuntime.consumeTokenFast(vararg tokens: SyntaxElementType): Boolean {
+  if (nextTokenIsFast(*tokens)) {
     builder.advanceLexer()
     return true
   }
@@ -499,7 +501,7 @@ fun SyntaxGeneratedParserRuntime.nextTokenIsFast(vararg tokens: SyntaxElementTyp
 }
 
 @ApiStatus.Experimental
-fun SyntaxGeneratedParserRuntime.nextTokenIsFast(tokens: Set<SyntaxElementType>): Boolean {
+fun SyntaxGeneratedParserRuntime.nextTokenIsFast(tokens: SyntaxElementTypeSet): Boolean {
   return tokens.contains(builder.tokenType)
 }
 

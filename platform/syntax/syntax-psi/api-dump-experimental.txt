@@ -1,8 +1,3 @@
-*f:com.intellij.platform.syntax.psi.CompositeElementTypeConverter
-- com.intellij.platform.syntax.psi.ElementTypeConverter
-- <init>(com.intellij.lang.Language):V
-- convert(com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
-- convert(com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType
 *:com.intellij.platform.syntax.psi.ElementTypeConverter
 - a:convert(com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
 - a:convert(com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType
@@ -23,6 +18,7 @@
 *:com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
 - a:getCommentTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
 - a:getLexer():com.intellij.platform.syntax.lexer.Lexer
+- getPairedBraces():java.util.Collection
 - getWhitespaceTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
 *f:com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
 - com.intellij.lang.LanguageExtension
@@ -52,6 +48,10 @@
 - sf:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
 *f:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
 - f:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
+*f:com.intellij.platform.syntax.psi.impl.PsiSyntaxParserRuntimeFactoryImpl
+- com.intellij.platform.syntax.runtime.SyntaxParserRuntimeFactory
+- <init>(com.intellij.lang.Language):V
+- buildParserUtils(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime
 *c:com.intellij.platform.syntax.psi.lexer.LexerAdapter
 - com.intellij.lexer.Lexer
 - <init>(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.psi.ElementTypeConverter):V
@@ -73,7 +73,3 @@
 - getOffset():I
 - f:getPosition():com.intellij.platform.syntax.lexer.LexerPosition
 - getState():I
-*f:com.intellij.platform.syntax.psi.impl.PsiSyntaxParserRuntimeFactoryImpl
-- com.intellij.platform.syntax.runtime.SyntaxParserRuntimeFactory
-- <init>(com.intellij.lang.Language):V
-- buildParserUtils(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime

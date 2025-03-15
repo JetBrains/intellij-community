@@ -214,8 +214,8 @@
 *f:com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime
 - <init>(I,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,Z,java.util.Collection):V
 - f:getBuilder():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-- f:init(kotlin.jvm.functions.Function2,java.util.Set[]):V
-- bs:init$default(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,kotlin.jvm.functions.Function2,java.util.Set[],I,java.lang.Object):V
+- f:init(kotlin.jvm.functions.Function2,com.intellij.platform.syntax.SyntaxElementTypeSet[]):V
+- bs:init$default(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,kotlin.jvm.functions.Function2,com.intellij.platform.syntax.SyntaxElementTypeSet[],I,java.lang.Object):V
 *f:com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime$BracePair
 - <init>(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,Z):V
 - f:component1():com.intellij.platform.syntax.SyntaxElementType
@@ -232,7 +232,7 @@
 - f:clearVariants(Z,I):V
 - f:getBundle():com.intellij.platform.syntax.i18n.ResourceBundle
 - f:getExpected(I,Z):java.lang.String
-- f:initState(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.util.Set[]):V
+- f:initState(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementTypeSet[]):V
 - f:typeExtends(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):Z
 *f:com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime$Frame
 - <init>():V
@@ -280,17 +280,17 @@
 - *sf:consumeToken(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType):Z
 - *sf:consumeToken(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String):Z
 - *sf:consumeToken(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String,Z):Z
-- *sf:consumeToken(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.util.Set):Z
+- *sf:consumeToken(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - *bs:consumeToken$default(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String,Z,I,java.lang.Object):Z
 - *sf:consumeTokenFast(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType):Z
 - *sf:consumeTokenFast(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String):Z
-- *sf:consumeTokenFast(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.util.Set):Z
+- *sf:consumeTokenFast(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - *sf:consumeTokenSmart(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType):Z
 - *sf:consumeTokenSmart(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String):Z
-- *sf:consumeTokenSmart(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.util.Set):Z
+- *sf:consumeTokenSmart(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - *sf:consumeTokens(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,I,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - *sf:consumeTokensSmart(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,I,com.intellij.platform.syntax.SyntaxElementType[]):Z
-- *sf:create_token_set_(com.intellij.platform.syntax.SyntaxElementType[]):java.util.Set
+- *sf:create_token_set_(com.intellij.platform.syntax.SyntaxElementType[]):com.intellij.platform.syntax.SyntaxElementTypeSet
 - *sf:current_position_(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime):I
 - *sf:empty_element_parsed_guard_(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String,I):Z
 - *sf:enter_section_(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
@@ -308,9 +308,9 @@
 - *sf:nextTokenIs(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String):Z
 - *sf:nextTokenIs(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - *sf:nextTokenIsFast(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType):Z
+- *sf:nextTokenIsFast(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementTypeSet):Z
 - *sf:nextTokenIsFast(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String):Z
 - *sf:nextTokenIsFast(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String,Z):I
-- *sf:nextTokenIsFast(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.util.Set):Z
 - *sf:nextTokenIsFast(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - *sf:nextTokenIsSlow(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,java.lang.String,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - *sf:nextTokenIsSmart(com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType):Z
