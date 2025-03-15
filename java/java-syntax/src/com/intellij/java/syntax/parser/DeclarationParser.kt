@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 
 @ApiStatus.Experimental
-class DeclarationParser(private val myParser: JavaParser) {
+open class DeclarationParser(private val myParser: JavaParser) {
   enum class Context {
     FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE, JSHELL
   }
@@ -227,7 +227,7 @@ class DeclarationParser(private val myParser: JavaParser) {
     invalidElements?.error(message("unexpected.token"))
   }
 
-  fun parse(builder: SyntaxTreeBuilder, context: Context?): SyntaxTreeBuilder.Marker? {
+  open fun parse(builder: SyntaxTreeBuilder, context: Context?): SyntaxTreeBuilder.Marker? {
     val tokenType = builder.tokenType
     if (tokenType == null) return null
 

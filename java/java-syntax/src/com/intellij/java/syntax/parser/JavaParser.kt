@@ -9,7 +9,7 @@ open class JavaParser(val languageLevel: LanguageLevel) {
   // todo make abstract and add a separate implementation?
   open val fileParser: FileParser = FileParser(this)
   val moduleParser: ModuleParser = ModuleParser(this)
-  val declarationParser: DeclarationParser = DeclarationParser(this)
+  open val declarationParser: DeclarationParser = DeclarationParser(this)
   val statementParser: StatementParser = StatementParser(this)
   val expressionParser: ExpressionParser = ExpressionParser(PrattExpressionParser(this))
   val referenceParser: ReferenceParser = ReferenceParser(this)

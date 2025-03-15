@@ -91,7 +91,7 @@ open class FileParser(private val myParser: JavaParser) {
     return false
   }
 
-  protected fun parseInitial(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker? {
+  protected open fun parseInitial(builder: SyntaxTreeBuilder): SyntaxTreeBuilder.Marker? {
     return myParser.declarationParser.parse(builder, DeclarationParser.Context.FILE)
   }
 
