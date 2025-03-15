@@ -257,4 +257,11 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "expects-compiler-plugin",
+    jar = "@expects-compiler-plugin//file",
+    source_jar = "@expects-compiler-plugin-sources//file",
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `libraries` end

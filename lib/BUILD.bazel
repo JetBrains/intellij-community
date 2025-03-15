@@ -21,10 +21,7 @@ kt_compiler_plugin(
 
 kt_compiler_plugin(
   name = "expects-plugin",
-  id = "org.jetbrains.fleet.expects-compiler-plugin",
-  deps = [
-    ":expects-compiler-plugin"
-  ],
+  id = "jetbrains.fleet.expects-compiler-plugin",
   visibility = ["//visibility:public"]
 )
 

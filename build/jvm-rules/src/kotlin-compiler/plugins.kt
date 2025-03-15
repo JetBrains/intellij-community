@@ -3,6 +3,7 @@ package org.jetbrains.bazel.jvm.kotlin
 
 import androidx.compose.compiler.plugins.kotlin.ComposeCommandLineProcessor
 import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
+import fleet.multiplatform.expects.ExpectsPluginRegistrar
 import io.bazel.kotlin.plugin.jdeps.JdepsGenCommandLineProcessor
 import io.bazel.kotlin.plugin.jdeps.JdepsGenComponentRegistrar
 import org.jetbrains.bazel.jvm.ArgMap
@@ -61,6 +62,16 @@ internal inline fun configurePlugins(
           componentRegistrar = null,
           compilerPluginRegistrar = ComposePluginRegistrar(),
           commandLineProcessor = ComposeCommandLineProcessor(),
+          pluginOptions = emptyList(),
+        ))
+      }
+
+      // todo it should be in maven central / not in the default image of jvm-builder
+      "jetbrains.fleet.expects-compiler-plugin" -> {
+        consumer(RegisteredPluginInfo(
+          componentRegistrar = null,
+          compilerPluginRegistrar = ExpectsPluginRegistrar(),
+          commandLineProcessor = null,
           pluginOptions = emptyList(),
         ))
       }

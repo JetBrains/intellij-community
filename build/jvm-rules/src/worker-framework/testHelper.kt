@@ -15,6 +15,7 @@ import kotlin.io.path.walk
 import kotlin.system.exitProcess
 
 enum class TestModules(@JvmField val sourcePaths: List<String>, private val paramsPath: String) {
+  UTIL_BASE_KMP(listOf("platform/util/base/kmp/src", "platform/util/base/kmp/srcJvmMain"), "platform/util/base/kmp/util-base-kmp.jar-0.params"),
   UTIL_RT(listOf("platform/util-rt/src"), "platform/util-rt/util-rt.jar-0.params"),
   STAT_CONFIG(listOf("platform/statistics/config/src"), "platform/statistics/config/config.jar-0.params"),
   XML_DOM(listOf("platform/util/xmlDom/src"), "platform/util/xmlDom/xmlDom.jar-0.params"),

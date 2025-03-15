@@ -2,31 +2,31 @@
   libs:
     # protobuf
     - id: com.google.protobuf:protobuf-java
-      version: 4.29.3
+      version: 4.30.1
     # kotlin JPS plugin
     - id: org.jetbrains.kotlin:kotlin-build-tools-api
-      version: 2.1.20-RC
+      version: 2.1.20-RC3
     - id: org.jetbrains.kotlin:kotlin-util-klib
-      version: 2.1.20-RC
+      version: 2.1.20-RC3
     - id: org.jetbrains.kotlin:kotlin-util-klib-metadata
-      version: 2.1.20-RC
+      version: 2.1.20-RC3
     # kotlin compiler
     - id: org.jetbrains.kotlin:kotlin-build-tools-impl
-      version: 2.1.20-RC
-    - id: org.jetbrains.kotlin:kotlin-compiler
-      version: 2.1.20-RC
-      runtimeDeps:
-        - "@lib//:jetbrains-annotations"
-        - "@lib//:kotlinx-coroutines-core"
+      version: 2.1.20-RC3
+    #- id: org.jetbrains.kotlin:kotlin-compiler
+    #  version: 2.1.20-RC
+    #  runtimeDeps:
+    #    - "@lib//:jetbrains-annotations"
+    #    - "@lib//:kotlinx-coroutines-core"
     - id: org.jetbrains.kotlin:kotlin-metadata-jvm
-      version: 2.1.20-RC
+      version: 2.1.20-RC3
     - id: org.jetbrains.kotlin:kotlin-jps-plugin
-      version: 2.1.20-RC
+      version: 2.1.20-RC3
     # kotlin compiler plugins
     - id: org.jetbrains.kotlin:kotlin-serialization-compiler-plugin
-      version: 2.1.20-RC
+      version: 2.1.20-RC3
     - id: org.jetbrains.kotlin:kotlin-compose-compiler-plugin
-      version: 2.1.20-RC
+      version: 2.1.20-RC3
     # other libs
     - id: com.google.flatbuffers:flatbuffers-java
       version: 25.2.10
@@ -65,3 +65,7 @@
   libs:
     - id: androidx.collection:collection-jvm
       version: 1.5.0
+- url: https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies
+  libs:
+    - id: jetbrains.fleet:expects-compiler-plugin
+      version: 2.1.20-RC2-0.3
