@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project
 import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
@@ -19,7 +18,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
-import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.RepositoryBlockedSyncIssue.getIssue
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue.getIssue
 import org.jetbrains.idea.maven.model.*
@@ -42,7 +40,7 @@ data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collect
 @ApiStatus.Internal
 class MavenProjectResolverResult(
   @JvmField val file: File?,
-  @JvmField val mavenModel: MavenModel,
+  @JvmField val mavenModel: MavenModel?,
   @JvmField val managedDependencies: List<MavenId>,
   @JvmField val dependencyHash: String?,
   @JvmField val dependencyResolutionSkipped: Boolean,
@@ -173,7 +171,7 @@ class MavenProjectResolver(private val myProject: Project) {
     val pomDependencies = projects
       .associate { it.file to it.dependencies.filter { it.file.path.endsWith(MavenConstants.POM_XML) }.map { it.file }.toSet() }
       .filterValues { it.isNotEmpty() }
-    val resultsAndProblems = resolveProjectsInEmbedder(
+    val results = resolveProjectsInEmbedder(
       filesToResolve,
       embedder,
       pomToDependencyHash,
@@ -185,22 +183,19 @@ class MavenProjectResolver(private val myProject: Project) {
       updateSnapshots,
       userProperties)
 
-    val results = resultsAndProblems.first
-    val readingProblems = resultsAndProblems.second
+    /*    if (readingProblems.isNotEmpty()) {
+          val pathToMavenProject = mavenProjects.associateBy { it.file.path }
+          val groupedProblems = readingProblems.groupBy { FileUtil.toSystemIndependentName(trimLineAndColumn(it.path)) }
+          for ((path, projectProblems) in groupedProblems) {
+            val mavenProject = pathToMavenProject[path]
+            if (null != mavenProject) {
+              mavenProject.updateState(projectProblems)
+              tree.fireProjectResolved(Pair.create(mavenProject, MavenProjectChanges.ALL))
+            }
+          }
+        }*/
 
-    if (readingProblems.isNotEmpty()) {
-      val pathToMavenProject = mavenProjects.associateBy { it.file.path }
-      val groupedProblems = readingProblems.groupBy { FileUtil.toSystemIndependentName(trimLineAndColumn(it.path)) }
-      for ((path, projectProblems) in groupedProblems) {
-        val mavenProject = pathToMavenProject[path]
-        if (null != mavenProject) {
-          mavenProject.updateState(projectProblems)
-          tree.fireProjectResolved(Pair.create(mavenProject, MavenProjectChanges.ALL))
-        }
-      }
-    }
-
-    val problems = getProblems(results, readingProblems)
+    val problems = getProblems(results /*, readingProblems*/)
     val problemsExist = !problems.isEmpty
     if (problemsExist) {
       MavenLog.LOG.debug(
@@ -280,14 +275,14 @@ class MavenProjectResolver(private val myProject: Project) {
     return withoutFilePrefix.replace(lineColumnRegex, "")
   }
 
-  private fun getProblems(results: Collection<MavenProjectResolverResult>, problems: Collection<MavenProjectProblem>): MavenResolveProblemHolder {
+  private fun getProblems(results: Collection<MavenProjectResolverResult>/*, problems: Collection<MavenProjectProblem>*/): MavenResolveProblemHolder {
     val repositoryBlockedProblems: MutableSet<MavenProjectProblem> = HashSet()
     val unresolvedArtifactProblems: MutableSet<MavenProjectProblem> = HashSet()
     val unresolvedArtifacts: MutableSet<MavenArtifact?> = HashSet()
 
     var hasProblem = false
 
-    val readingProblems = problems + results.flatMap { it.readingProblems }
+    val readingProblems = results.flatMap { it.readingProblems }
 
     for (problem in readingProblems) {
       if (!hasProblem) hasProblem = true
@@ -341,10 +336,9 @@ class MavenProjectResolver(private val myProject: Project) {
     workspaceMap: MavenWorkspaceMap?,
     updateSnapshots: Boolean,
     userProperties: Properties,
-  ): Pair<Collection<MavenProjectResolverResult>, Collection<MavenProjectProblem>> {
+  ): Collection<MavenProjectResolverResult> {
     val files = pomToDependencyHash.keys
     val resolverResults: MutableCollection<MavenProjectResolverResult> = ArrayList()
-    val readingProblems = mutableListOf<MavenProjectProblem>()
     try {
       val executionResults = tracer.spanBuilder("resolveProjectInEmbedder")
         .useWithScope {
@@ -366,7 +360,17 @@ class MavenProjectResolver(private val myProject: Project) {
         if (projectData == null) {
           val file = detectPomFile(filesMap, result)
           MavenLog.LOG.warn("Project resolution: projectData is null, file $file")
-          readingProblems.addAll(result.problems)
+          resolverResults.add(MavenProjectResolverResult(
+            result.file,
+            null,
+            listOf(),
+            null,
+            false,
+            mapOf(),
+            MavenExplicitProfiles.NONE,
+            result.problems,
+            result.unresolvedArtifacts,
+            result.unresolvedProblems))
         }
         else {
           resolverResults.add(MavenProjectResolverResult(
@@ -386,7 +390,7 @@ class MavenProjectResolver(private val myProject: Project) {
     catch (e: Throwable) {
       processResolverException(e, true)
     }
-    return Pair.create(resolverResults, readingProblems)
+    return resolverResults
   }
 
   private fun detectPomFile(filesMap: Map<String, VirtualFile>, result: MavenServerExecutionResult): VirtualFile? {
@@ -396,7 +400,7 @@ class MavenProjectResolver(private val myProject: Project) {
     if (!result.problems.isEmpty()) {
       val path = result.problems.firstOrNull()?.path
       if (path != null) {
-        return filesMap[FileUtil.toSystemIndependentName(path)]
+        return filesMap[FileUtil.toSystemIndependentName(trimLineAndColumn(path))]
       }
     }
     return null
@@ -429,23 +433,29 @@ class MavenProjectResolver(private val myProject: Project) {
     val keepPreviousResolutionResults = MavenUtil.shouldKeepPreviousResolutionResults(result.readingProblems)
     val keepPreviousArtifacts = keepPreviousResolutionResults || result.dependencyResolutionSkipped
 
+    val mavenModel = result.mavenModel
     MavenLog.LOG.debug(
-      "Project resolution: updating maven project $mavenProject, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}, managedDeps: ${result.managedDependencies.size}")
+      "Project resolution: updating maven project $mavenProject, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${mavenModel?.dependencies?.size}, managedDeps: ${result.managedDependencies.size}")
 
-    MavenServerResultTransformer.getInstance(myProject)
-      .transform(result.mavenModel, mavenProject.file)
+    if (null != mavenModel) {
+      MavenServerResultTransformer.getInstance(myProject)
+        .transform(mavenModel, mavenProject.file)
 
-    mavenProject.updateState(
-      result.mavenModel,
-      result.managedDependencies,
-      result.dependencyHash,
-      result.readingProblems,
-      result.activatedProfiles,
-      result.unresolvedArtifactIds,
-      result.nativeModelMap,
-      effectiveRepositoryPath,
-      keepPreviousArtifacts,
-      keepPreviousResolutionResults)
+      mavenProject.updateState(
+        mavenModel,
+        result.managedDependencies,
+        result.dependencyHash,
+        result.readingProblems,
+        result.activatedProfiles,
+        result.unresolvedArtifactIds,
+        result.nativeModelMap,
+        effectiveRepositoryPath,
+        keepPreviousArtifacts,
+        keepPreviousResolutionResults)
+    }
+    else {
+      mavenProject.updateState(result.readingProblems)
+    }
 
     for (contributor in EP_NAME.extensionList) {
       contributor.onMavenProjectResolved(myProject, mavenProject, embedder)
@@ -472,27 +482,5 @@ class MavenProjectResolver(private val myProject: Project) {
       }
     }
     return null
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link #resolveProject()}")
-  internal fun resolveProjectSync(
-    embedder: MavenEmbedderWrapper,
-    files: Collection<VirtualFile>,
-    explicitProfiles: MavenExplicitProfiles,
-  ): Collection<MavenProjectResolverResult> {
-    return runBlockingMaybeCancellable {
-      resolveProjectsInEmbedder(
-        files.toList(),
-        embedder,
-        files.associateWith { null },
-        mapOf(),
-        explicitProfiles,
-        object : RawProgressReporter {},
-        MavenLogEventHandler,
-        null,
-        false,
-        Properties()).first
-    }
   }
 }
