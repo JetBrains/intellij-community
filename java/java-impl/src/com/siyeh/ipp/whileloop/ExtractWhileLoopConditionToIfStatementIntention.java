@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.whileloop;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public final class ExtractWhileLoopConditionToIfStatementIntention extends MCIntention {
+public final class ExtractWhileLoopConditionToIfStatementIntention extends MCIntention implements DumbAware {
 
   @Override
   public @NotNull String getFamilyName() {

@@ -16,6 +16,7 @@
 package com.siyeh.ipp.shift;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -27,7 +28,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public final class ReplaceShiftWithMultiplyIntention extends MCIntention {
+public final class ReplaceShiftWithMultiplyIntention extends MCIntention implements DumbAware {
 
   @Override
   public @NotNull String getFamilyName() {

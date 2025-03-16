@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.numeric;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -9,6 +9,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class AbstractNumberConversionIntention implements ModCommandAction {
+public abstract class AbstractNumberConversionIntention implements ModCommandAction, DumbAware {
 
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
@@ -72,7 +73,7 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
     if (context == null) return ModCommand.nop();
     Number number = context.myNumber;
     String text = context.myText;
-    class Conversion implements ModCommandAction {
+    class Conversion implements ModCommandAction, DumbAware {
       final NumberConverter myConverter;
       final String myResult;
 
@@ -114,13 +115,13 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
   /**
    * Extract conversion context from given PsiElement
    * @param element an element to extract the context from
-   * @return extracted context or null if given element is not a number which could be converted.
+   * @return extracted context or null if the given element is not a number that can be converted.
    */
   @Contract(pure = true)
   protected abstract @Nullable NumberConversionContext extract(@NotNull PsiElement element);
 
   /**
-   * Returns list of converters which are applicable to given file
+   * Returns list of converters which are applicable to the given file
    * 
    * @param file file to find relevant converters
    * @return list of converters for given PsiFile

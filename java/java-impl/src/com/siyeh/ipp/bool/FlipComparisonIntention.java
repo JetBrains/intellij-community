@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.bool;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -28,7 +29,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public final class FlipComparisonIntention extends MCIntention {
+public final class FlipComparisonIntention extends MCIntention implements DumbAware {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -42,13 +43,10 @@ public final class FlipComparisonIntention extends MCIntention {
     String operatorText = sign.getText();
     String flippedOperatorText = ComparisonUtils.getFlippedComparison(sign.getTokenType());
     if (operatorText.equals(flippedOperatorText)) {
-      return IntentionPowerPackBundle.message("flip.smth.intention.name",
-                                              operatorText);
+      return IntentionPowerPackBundle.message("flip.smth.intention.name", operatorText);
     }
     else {
-      return IntentionPowerPackBundle.message(
-        "flip.comparison.intention.name",
-        operatorText, flippedOperatorText);
+      return IntentionPowerPackBundle.message("flip.comparison.intention.name", operatorText, flippedOperatorText);
     }
   }
 
@@ -59,8 +57,7 @@ public final class FlipComparisonIntention extends MCIntention {
 
   @Override
   public void invoke(@NotNull PsiElement element) {
-    final PsiBinaryExpression expression =
-      (PsiBinaryExpression)element;
+    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
     final PsiExpression lhs = expression.getLOperand();
     final PsiExpression rhs = expression.getROperand();
     final IElementType tokenType = expression.getOperationTokenType();

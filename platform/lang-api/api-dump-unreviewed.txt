@@ -1257,6 +1257,7 @@ f:com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper
 - startInWriteAction():Z
 a:com.intellij.codeInsight.intention.numeric.AbstractNumberConversionIntention
 - com.intellij.modcommand.ModCommandAction
+- com.intellij.openapi.project.DumbAware
 - <init>():V
 - pa:extract(com.intellij.psi.PsiElement):com.intellij.codeInsight.intention.numeric.AbstractNumberConversionIntention$NumberConversionContext
 - pa:getConverters(com.intellij.psi.PsiFile):java.util.List
