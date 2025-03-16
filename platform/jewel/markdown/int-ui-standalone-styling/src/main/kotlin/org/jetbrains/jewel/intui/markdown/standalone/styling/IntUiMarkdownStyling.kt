@@ -38,6 +38,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
+import org.jetbrains.jewel.ui.component.Typography
 
 public fun MarkdownStyling.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -664,10 +665,18 @@ private val blockContentColorDark = Color(0xFFBCBEC4)
 private val defaultTextSize = 13.sp
 
 private val defaultTextStyle
-    get() = JewelTheme.createDefaultTextStyle(fontSize = defaultTextSize, lineHeight = defaultTextSize * 1.5)
+    get() =
+        JewelTheme.createDefaultTextStyle(
+            fontSize = defaultTextSize,
+            lineHeight = defaultTextSize * Typography.DefaultLineHeightMultiplier,
+        )
 
 private val defaultEditorTextStyle
-    get() = JewelTheme.createEditorTextStyle(fontSize = defaultTextSize, lineHeight = defaultTextSize * 1.2)
+    get() =
+        JewelTheme.createEditorTextStyle(
+            fontSize = defaultTextSize,
+            lineHeight = defaultTextSize * Typography.EditorLineHeightMultiplier,
+        )
 
 private val inlineCodeBackgroundColorLight = Color(red = 212, green = 222, blue = 231, alpha = 255 / 4)
 private val inlineCodeBackgroundColorDark = Color(red = 212, green = 222, blue = 231, alpha = 25)
