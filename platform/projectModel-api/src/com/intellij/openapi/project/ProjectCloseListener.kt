@@ -2,9 +2,7 @@
 package com.intellij.openapi.project
 
 import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 interface ProjectCloseListener {
   companion object {
     @Topic.AppLevel

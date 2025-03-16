@@ -295,6 +295,13 @@ com.intellij.openapi.project.ModuleListener
 - modulesRenamed(com.intellij.openapi.project.Project,java.util.List,com.intellij.util.Function):V
 com.intellij.openapi.project.ProjectCloseHandler
 - a:canClose(com.intellij.openapi.project.Project):Z
+com.intellij.openapi.project.ProjectCloseListener
+- sf:Companion:com.intellij.openapi.project.ProjectCloseListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- projectClosed(com.intellij.openapi.project.Project):V
+- projectClosing(com.intellij.openapi.project.Project):V
+- projectClosingBeforeSave(com.intellij.openapi.project.Project):V
+f:com.intellij.openapi.project.ProjectCloseListener$Companion
 Fa:com.intellij.openapi.project.ProjectManager
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:addProjectManagerListener(com.intellij.openapi.project.Project,com.intellij.openapi.project.ProjectManagerListener):V
