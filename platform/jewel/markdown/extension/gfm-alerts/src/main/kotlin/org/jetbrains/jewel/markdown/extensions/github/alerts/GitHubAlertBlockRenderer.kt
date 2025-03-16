@@ -39,6 +39,7 @@ public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private
         blockRenderer: MarkdownBlockRenderer,
         inlineRenderer: InlineMarkdownRenderer,
         enabled: Boolean,
+        modifier: Modifier,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
@@ -48,11 +49,11 @@ public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private
         val alert = block as? Alert
 
         when (alert) {
-            is Caution -> Alert(alert, styling.caution, enabled, blockRenderer, onUrlClick, onTextClick)
-            is Important -> Alert(alert, styling.important, enabled, blockRenderer, onUrlClick, onTextClick)
-            is Note -> Alert(alert, styling.note, enabled, blockRenderer, onUrlClick, onTextClick)
-            is Tip -> Alert(alert, styling.tip, enabled, blockRenderer, onUrlClick, onTextClick)
-            is Warning -> Alert(alert, styling.warning, enabled, blockRenderer, onUrlClick, onTextClick)
+            is Caution -> Alert(alert, modifier, styling.caution, enabled, blockRenderer, onUrlClick, onTextClick)
+            is Important -> Alert(alert, modifier, styling.important, enabled, blockRenderer, onUrlClick, onTextClick)
+            is Note -> Alert(alert, modifier, styling.note, enabled, blockRenderer, onUrlClick, onTextClick)
+            is Tip -> Alert(alert, modifier, styling.tip, enabled, blockRenderer, onUrlClick, onTextClick)
+            is Warning -> Alert(alert, modifier, styling.warning, enabled, blockRenderer, onUrlClick, onTextClick)
             else -> error("Unsupported block of type ${block.javaClass.name} cannot be rendered")
         }
     }
@@ -60,6 +61,7 @@ public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private
     @Composable
     private fun Alert(
         block: Alert,
+        modifier: Modifier,
         styling: BaseAlertStyling,
         enabled: Boolean,
         blockRenderer: MarkdownBlockRenderer,
@@ -67,7 +69,8 @@ public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private
         onTextClick: () -> Unit,
     ) {
         Column(
-            Modifier.drawBehind {
+            modifier
+                .drawBehind {
                     val isLtr = layoutDirection == Ltr
                     val lineWidthPx = styling.lineWidth.toPx()
                     val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
@@ -108,7 +111,7 @@ public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private
             CompositionLocalProvider(
                 LocalContentColor provides styling.textColor.takeOrElse { LocalContentColor.current }
             ) {
-                blockRenderer.render(block.content, enabled, onUrlClick, onTextClick)
+                blockRenderer.render(block.content, enabled, onUrlClick, onTextClick, Modifier)
             }
         }
     }
