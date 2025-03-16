@@ -31,10 +31,7 @@ repositories {
 }
 
 dependencies {
-    intellijPlatform {
-        intellijIdeaCommunity(libs.versions.idea)
-        instrumentationTools()
-    }
+    intellijPlatform { intellijIdeaCommunity(libs.versions.idea) }
 
     implementation(projects.ideLafBridge) { exclude(group = "org.jetbrains.kotlinx") }
 
