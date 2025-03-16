@@ -27,6 +27,7 @@ enum class Language(val displayName: String, private val extensions: List<String
   TERRAFORM("Terraform", listOf("tf", "tfvars"), "HCL-Terraform"),
   SQL("SQL", listOf("sql"), "SQL"),
   YAML("YAML", listOf("yaml", "yml"), "yaml"),
+  JSON("JSON", listOf("json"), "JSON"),
   MARKDOWN("Markdown", listOf("md"), "Markdown"),
   ANOTHER("Another", listOf(), ""),
   UNSUPPORTED("Unsupported", listOf(), ""); // TODO: There are no unsupported languages
