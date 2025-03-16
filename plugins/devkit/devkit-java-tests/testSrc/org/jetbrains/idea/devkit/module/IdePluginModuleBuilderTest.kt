@@ -62,9 +62,9 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_17)
         <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
              Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
         <description><![CDATA[
-        Enter short description for your plugin here.<br>
-        <em>most HTML tags may be used</em>
-      ]]></description>
+            Enter short description for your plugin here.<br>
+            <em>most HTML tags may be used</em>
+        ]]></description>
     
         <!-- Product and plugin compatibility requirements.
              Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
@@ -94,20 +94,20 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_17)
         <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
         <vendor url="https://www.yourcompany.com">YourCompany</vendor>
 
-        <idea-version since-build="242"/>
+        <idea-version since-build="251"/>
 
         <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
              Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
         <description><![CDATA[
-        Enter short description for your theme here.<br>
-        <em>most HTML tags may be used</em>
-      ]]></description>
+            Enter short description for your theme here.<br>
+            <em>most HTML tags may be used</em>
+        ]]></description>
 
         <!-- Short summary of new features and bugfixes in the latest plugin version.
              Displayed on the Plugin Page and IDE Plugin Manager. Simple HTML elements can be included between <![CDATA[  ]]> tags. -->
         <change-notes><![CDATA[
-        Initial release of the theme.
-      ]]></change-notes>
+            Initial release of the theme.
+        ]]></change-notes>
 
         <!-- Product and plugin compatibility requirements.
              Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->

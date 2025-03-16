@@ -1,54 +1,57 @@
 plugins {
-  id("java")
+    id("java")
 #if ($context.hasLanguage("kotlin"))
-  id("org.jetbrains.kotlin.jvm") version "${context.getBomProperty("kotlin.version")}"
+    id("org.jetbrains.kotlin.jvm") version "${context.getBomProperty("kotlin.version")}"
 #end
-  id("org.jetbrains.intellij.platform") version "${context.getBomProperty("gradle.intellij.version")}"
+    id("org.jetbrains.intellij.platform") version "${context.getBomProperty("gradle.intellij.version")}"
 }
 
 group = "${context.group}"
 version = "${context.version}"
 
 repositories {
-  mavenCentral()
-  intellijPlatform {
-    defaultRepositories()
-  }
+    mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 // Configure IntelliJ Platform Gradle Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
-  intellijPlatform {
-    create("IC", "${context.getBomProperty("intellij.version")}")
-    testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
+    intellijPlatform {
+        create("IC", "${context.getBomProperty("intellij.version")}")
+        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
 
-    // Add necessary plugin dependencies for compilation here, example:
-    // bundledPlugin("com.intellij.java")
-  }
+      // Add necessary plugin dependencies for compilation here, example:
+      // bundledPlugin("com.intellij.java")
+    }
 }
 
 intellijPlatform {
-  pluginConfiguration {
-    ideaVersion {
-      sinceBuild = "${context.getBomProperty("intellij.since.build")}"
-    }
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = "${context.getBomProperty("intellij.since.build")}"
+        }
 
-    changeNotes = """
-      Initial version
-    """.trimIndent()
-  }
+        changeNotes = """
+            Initial version
+        """.trimIndent()
+    }
 }
 
 tasks {
-  // Set the JVM compatibility versions
-  withType<JavaCompile> {
-    sourceCompatibility = "${context.getBomProperty("java.version")}"
-    targetCompatibility = "${context.getBomProperty("java.version")}"
-  }
-#if ($context.hasLanguage("kotlin"))
-  withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions.jvmTarget = "${context.getBomProperty("kotlin.target")}"
-  }
-#end
+    // Set the JVM compatibility versions
+    withType<JavaCompile> {
+        sourceCompatibility = "${context.getBomProperty("java.version")}"
+        targetCompatibility = "${context.getBomProperty("java.version")}"
+    }
 }
+
+#if ($context.hasLanguage("kotlin"))
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
+}
+#end
