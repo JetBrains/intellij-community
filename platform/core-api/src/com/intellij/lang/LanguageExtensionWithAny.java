@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
-public final class LanguageExtensionWithAny<T> extends LanguageExtension<T> {
+public class LanguageExtensionWithAny<T> extends LanguageExtension<T> {
   public LanguageExtensionWithAny(String epName) {
     super(epName);
   }
