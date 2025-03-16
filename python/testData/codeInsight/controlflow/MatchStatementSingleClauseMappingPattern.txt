@@ -16,7 +16,8 @@
 15(16) matched pattern: 'bar': foo.bar
 16(17) matched pattern: {'foo': 1, 'bar': foo.bar}
 17(18) element: PyExpressionStatement
-18(19) READ ACCESS: x
-19(20) element: PyExpressionStatement
-20(21) READ ACCESS: y
-21() element: null
+18(20) READ ACCESS: x
+19(20) ASSERTTYPE ACCESS: null
+20(21) element: PyExpressionStatement
+21(22) READ ACCESS: y
+22() element: null

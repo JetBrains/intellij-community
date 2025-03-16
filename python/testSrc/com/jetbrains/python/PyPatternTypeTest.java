@@ -13,6 +13,17 @@ public class PyPatternTypeTest extends PyInspectionTestCase {
     return PyAssertTypeInspection.class;
   }
 
+  @Override
+  protected String getTestCaseDirectory() {
+    return "inspections/PyPatternTypeTest/";
+  }
+  
+  public void testPyrightMatchClass1() {
+    // matchClass1.py test from pyright repo, adjusted to our system.
+    // Parts that are commented out are WIP
+    doTest();
+  }
+
   public void testMatchCapturePatternType() {
     doTestByText("""
 from typing import assert_type
@@ -310,6 +321,54 @@ match m:
         assert_type(m, list[list[str]])
         """);
   }
+  
+  public void testMatchSequenceNotNamedElement() {
+    doTestByText("""
+from typing import assert_type
+def func():
+    match [10]:
+        case [*values]:
+            return values[0]
+
+assert_type(func(), int)
+                   """);
+  }
+
+  public void testMatchHomogeneousTuplePattern() {
+    doTestByText("""
+from typing import assert_type
+m: tuple[int, ...]
+
+match m:
+    case [a, b, c]:
+        assert_type(a, int)
+        assert_type(b, int)
+        assert_type(c, int)
+        assert_type(m, tuple[int, ...])
+
+    case [a, b]:
+        assert_type(a, int)
+        assert_type(b, int)
+        assert_type(m, tuple[int, ...])
+        """);
+  }
+
+
+  public void testMatchNotHomogeneousTuplePattern() {
+    doTestByText("""
+from typing import assert_type, Never
+m: tuple[int, str]
+
+match m:
+    case [a, b]:
+        assert_type(a, int)
+        assert_type(b, str)
+        assert_type(m, tuple[int, str])
+    
+    case x:
+        assert_type(x, Never)
+        """);
+  }
 
   public void testMatchMappingPatternCaptures() {
     doTestByText("""
@@ -353,6 +412,30 @@ match m:
         assert_type(v5, str)
     case {"o": v6}:
         assert_type(v6, Any)
+                   """);
+  }
+
+  public void testMatchMappingPatternCapturesUnion() {
+    doTestByText("""
+from typing import TypedDict, Literal, assert_type
+
+class A(TypedDict):
+    a: Literal["str"]
+    b: Literal[42]
+
+
+m: A | dict[str | int, int]
+
+match m:
+    case {"a": v}:
+        assert_type(v, Literal["str"] | int)
+    case {"b": v2}:
+        assert_type(v2, Literal[42] | int)
+    case {"a": v3, "b": v4}:
+        assert_type(v3, Literal["str"] | int)
+        assert_type(v4, Literal[42] | int)
+    case {42: v5}:
+        assert_type(v5, int)
                    """);
   }
 
@@ -403,9 +486,11 @@ class A:
 m: A
 
 match m:
-    case A(a=i, b=j):
-        assert_type(i, str)
+    case A(a="name", b=j):
         assert_type(j, int)
+        
+    case A():
+        assert_type(m, A)
                    """);
   }
 
@@ -424,6 +509,25 @@ def f(x):
             assert_type(x, str)
                    """);
   }
+  
+  public void testMatchClassPatternNegativeNarrow() {
+      doTestByText("""
+from typing import assert_type, Never
+
+class A:
+    a: str
+    b: int
+
+m: A
+
+match m:
+    case A(a=i, b=j):
+        assert_type(j, int)
+        
+    case A():
+        assert_type(m, Never)
+                   """);
+    }
 
   public void testMatchClassPatternCaptureSelf() {
     doTestByText("""
@@ -569,6 +673,7 @@ match x:
                    """);
   }
 
+  // PY-79832
   public void testMatchClassPatternSelfCaptureParameterized() {
     doTestByText("""
 def flip(pair: list[int]):
@@ -722,6 +827,55 @@ def func(val: tuple[*tuple[str, ...], *tuple[int, ...]]):
             # actual type doesn't matter here since the original type is invalid
             # this test verifies that there are no exceptions or infinite loops
             assert_type(val, tuple[str, *tuple[int, ...]])
+                   """);
+  }
+
+  // PY-53880
+  public void testGuardConditionDoesNotExcludePattern() {
+    doTestByText("""
+from typing import assert_type
+
+
+def excluding_conditional_pattern(p: int):
+    match p:
+        case int() if p >= 0:
+            pass
+        case negative:
+            assert_type(negative, int)
+                   """);
+  }
+
+  // PY-53880
+  public void testClassPatternTypeTypeNotExhaustive() {
+    doTestByText("""
+from typing import assert_type, Never
+
+class A:
+    pass
+
+def check_pattern(clazz: type[A], obj: A):
+    match obj:
+        case clazz(): # <-- this is not exhaustive
+            assert_type(obj, A)
+        case A():
+            assert_type(obj, A)
+        case _:
+            assert_type(obj, Never)
+                   """);
+  }
+  
+  // PY-53880
+  public void testListNotExhaustive() {
+    doTestByText("""
+from typing import assert_type
+
+
+def excluding_fixed_size_list(p: list[str]):
+    match p:
+        case [*items, item1, item2]:
+            pass
+        case shorter_than_two:
+            assert_type(shorter_than_two, list[str])
                    """);
   }
 }

@@ -183,7 +183,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     assert !myPositive; // for match statement as a whole, only negative assertion can be made
     final PyExpression subject = matchStatement.getSubject();
     if (subject == null) return;
-    pushAssertion(subject, true, context -> {
+    // allowAnyExpr is here because we need negative edges with Never even when subject is not reference expression
+    pushAssertion(subject, true, true, context -> {
       PyType subjectType = context.getType(subject);
       for (PyCaseClause cs : matchStatement.getCaseClauses()) {
         if (cs.getPattern() == null) continue;
@@ -211,14 +212,14 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                                                           initialSubtype -> match(initialSubtype, suggestedSubtype, context)));
 
       List<PyType> types = StreamEx.of(initialSubtypes).append(suggestedSubtypes).toList();
-      return Ref.create(types.isEmpty() ? suggested : PyUnionType.union(types));
+      return Ref.create(types.isEmpty() ? intersect(initial, suggested) : PyUnionType.union(types));
     }
     else {
       if (initial instanceof PyUnionType unionType) {
         return Ref.create(excludeFromUnion(unionType, suggested, context));
       }
       if (match(suggested, initial, context)) {
-        return null;
+        return Ref.create(PyNeverType.INSTANCE);
       }
       Ref<@Nullable PyType> diff = trySubtract(initial, suggested, context);
       return diff != null ? diff : Ref.create(initial);
@@ -238,6 +239,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         members.add(m);
       }
     }
+    if (members.isEmpty()) {
+      return PyNeverType.INSTANCE;
+    }
     return PyUnionType.union(members);
   }
 
@@ -256,10 +260,22 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       }
       List<PyLiteralType> enumMembers = PyStdlibTypeProvider.getEnumMembers(classType1.getPyClass(), context).toList();
       List<PyType> filteredEnumMembers = ContainerUtil.filter(enumMembers, m -> !PyTypeChecker.match(type2, m, context));
+      if (filteredEnumMembers.isEmpty()) {
+        return Ref.create(PyNeverType.INSTANCE);
+      }
       PyType type = enumMembers.size() == filteredEnumMembers.size() ? type1 : PyUnionType.union(filteredEnumMembers);
       return Ref.create(type);
     }
     return null;
+  }
+  
+  private static @Nullable PyType intersect(@Nullable PyType initial, @Nullable PyType suggested) {
+    // TODO: if we had IntersectionType, here it would be created. Also, final classes can be handled here
+    if (initial instanceof PyNeverType) {
+      return initial;
+    }
+    // While we don't have IntersectionType, return suggested
+    return suggested;
   }
 
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context) {
@@ -314,9 +330,16 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   private void pushAssertion(@Nullable PyExpression expr, boolean positive, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
+    pushAssertion(expr, positive, false, suggestedType);
+  }
+
+  private void pushAssertion(@Nullable PyExpression expr, boolean positive, boolean allowAnyExpr, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
     expr = PyPsiUtils.flattenParens(expr);
-    if (expr instanceof PyReferenceExpression || expr instanceof PyTargetExpression) {
-      final var target = (PyQualifiedExpression)expr;
+    if (expr instanceof PyAssignmentExpression walrus) {
+      pushAssertion(walrus.getTarget(), positive, allowAnyExpr, suggestedType);
+    }
+    else if (expr != null) {
+      final var target = expr;
       final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
         @Override
         public Ref<PyType> getType(TypeEvalContext context) {
@@ -324,10 +347,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         }
       };
 
-      myStack.push(new Assertion(target, typeCallback));
-    }
-    else if (expr instanceof PyAssignmentExpression walrus) {
-      pushAssertion(walrus.getTarget(), positive, suggestedType);
+      if (expr instanceof PyReferenceExpression || expr instanceof PyTargetExpression) {
+        myStack.push(new Assertion((PyQualifiedExpression)target, typeCallback));
+      }
+      else if (allowAnyExpr) {
+        myStack.push(new Assertion(null, typeCallback));
+      }
     }
   }
 
@@ -349,19 +374,19 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   static class Assertion {
-    private final PyQualifiedExpression element;
-    private final InstructionTypeCallback myFunction;
+    private final @Nullable PyQualifiedExpression element;
+    private final @NotNull InstructionTypeCallback myFunction;
 
-    Assertion(PyQualifiedExpression element, InstructionTypeCallback getType) {
+    Assertion(@Nullable PyQualifiedExpression element, @NotNull InstructionTypeCallback getType) {
       this.element = element;
       this.myFunction = getType;
     }
 
-    public PyQualifiedExpression getElement() {
+    public @Nullable PyQualifiedExpression getElement() {
       return element;
     }
 
-    public InstructionTypeCallback getTypeEvalFunction() {
+    public @NotNull InstructionTypeCallback getTypeEvalFunction() {
       return myFunction;
     }
   }

@@ -16,7 +16,8 @@
 15(19) element: null. Condition: (x1 or x2) > x3:false
 16(17) element: null. Condition: (x1 or x2) > x3:true
 17(18) element: PyExpressionStatement
-18(19) READ ACCESS: y
-19(20) element: PyExpressionStatement
-20(21) READ ACCESS: z
-21() element: null
+18(20) READ ACCESS: y
+19(20) ASSERTTYPE ACCESS: null
+20(21) element: PyExpressionStatement
+21(22) READ ACCESS: z
+22() element: null

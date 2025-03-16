@@ -227,7 +227,7 @@ public final class PyUtilCore {
     return name == null ? 0 : name.startsWith("__") ? 2 : name.startsWith(PyNames.UNDERSCORE) ? 1 : 0;
   }
 
-  public static @Nullable List<@NotNull String> strListValue(PyAstExpression value) {
+  public static @Nullable List<@NotNull String> strListValue(@Nullable PyAstExpression value) {
     while (value instanceof PyAstParenthesizedExpression) {
       value = ((PyAstParenthesizedExpression)value).getContainedExpression();
     }

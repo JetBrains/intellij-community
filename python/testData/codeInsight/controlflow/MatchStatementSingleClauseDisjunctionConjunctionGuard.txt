@@ -13,7 +13,8 @@
 12(16) element: null. Condition: x % 100 != 0:false
 13(14) element: null. Condition: x % 100 != 0:true
 14(15) element: PyExpressionStatement
-15(16) READ ACCESS: y
-16(17) element: PyExpressionStatement
-17(18) READ ACCESS: z
-18() element: null
+15(17) READ ACCESS: y
+16(17) ASSERTTYPE ACCESS: null
+17(18) element: PyExpressionStatement
+18(19) READ ACCESS: z
+19() element: null

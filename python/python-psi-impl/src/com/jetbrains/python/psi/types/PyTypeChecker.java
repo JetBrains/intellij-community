@@ -113,6 +113,14 @@ public final class PyTypeChecker {
       }
     }
 
+    if (actual instanceof PyNeverType) {
+      return Optional.of(true);
+    }
+
+    if (expected instanceof PyNeverType) {
+      return Optional.of(false);
+    }
+
     if (expected instanceof PyClassType) {
       Optional<Boolean> match = matchObject((PyClassType)expected, actual);
       if (match.isPresent()) {
@@ -1446,7 +1454,7 @@ public final class PyTypeChecker {
     return new GenericSubstitutions();
   }
 
-  static @NotNull GenericSubstitutions unifyReceiver(@Nullable PyType receiverType, @NotNull TypeEvalContext context) {
+  public static @NotNull GenericSubstitutions unifyReceiver(@Nullable PyType receiverType, @NotNull TypeEvalContext context) {
     // Collect generic params of object type
     final var substitutions = new GenericSubstitutions();
     if (receiverType != null) {

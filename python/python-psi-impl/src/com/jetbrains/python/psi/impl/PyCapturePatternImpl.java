@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
+import static com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator.createAssertionType;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PySequencePatternImpl.wrapInListType;
 
@@ -39,8 +39,28 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
     "bool", "bytearray", "bytes", "dict", "float", "frozenset", "int", "list", "set", "str", "tuple");
 
   /**
-   * Determines the type of a given pattern assuming it is a capture pattern (even when it is actually not),
-   * and looking up (to parents or subject expression of the match statement).
+   * Determines what type this pattern would have if it was a capture pattern (like a bare name or _).
+   * <p>
+   * In pattern matching, a capture pattern takes on the type of the entire matched expression,
+   * regardless of any specific pattern constraints.
+   * <p>
+   * For example:
+   * <pre>{@code
+   * x: int | str
+   * match x:
+   *     case a:         # This is a capture pattern
+   *         # Here 'a' has type int | str
+   *     case str():     # This is a class pattern
+   *         # Capture type: int | str (same as what 'case a:' would get)
+   *         # Regular getType: str
+   *
+   * y: int
+   * match y:
+   *     case str() as a:
+   *         # Capture type: int (same as what 'case a:' would get)
+   *         # Regular getType: intersect(int, str) (just 'str' for now)
+   * }</pre>
+   * @see PyPattern#getType(TypeEvalContext, TypeEvalContext.Key) 
    */
   static @Nullable PyType getCaptureType(@NotNull PyPattern pattern, @NotNull TypeEvalContext context) {
     final PyElement parentPattern = PsiTreeUtil.getParentOfType(
@@ -48,7 +68,7 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
       PyCaseClause.class,        // - Subject of a match statement
       PySingleStarPattern.class, // - Type of parent sequence pattern
       PyDoubleStarPattern.class, // - Type of parent mapping pattern
-      PyKeyValuePattern.class,   // - Any
+      PyKeyValuePattern.class,   // - Value type of parent mapping pattern
       PySequencePattern.class,   // - Iterated item type of sequence
       PyClassPattern.class,      // - Attribute type in the corresponding class
       PyKeywordPattern.class     // - Attribute type in the corresponding class
@@ -65,9 +85,10 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
       for (PyCaseClause cs : matchStatement.getCaseClauses()) {
         if (cs == caseClause) break;
         if (cs.getPattern() == null) continue;
-        if (cs.getGuardCondition() != null) continue;
-        subjectType = Ref.deref(
-          PyTypeAssertionEvaluator.createAssertionType(subjectType, context.getType(cs.getPattern()), false, context));
+        if (cs.getGuardCondition() != null && !PyEvaluator.evaluateAsBoolean(cs.getGuardCondition(), false)) continue;
+        if (cs.getPattern().canExcludePatternType(context)) {
+          subjectType = Ref.deref(createAssertionType(subjectType, context.getType(cs.getPattern()), false, context));
+        }
       }
 
       return subjectType;
@@ -83,8 +104,8 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
     if (parentPattern instanceof PyDoubleStarPattern) {
       final PyMappingPattern mappingParent = as(parentPattern.getParent(), PyMappingPattern.class);
       if (mappingParent == null) return null;
-      var parentType = context.getType(mappingParent);
-      if (parentType instanceof PyCollectionType collectionType) {
+      var mappingType = PyTypeUtil.convertToType(context.getType(mappingParent), "typing.Mapping", pattern, context);
+      if (mappingType instanceof PyCollectionType collectionType) {
         final PyClass dict = PyBuiltinCache.getInstance(pattern).getClass("dict");
         return dict != null ? new PyCollectionTypeImpl(dict, false, collectionType.getElementTypes()) : null;
       }
@@ -94,30 +115,36 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
       final PyMappingPattern mappingParent = as(keyValuePattern.getParent(), PyMappingPattern.class);
       if (mappingParent == null) return null;
 
-      var dictType = getCaptureType(mappingParent, context);
-      if (dictType == null) return null;
-
-      if (dictType instanceof PyTypedDictType typedDictType) {
-        if (context.getType(keyValuePattern.getKeyPattern()) instanceof PyLiteralType l && l.getExpression() instanceof PyStringLiteralExpression str) {
-          return typedDictType.getElementType(str.getStringValue());
+      return PyTypeUtil.toStream(getCaptureType(mappingParent, context)).map(type -> {
+        if (type instanceof PyTypedDictType typedDictType) {
+          if (context.getType(keyValuePattern.getKeyPattern()) instanceof PyLiteralType l &&
+              l.getExpression() instanceof PyStringLiteralExpression str) {
+            return typedDictType.getElementType(str.getStringValue());
+          }
         }
-      }
-      var mappingType = PyTypeUtil.convertToType(dictType, "typing.Mapping", pattern, context);
-      if (mappingType instanceof PyCollectionType collectionType) {
-        return collectionType.getElementTypes().get(1);
-      }
-      return null;
+
+        PyType mappingType = PyTypeUtil.convertToType(type, "typing.Mapping", pattern, context);
+        if (mappingType == null) {
+          return PyNeverType.INSTANCE;
+        }
+        else if (mappingType instanceof PyCollectionType collectionType) {
+          return collectionType.getElementTypes().get(1);
+        }
+        return null;
+      }).collect(PyTypeUtil.toUnion());
     }
     if (parentPattern instanceof PySequencePattern sequencePattern) {
       final PyType sequenceType = PySequencePatternImpl.getSequenceCaptureType(sequencePattern, context);
       if (sequenceType == null) return null;
+
+      // This is done to skip group- and as-patterns
+      final var sequenceMember = PsiTreeUtil.findFirstParent(pattern, el -> el.getParent() == sequencePattern);
+      final List<PyPattern> elements = sequencePattern.getElements();
+      final int idx = elements.indexOf(sequenceMember);
+      final int starIdx = ContainerUtil.indexOf(elements, it2 -> it2 instanceof PySingleStarPattern);
+      
       return PyTypeUtil.toStream(sequenceType).map(it -> {
         if (it instanceof PyTupleType tupleType && !tupleType.isHomogeneous()) {
-          // This is done to skip group- and as-patterns
-          final var sequenceMember = PsiTreeUtil.findFirstParent(pattern, el -> el.getParent() == sequencePattern);
-          final List<PyPattern> elements = sequencePattern.getElements();
-          final int idx = elements.indexOf(sequenceMember);
-          final int starIdx = ContainerUtil.indexOf(elements, it2 -> it2 instanceof PySingleStarPattern);
           if (starIdx == -1 || idx < starIdx) {
             return tupleType.getElementType(idx);
           }
@@ -134,32 +161,30 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
       }).collect(PyTypeUtil.toUnion());
     }
     if (parentPattern instanceof PyClassPattern classPattern) {
-      if (context.getType(classPattern) instanceof PyClassType classType) {
-        final List<PyPattern> arguments = classPattern.getArgumentList().getPatterns();
-        int index = arguments.indexOf(pattern);
-        if (index < 0) return null;
-
-        if (SPECIAL_BUILTINS.contains(classType.getClassQName())) {
-          if (index == 0) {
-            var classCapture = PyTypeUtil.toStream(getCaptureType(classPattern, context))
-              .filter(it -> PyTypeChecker.match(classType, it, context))
-              .collect(PyTypeUtil.toUnion());
-            return classCapture != null ? classCapture : classType;
+      final List<PyPattern> arguments = classPattern.getArgumentList().getPatterns();
+      int index = arguments.indexOf(pattern);
+      if (index < 0) return null;
+      
+      // capture type can be a union like: list[int] | list[str]
+      return PyTypeUtil.toStream(context.getType(classPattern)).map(type -> {
+        if (type instanceof PyClassType classType) {
+          if (SPECIAL_BUILTINS.contains(classType.getClassQName())) {
+            if (index == 0) {
+              return classType;
+            }
+            return null;
           }
-          return null;
-        }
 
-        final PyClass cls = classType.getPyClass();
-        List<String> matchArgs = cls.getOwnMatchArgs();
-        if (matchArgs == null) {
-          matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(cls, context);
-        }
-        if (matchArgs == null || matchArgs.size() > arguments.size()) return null;
+          List<String> matchArgs = getMatchArgs(classType, context);
+          if (matchArgs == null || matchArgs.size() > arguments.size()) return null;
 
-        final PyTypedElement instanceAttribute = as(resolveTypeMember(classType, matchArgs.get(index), context), PyTypedElement.class);
-        return instanceAttribute != null ? context.getType(instanceAttribute) : null;
-      }
-      return null;
+          final PyTypedElement instanceAttribute = as(resolveTypeMember(classType, matchArgs.get(index), context), PyTypedElement.class);
+          if (instanceAttribute == null) return null;
+
+          return PyTypeChecker.substitute(context.getType(instanceAttribute), PyTypeChecker.unifyReceiver(classType, context), context);
+        }
+        return null;
+      }).collect(PyTypeUtil.toUnion());
     }
     if (parentPattern instanceof PyKeywordPattern keywordPattern) {
       final PyClassPattern classPattern = PsiTreeUtil.getParentOfType(keywordPattern, PyClassPattern.class);
@@ -174,9 +199,18 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
     }
     return null;
   }
+  
+  static @Nullable List<@NotNull String> getMatchArgs(@NotNull PyClassType type, @NotNull TypeEvalContext context) {
+    final PyClass cls = type.getPyClass();
+    List<String> matchArgs = cls.getOwnMatchArgs();
+    if (matchArgs == null) {
+      matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(cls, context);
+    }
+    return matchArgs;
+  }
 
   @Nullable
-  private static PsiElement resolveTypeMember(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
+  static PsiElement resolveTypeMember(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
     return !ContainerUtil.isEmpty(results) ? results.get(0).getElement() : null;

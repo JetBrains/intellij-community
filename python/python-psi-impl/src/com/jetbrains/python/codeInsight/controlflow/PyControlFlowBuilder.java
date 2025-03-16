@@ -380,6 +380,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitWildcardPattern(@NotNull PyWildcardPattern node) {
     myBuilder.startNode(node);
+    addTypeAssertionNodes(node, true);
   }
 
   @Override
@@ -393,9 +394,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     node.acceptChildren(this);
     myBuilder.updatePendingElementScope(node, node.getParent());
 
+    addTypeAssertionNodes(node, true);
     if (isRefutable) {
       myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
-      addTypeAssertionNodes(node, true);
     }
   }
 
@@ -1101,8 +1102,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     condition.accept(evaluator);
     for (PyTypeAssertionEvaluator.Assertion def : evaluator.getDefinitions()) {
       final PyQualifiedExpression e = def.getElement();
-      final QualifiedName qname = e.asQualifiedName();
-      final String name = qname != null ? qname.toString() : e.getName();
+      String name = null;
+      if (e != null) {
+        final QualifiedName qname = e.asQualifiedName();
+        name = qname != null ? qname.toString() : e.getName();
+      }
       myBuilder.addNode(ReadWriteInstruction.assertType(myBuilder, e, name, def.getTypeEvalFunction()));
     }
   }

@@ -868,6 +868,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
           return typeFromTypeAlias;
         }
       }
+      final PyType neverType = getNeverType(resolved);
+      if (neverType != null) {
+        return Ref.create(neverType);
+      }
       final PyType unionType = getUnionType(resolved, context);
       if (unionType != null) {
         return Ref.create(unionType);
@@ -1454,6 +1458,15 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (resolveToQualifiedNames((PyTargetExpression)resolved, context.getTypeContext()).contains(CALLABLE)) {
         return new PyCallableTypeImpl(null, null);
       }
+    }
+    return null;
+  }
+
+  private static @Nullable PyType getNeverType(@NotNull PsiElement element) {
+    var qName = getQualifiedName(element);
+    if (qName == null) return null;
+    if (List.of(NEVER, NEVER_EXT, NO_RETURN, NO_RETURN_EXT).contains(qName)) {
+      return PyNeverType.INSTANCE;
     }
     return null;
   }

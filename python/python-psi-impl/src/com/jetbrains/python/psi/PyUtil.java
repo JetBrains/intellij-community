@@ -1119,7 +1119,7 @@ public final class PyUtil {
     return null;
   }
 
-  public static @Nullable List<@NotNull String> strListValue(PyExpression value) {
+  public static @Nullable List<@NotNull String> strListValue(@Nullable PyExpression value) {
     return PyUtilCore.strListValue(value);
   }
 

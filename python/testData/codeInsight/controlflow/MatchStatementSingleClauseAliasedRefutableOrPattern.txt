@@ -12,7 +12,8 @@
 11(12) matched pattern: [42] | foo.bar
 12(13) WRITE ACCESS: x
 13(14) element: PyExpressionStatement
-14(15) READ ACCESS: y
-15(16) element: PyExpressionStatement
-16(17) READ ACCESS: z
-17() element: null
+14(16) READ ACCESS: y
+15(16) ASSERTTYPE ACCESS: null
+16(17) element: PyExpressionStatement
+17(18) READ ACCESS: z
+18() element: null

@@ -4,7 +4,9 @@ import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.psi.types.PyNeverType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @ApiStatus.Internal
-public class PyDataFlow {
+public class PyDataFlow implements ControlFlow {
   private final TypeEvalContext myTypeEvalContext;
   private final Instruction[] myInstructions;
   private final boolean[] myReachability;
@@ -41,7 +43,18 @@ public class PyDataFlow {
   private @NotNull Collection<Instruction> getReachableSuccessors(@NotNull Instruction instruction) {
     if (instruction instanceof CallInstruction ci && ci.isNoReturnCall(myTypeEvalContext)) return List.of();
     if (instruction instanceof PyWithContextExitInstruction wi && !wi.isSuppressingExceptions(myTypeEvalContext)) return List.of();
-    return instruction.allSucc();
+    return ContainerUtil.filter(instruction.allSucc(), next -> {
+      if (next instanceof ReadWriteInstruction rw && rw.getAccess().isAssertTypeAccess()) {
+        final var type = rw.getType(myTypeEvalContext, null);
+        return !(type != null && type.get() instanceof PyNeverType);
+      }
+      return true;
+    });
+  }
+
+  @Override
+  public Instruction @NotNull [] getInstructions() {
+    return myInstructions;
   }
 
   public boolean isUnreachable(@NotNull Instruction instruction) {

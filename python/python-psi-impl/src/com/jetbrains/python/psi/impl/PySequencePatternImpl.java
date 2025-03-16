@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.psi.impl.PyClassPatternImpl.canExcludeArgumentPatternType;
 import static com.jetbrains.python.psi.types.PyLiteralType.upcastLiteralToClass;
 
 public class PySequencePatternImpl extends PyElementImpl implements PySequencePattern, PsiListLikeElement {
@@ -54,6 +55,23 @@ public class PySequencePatternImpl extends PyElementImpl implements PySequencePa
         return expectedType;
       })
       .collect(PyTypeUtil.toUnion());
+  }
+  
+  @Override
+  public boolean canExcludePatternType(@NotNull TypeEvalContext context) {
+    for (var p : getElements()) {
+      if (!canExcludeArgumentPatternType(p, context)) {
+        return false;
+      }
+    }
+    for (var type : PyTypeUtil.toStream(getSequenceCaptureType(this, context))) {
+      if (!(type instanceof PyTupleType tupleType) || tupleType.isHomogeneous()) {
+        // Not clear how to do this accurately, so for now matching 
+        // types like list[Something] will not exclude type in any case
+        return false;
+      }
+    }
+    return true;
   }
 
   static @Nullable PyType wrapInListType(@Nullable PyType elementType, @NotNull PsiElement resolveAnchor) {

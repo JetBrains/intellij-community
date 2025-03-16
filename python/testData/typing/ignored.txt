@@ -14,6 +14,7 @@ classes_override.py
 constructors_call_init.py
 constructors_call_new.py
 constructors_call_type.py
+constructors_call_metaclass.py
 constructors_callable.py
 dataclasses_hash.py
 dataclasses_inheritance.py
@@ -65,4 +66,5 @@ specialtypes_promotions.py
 specialtypes_type.py
 tuples_type_form.py
 tuples_unpacked.py
+tuples_type_compat.py
 typeddicts_readonly_inheritance.py

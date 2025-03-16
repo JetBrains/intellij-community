@@ -9,7 +9,8 @@
 8(12) element: null. Condition: x < 0:false
 9(10) element: null. Condition: x < 0:true
 10(11) element: PyExpressionStatement
-11(12) READ ACCESS: y
-12(13) element: PyExpressionStatement
-13(14) READ ACCESS: z
-14() element: null
+11(13) READ ACCESS: y
+12(13) ASSERTTYPE ACCESS: null
+13(14) element: PyExpressionStatement
+14(15) READ ACCESS: z
+15() element: null

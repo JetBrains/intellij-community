@@ -8,7 +8,8 @@
 7(8) matched pattern: 1 | x
 8(9) matched pattern: [1 | x]
 9(10) element: PyExpressionStatement
-10(11) READ ACCESS: y
-11(12) element: PyExpressionStatement
-12(13) READ ACCESS: z
-13() element: null
+10(12) READ ACCESS: y
+11(12) ASSERTTYPE ACCESS: null
+12(13) element: PyExpressionStatement
+13(14) READ ACCESS: z
+14() element: null

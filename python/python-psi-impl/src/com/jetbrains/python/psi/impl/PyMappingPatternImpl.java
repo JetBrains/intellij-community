@@ -28,19 +28,32 @@ public class PyMappingPatternImpl extends PyElementImpl implements PyMappingPatt
   }
 
   @Override
+  public boolean canExcludePatternType(@NotNull TypeEvalContext context) {
+    return false;
+  }
+
+  @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
     ArrayList<PyType> keyTypes = new ArrayList<>();
     ArrayList<PyType> valueTypes = new ArrayList<>();
     for (PyKeyValuePattern it : getComponents()) {
-      PyType type = context.getType(it);
-      if (type instanceof PyTupleType tupleType) {
-        keyTypes.add(tupleType.getElementType(0));
-        valueTypes.add(tupleType.getElementType(1));
+      keyTypes.add(context.getType(it.getKeyPattern()));
+      if (it.getValuePattern() != null) {
+        valueTypes.add(context.getType(it.getValuePattern()));
       }
     }
-    //keyTypes.add(null);
-    //valueTypes.add(null);
-    return wrapInMappingType(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes), this);
+
+    PyType patternMappingType = wrapInMappingType(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes), this);
+
+    PyType captureTypes = PyCapturePatternImpl.getCaptureType(this, context);
+    PyType filteredType = PyTypeUtil.toStream(captureTypes).filter(captureType -> {
+      var mappingType = PyTypeUtil.convertToType(captureType, "typing.Mapping", this, context);
+      if (mappingType == null) return false;
+      if (!PyTypeChecker.match(mappingType, patternMappingType, context)) return false;
+      return true;
+    }).collect(PyTypeUtil.toUnion());
+
+    return filteredType == null ? patternMappingType : filteredType;
   }
 
   private static @Nullable PyType wrapInMappingType(@Nullable PyType keyType, @Nullable PyType valueType, @NotNull PsiElement resolveAnchor) {
