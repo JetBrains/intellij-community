@@ -2,7 +2,6 @@
 package org.jetbrains.uast.expressions
 
 import com.intellij.psi.PsiLanguageInjectionHost
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UExpression
 
 /**
@@ -31,7 +30,6 @@ interface UInjectionHost : UExpression {
    * 
    * Also, it will include string-processing postfix-methods like `trimIndent` and `trimMargin` if any of them is used.
    */
-  @ApiStatus.Experimental
   fun getStringRoomExpression(): UExpression = this
 
 }
