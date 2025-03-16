@@ -1,9 +1,0 @@
-public final class org/jetbrains/jewel/markdown/extension/autolink/AutolinkProcessorExtension : org/jetbrains/jewel/markdown/extensions/MarkdownProcessorExtension {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/markdown/extension/autolink/AutolinkProcessorExtension;
-	public fun getBlockProcessorExtension ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockProcessorExtension;
-	public fun getDelimitedInlineProcessorExtension ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownDelimitedInlineProcessorExtension;
-	public fun getParserExtension ()Lorg/commonmark/parser/Parser$ParserExtension;
-	public fun getTextRendererExtension ()Lorg/commonmark/renderer/text/TextContentRenderer$TextContentRendererExtension;
-}
-

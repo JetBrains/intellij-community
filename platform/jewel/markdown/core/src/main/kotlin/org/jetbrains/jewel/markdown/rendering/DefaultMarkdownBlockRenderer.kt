@@ -447,7 +447,8 @@ public open class DefaultMarkdownBlockRenderer(
             style = styling.editorTextStyle,
             modifier =
                 Modifier.focusProperties { canFocus = false }
-                    .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                    .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true)
+                    .thenIf(!enabled) { alpha(.5f) },
         )
     }
 
