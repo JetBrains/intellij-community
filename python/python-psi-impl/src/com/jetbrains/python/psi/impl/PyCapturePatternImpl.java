@@ -141,7 +141,10 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
 
         if (SPECIAL_BUILTINS.contains(classType.getClassQName())) {
           if (index == 0) {
-            return context.getType(classPattern);
+            var classCapture = PyTypeUtil.toStream(getCaptureType(classPattern, context))
+              .filter(it -> PyTypeChecker.match(classType, it, context))
+              .collect(PyTypeUtil.toUnion());
+            return classCapture != null ? classCapture : classType;
           }
           return null;
         }

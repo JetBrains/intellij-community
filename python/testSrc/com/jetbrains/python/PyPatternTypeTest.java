@@ -569,6 +569,18 @@ match x:
                    """);
   }
 
+  public void testMatchClassPatternSelfCaptureParameterized() {
+    doTestByText("""
+def flip(pair: list[int]):
+    match pair:
+        case list([x, y]):
+            assert_type(x, int)
+            assert_type(y, int)
+        case _:
+            raise TypeError("unsupported length")
+                   """);
+  }
+
   public void testTypeNarrowingUnionOfTuples() {
     doTestByText("""
 from typing import assert_type
