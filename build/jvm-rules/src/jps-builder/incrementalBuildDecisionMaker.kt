@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.jps
 
+import androidx.collection.ObjectList
+import androidx.collection.ScatterMap
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
@@ -45,12 +47,12 @@ internal suspend fun computeBuildState(
   parentSpan: Span,
   sourceRelativizer: PathRelativizer,
   allocator: RootAllocator,
-  sourceFileToDigest: Map<Path, ByteArray>,
+  sourceFileToDigest: ScatterMap<Path, ByteArray>,
   targetDigests: TargetConfigurationDigestContainer,
   forceIncremental: Boolean,
   tracer: Tracer,
-  trackableDependencyFiles: List<Path>,
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  trackableDependencyFiles: ObjectList<Path>,
+  dependencyFileToDigest: ScatterMap<Path, ByteArray>,
 ): BuildStateResult {
   val sourceFileStateResult = loadBuildState(
     buildStateFile = buildStateFile,
@@ -90,8 +92,8 @@ internal suspend fun computeBuildState(
 }
 
 internal fun createCleanBuildStateResult(
-  trackableDependencyFiles: List<Path>,
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  trackableDependencyFiles: ObjectList<Path>,
+  dependencyFileToDigest: ScatterMap<Path, ByteArray>,
   rebuildRequested: String?,
 ): BuildStateResult {
   return BuildStateResult(

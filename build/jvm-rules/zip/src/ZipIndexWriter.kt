@@ -56,7 +56,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
     buffer.writeBytes(name)
   }
 
-  fun finish(centralDirectoryOffset: Long, indexWriter: IkvIndexBuilder?, indexOffset: Int): ByteBuf {
+  fun finish(centralDirectoryOffset: Long, indexWriter: IkvIndexBuilder?, indexDataEnd: Int): ByteBuf {
     val buffer = buffer!!
     val centralDirectoryLength = buffer.readableBytes()
     if (entryCount < 65_535) {
@@ -81,7 +81,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
         buffer.writeShortLE(Byte.SIZE_BYTES + Integer.BYTES)
         // version
         buffer.writeByte(INDEX_FORMAT_VERSION.toInt())
-        buffer.writeIntLE(indexOffset)
+        buffer.writeIntLE(indexDataEnd)
       }
     }
     else {
@@ -89,7 +89,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
         entryCount = entryCount,
         centralDirectoryLength = centralDirectoryLength,
         centralDirectoryOffset = centralDirectoryOffset,
-        optimizedMetadataOffset = indexOffset,
+        optimizedMetadataOffset = indexDataEnd,
       )
     }
     return buffer

@@ -2,8 +2,13 @@
 
 package org.jetbrains.jps.dependency
 
+import androidx.collection.MutableObjectList
 import androidx.collection.MutableScatterMap
+import androidx.collection.ObjectList
+import androidx.collection.objectListOf
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import org.jetbrains.bazel.jvm.emptyList
+import org.jetbrains.jps.dependency.storage.ClassRegistry
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
@@ -27,8 +32,6 @@ interface GraphDataInput : DataInput {
 interface GraphDataOutput : DataOutput {
   fun <T : ExternalizableGraphElement> writeGraphElement(element: T)
 
-  fun <T : ExternalizableGraphElement> writeGraphElementCollection(elementType: Class<out T>, collection: Iterable<T>)
-
   fun writeRawLong(v: Long)
 
   override fun writeBytes(s: String) = throw UnsupportedOperationException("do not use")
@@ -48,17 +51,17 @@ interface GraphDataOutput : DataOutput {
       1 -> {
         writeInt(1)
         val usage = usages.single()
-        writeGraphElementCollection(usage.javaClass, listOf(usage))
+        doWriteGraphElementCollection(this@GraphDataOutput, usage.javaClass, objectListOf(usage))
       }
       else -> {
-        val classToItem = MutableScatterMap<Class<out Usage>, MutableList<Usage>>()
+        val classToItem = MutableScatterMap<Class<Usage>, MutableObjectList<Usage>>()
         for (usage in usages) {
-          classToItem.compute(usage.javaClass) { k, v -> (v ?: ArrayList()).also { it.add(usage) } }
+          classToItem.compute(usage.javaClass) { k, v -> (v ?: MutableObjectList()).also { it.add(usage) } }
         }
 
         writeInt(classToItem.size)
         classToItem.forEach { k, v ->
-          writeGraphElementCollection(k, v)
+          doWriteGraphElementCollection(this@GraphDataOutput, k, v)
         }
       }
     }
@@ -80,5 +83,34 @@ internal inline fun <T : Any> GraphDataOutput.writeCollection(collection: Collec
   writeInt(collection.size)
   for (t in collection) {
     writer(t)
+  }
+}
+
+private fun <T : ExternalizableGraphElement> doWriteGraphElementCollection(
+  output: GraphDataOutput,
+  elementType: Class<out T>,
+  collection: ObjectList<T>,
+) {
+  val classInfo = ClassRegistry.writeClassId(elementType, output)
+  if (classInfo.isFactored) {
+    val elementGroups = Object2ObjectLinkedOpenHashMap<ExternalizableGraphElement, MutableObjectList<FactoredExternalizableGraphElement<*>>>()
+    collection.forEach { e ->
+      e as FactoredExternalizableGraphElement<*>
+      elementGroups.computeIfAbsent(e.getFactorData()) { MutableObjectList() }.add(e)
+    }
+    output.writeInt(elementGroups.size)
+    elementGroups.forEach { key, list ->
+      output.writeGraphElement(key)
+      output.writeInt(list.size)
+      list.forEach {
+        it.write(output)
+      }
+    }
+  }
+  else {
+    output.writeInt(collection.size)
+    collection.forEach {
+      it.write(output)
+    }
   }
 }

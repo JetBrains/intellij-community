@@ -4,9 +4,9 @@ package org.jetbrains.bazel.jvm.jps.kotlin
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import org.jetbrains.annotations.Nls
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
-import org.jetbrains.bazel.jvm.linkedSet
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
@@ -24,7 +24,7 @@ internal class MessageCollectorAdapter(
 ) : MessageCollector {
   private var hasErrors = false
   @JvmField
-  val filesWithErrors = linkedSet<Path>()
+  val filesWithErrors = ObjectLinkedOpenHashSet<Path>()
 
   override fun report(severity: CompilerMessageSeverity, @Nls message: String, location: CompilerMessageSourceLocation?) {
     if (severity == CompilerMessageSeverity.WARNING) {

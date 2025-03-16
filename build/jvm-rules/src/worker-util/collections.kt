@@ -3,9 +3,12 @@
 
 package org.jetbrains.bazel.jvm
 
+import androidx.collection.MutableScatterMap
+import androidx.collection.ObjectList
+import androidx.collection.ScatterMap
 import androidx.collection.ScatterSet
+import androidx.collection.emptyScatterMap
 import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import kotlinx.collections.immutable.PersistentSet
@@ -20,34 +23,14 @@ private object SlowEqualsAwareHashStrategy : Hash.Strategy<Any> {
   override fun equals(a: Any?, b: Any?): Boolean = (a?.hashCode() ?: 0) == (b?.hashCode() ?: 0) && a == b
 }
 
-fun <T> slowEqualsAwareHashStrategy(): Hash.Strategy<T> {
+fun <T : Any> slowEqualsAwareHashStrategy(): Hash.Strategy<T> {
   @Suppress("UNCHECKED_CAST")
   return SlowEqualsAwareHashStrategy as Hash.Strategy<T>
 }
 
 fun <T : Any> linkedSet(): ObjectLinkedOpenCustomHashSet<T> = ObjectLinkedOpenCustomHashSet(slowEqualsAwareHashStrategy())
 
-fun <T : Any> linkedSet(collection: Collection<T>): ObjectLinkedOpenCustomHashSet<T> {
-  return ObjectLinkedOpenCustomHashSet(collection, slowEqualsAwareHashStrategy())
-}
-
-fun <T : Any> hashSet(): ObjectOpenCustomHashSet<T> = ObjectOpenCustomHashSet(slowEqualsAwareHashStrategy())
-
 fun <T : Any> hashSet(expectedSize: Int): ObjectOpenCustomHashSet<T> = ObjectOpenCustomHashSet(expectedSize, slowEqualsAwareHashStrategy())
-
-fun <T : Any> hashSet(collection: Collection<T>): ObjectOpenCustomHashSet<T> = ObjectOpenCustomHashSet(collection, slowEqualsAwareHashStrategy())
-
-fun <K : Any, V : Any> hashMap(): Object2ObjectOpenCustomHashMap<K, V> {
-  return Object2ObjectOpenCustomHashMap(slowEqualsAwareHashStrategy())
-}
-
-fun <K : Any, V : Any> hashMap(map: Map<K, V>): Object2ObjectOpenCustomHashMap<K, V> {
-  return Object2ObjectOpenCustomHashMap(map, slowEqualsAwareHashStrategy())
-}
-
-fun <K : Any, V : Any> hashMap(size: Int): Object2ObjectOpenCustomHashMap<K, V> {
-  return Object2ObjectOpenCustomHashMap(size, slowEqualsAwareHashStrategy())
-}
 
 fun <T : Any> emptyList(): List<T> = java.util.List.of()
 
@@ -77,6 +60,30 @@ fun <V : Any> ScatterSet<V>.toPersistentHashSet(): PersistentSet<V> {
   }
 }
 
+fun <T : Any> ObjectList<T>.toLinkedSet(): MutableSet<T> {
+  val result = ObjectLinkedOpenCustomHashSet<T>(size, slowEqualsAwareHashStrategy())
+  forEach {
+    result.add(it)
+  }
+  return result
+}
+
+inline fun <T, K, V> Array<out T>.toScatterMap(transform: (T, MutableScatterMap<K, V>) -> Unit): ScatterMap<K, V> {
+  val result = MutableScatterMap<K, V>(size)
+  for (t in this) {
+    transform(t, result)
+  }
+  return result
+}
+
+inline fun <T, K, V> List<T>.toScatterMap(transform: (T, MutableScatterMap<K, V>) -> Unit): ScatterMap<K, V> {
+  val result = MutableScatterMap<K, V>(size)
+  for (t in this) {
+    transform(t, result)
+  }
+  return result
+}
+
 inline fun <T> ScatterSet<T>.filterToList(predicate: (T) -> Boolean): List<T> {
   val result = ArrayList<T>()
   forEach {
@@ -84,8 +91,10 @@ inline fun <T> ScatterSet<T>.filterToList(predicate: (T) -> Boolean): List<T> {
       result.add(it)
     }
   }
-  return result.ifEmpty { kotlin.collections.emptyList() }
+  return result.ifEmpty { emptyList() }
 }
+
+fun <K, V> ScatterMap<K, V>.orEmpty(): ScatterMap<K, V> = if (isEmpty()) emptyScatterMap() else this
 
 //inline fun <T> Iterable<T>.filterToScatterSet(predicate: (T) -> Boolean): ScatterSet<T> {
 //  val result = MutableScatterSet<T>()

@@ -15,6 +15,9 @@ import java.util.zip.ZipEntry
 const val INDEX_FILENAME: String = "__index__"
 private val INDEX_FILENAME_BYTES = "__index__".toByteArray()
 
+// 1MB
+private const val FLUSH_THRESHOLD = 1 * 1024 * 1024
+
 class ZipArchiveOutputStream(
   private val channel: GatheringByteChannel,
   private val zipIndexWriter: ZipIndexWriter,
@@ -22,24 +25,20 @@ class ZipArchiveOutputStream(
   private var finished = false
 
   private var bufferReleased = false
-  private val buffer = ByteBufAllocator.DEFAULT.directBuffer()
+  @PublishedApi
+  internal val buffer: ByteBuf = ByteBufAllocator.DEFAULT.directBuffer(64 * 1024)
 
   private var channelPosition = 0L
 
   private val fileChannel = channel as? FileChannel
 
-  fun addDirEntry(name: String) {
-    if (finished) {
-      throw IOException("Stream has already been finished")
-    }
-
-    val localFileHeaderOffset = channelPosition
+  internal fun addDirEntry(name: String) {
+    val localFileHeaderOffset = flushBufferIfNeeded()
 
     assert(!name.endsWith('/'))
     val key = name.toByteArray()
     val nameInArchive = key + '/'.code.toByte()
 
-    buffer.clear()
     buffer.writeIntLE(0x04034b50)
     // Version needed to extract (minimum)
     buffer.writeShortLE(0)
@@ -63,8 +62,6 @@ class ZipArchiveOutputStream(
     buffer.writeShortLE(0)
     buffer.writeBytes(nameInArchive)
 
-    writeAndClearBuffer()
-
     zipIndexWriter.writeCentralFileHeader(
       size = 0,
       compressedSize = 0,
@@ -77,124 +74,81 @@ class ZipArchiveOutputStream(
     )
   }
 
-  fun writeDataRawEntryWithoutCrc(name: ByteArray, data: ByteArray) {
-    writeDataRawEntry(name = name, data = data, size = data.size, crc = 0)
-  }
-
-  // data contains only data - zip local file header will be generated
-  fun writeDataRawEntry(
-    name: ByteArray,
-    data: ByteArray,
-    size: Int,
-    crc: Long,
-  ) {
-    if (finished) {
-      throw IOException("Stream has already been finished")
-    }
-
-    buffer.clear()
-    writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = crc, method = ZipEntry.STORED, buffer = buffer)
-
-    val localFileHeaderOffset = channelPosition
-    val dataOffset = localFileHeaderOffset + buffer.readableBytes()
-
-    // write to buffer, to avoid writing to disk in two calls
-    buffer.writeBytes(data)
-    writeAndClearBuffer()
-
-    zipIndexWriter.writeCentralFileHeader(
-      size = size,
-      compressedSize = size,
-      method = ZipEntry.STORED,
-      crc = crc,
-      name = name,
-      localFileHeaderOffset = localFileHeaderOffset,
-      dataOffset = dataOffset,
-    )
-  }
-
-  fun writeEntryWithHalfBackedBuffer(path: ByteArray, unwrittenHeaderAndData: ByteBuf) {
-    if (finished) {
-      throw IOException("Stream has already been finished")
-    }
-
+  fun writeWithCrc(path: ByteArray, estimatedSize: Int, crc32: CRC32?, task: (ByteBuf) -> Unit) {
+    val localFileHeaderOffset = flushBufferIfNeeded()
     val headerSize = 30 + path.size
-    val size = unwrittenHeaderAndData.readableBytes() - headerSize
-    val currentWriterIndex = unwrittenHeaderAndData.writerIndex()
-    unwrittenHeaderAndData.writerIndex(0)
+    val dataOffset = localFileHeaderOffset + headerSize
+
+    buffer.ensureWritable(headerSize + estimatedSize.coerceAtLeast(1024))
+
+    val headerPosition = buffer.writerIndex()
+    val endOfHeaderPosition = headerPosition + headerSize
+    buffer.writerIndex(endOfHeaderPosition)
+
+    task(buffer)
+
+    val size = buffer.writerIndex() - endOfHeaderPosition
+
+    val crc = if (crc32 == null || size == 0) {
+      0
+    }
+    else {
+      crc32.reset()
+      val nioBuffer = buffer.nioBuffer(endOfHeaderPosition, size)
+      crc32.update(nioBuffer)
+      crc32.value
+    }
+
+    buffer.writerIndex(headerPosition)
+
     writeZipLocalFileHeader(
       name = path,
       size = size,
       compressedSize = size,
-      crc32 = 0,
+      crc32 = crc,
       method = ZipEntry.STORED,
-      buffer = unwrittenHeaderAndData,
+      buffer = buffer,
     )
-    assert(unwrittenHeaderAndData.writerIndex() == headerSize)
-    unwrittenHeaderAndData.writerIndex(currentWriterIndex)
-
-    val localFileHeaderOffset = channelPosition
-    val dataOffset = localFileHeaderOffset + headerSize
-    writeBuffer(unwrittenHeaderAndData)
+    assert(buffer.writerIndex() == endOfHeaderPosition)
+    buffer.writerIndex(endOfHeaderPosition + size)
 
     zipIndexWriter.writeCentralFileHeader(
       size = size,
       compressedSize = size,
       method = ZipEntry.STORED,
-      crc = 0,
+      crc = crc,
       name = path,
       localFileHeaderOffset = localFileHeaderOffset,
       dataOffset = dataOffset,
     )
   }
 
-  // data contains only data - zip local file header will be generated
-  fun writeDataRawEntry(
-    data: ByteBuffer,
-    name: ByteArray,
-    size: Int,
-    compressedSize: Int,
-    method: Int,
-    crc: Long,
-  ) {
-    assert(method != -1)
+  fun write(path: ByteArray, estimatedSize: Int, task: (ByteBuf) -> Unit) {
+    writeWithCrc(path, estimatedSize, crc32 = null, task = task)
+  }
 
-    if (finished) {
+  // returns start position
+  inline fun writeUndeclaredData(task: (ByteBuf, Long) -> Unit): Long {
+    val position = flushBufferIfNeeded()
+    task(buffer, position)
+    return position
+  }
+
+  @PublishedApi
+  internal fun flushBufferIfNeeded(threshold: Int = FLUSH_THRESHOLD): Long {
+    if (bufferReleased) {
       throw IOException("Stream has already been finished")
     }
 
-    buffer.clear()
-    writeZipLocalFileHeader(name = name, size = size, compressedSize = compressedSize, crc32 = crc, method = method, buffer = buffer)
-
-    val localFileHeaderOffset = channelPosition
-    val dataOffset = localFileHeaderOffset + buffer.readableBytes()
-
-    writeAndClearBuffer()
-    writeBuffer(data)
-
-    zipIndexWriter.writeCentralFileHeader(
-      size = size,
-      compressedSize = compressedSize,
-      method = method,
-      crc = crc,
-      name = name,
-      localFileHeaderOffset = localFileHeaderOffset,
-      dataOffset = dataOffset,
-    )
-  }
-
-  fun writeEmptyFile(name: ByteArray) {
-    buffer.clear()
-    writeZipLocalFileHeader(name = name, size = 0, compressedSize = 0, crc32 = 0, method = ZipEntry.STORED, buffer = buffer)
-    writeRawEntry(
-      data = buffer,
-      name = name,
-      size = 0,
-      compressedSize = 0,
-      method = ZipEntry.STORED,
-      crc = 0,
-      headerSize = 30 + name.size,
-    )
+    val readableBytes = buffer.readableBytes()
+    if (readableBytes > threshold) {
+      writeBuffer(buffer)
+      buffer.clear()
+      return channelPosition
+    }
+    else {
+      return channelPosition + readableBytes
+    }
   }
 
   // data contains data and zip local file header
@@ -207,20 +161,8 @@ class ZipArchiveOutputStream(
     crc: Long,
     headerSize: Int,
   ) {
-    if (finished) {
-      throw IOException("Stream has already been finished")
-    }
-
-    val localFileHeaderOffset = channelPosition
-    assert(method != -1)
-
-    if (fileChannel == null) {
-      writeToChannelFully(channel, data)
-    }
-    else {
-      writeToFileChannelFully(fileChannel, channelPosition, data)
-    }
-    channelPosition += compressedSize + headerSize
+    val localFileHeaderOffset = flushBufferIfNeeded()
+    buffer.writeBytes(data)
 
     zipIndexWriter.writeCentralFileHeader(
       size = size,
@@ -234,20 +176,13 @@ class ZipArchiveOutputStream(
   }
 
   fun writeEntryHeaderWithoutCrc(name: ByteArray, size: Int) {
-    buffer.clear()
-    writeEntryHeaderWithoutCrc(name, size, buffer)
-    buffer.clear()
-  }
-
-  fun writeEntryHeaderWithoutCrc(name: ByteArray, size: Int, buffer: ByteBuf) {
-    val localFileHeaderOffset = channelPosition
+    // always flush - this method doesn't yet support pending buffer
+    val localFileHeaderOffset = flushBufferIfNeeded(threshold = 0)
     val headerSize = 30 + name.size
     val dataOffset = channelPosition + headerSize
-
     writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = 0, method = ZipEntry.STORED, buffer = buffer)
     assert(buffer.readableBytes() == headerSize)
     writeBuffer(buffer)
-
     zipIndexWriter.writeCentralFileHeader(
       size = size,
       compressedSize = size,
@@ -257,9 +192,10 @@ class ZipArchiveOutputStream(
       localFileHeaderOffset = localFileHeaderOffset,
       dataOffset = dataOffset,
     )
+    buffer.clear()
   }
 
-  fun writeEntryHeaderAt(
+  internal fun writeEntryHeaderAt(
     name: ByteArray,
     position: Long,
     size: Int,
@@ -267,10 +203,12 @@ class ZipArchiveOutputStream(
     crc: Long,
     method: Int,
   ) {
+    // always flush - this method doesn't yet support pending buffer
+    flushBufferIfNeeded(threshold = 0)
+
     val headerSize = 30 + name.size
     val dataOffset = position + headerSize
 
-    buffer.clear()
     writeZipLocalFileHeader(name = name, size = size, compressedSize = compressedSize, crc32 = crc, method = method, buffer = buffer)
     assert(buffer.readableBytes() == headerSize)
 
@@ -296,106 +234,78 @@ class ZipArchiveOutputStream(
     )
   }
 
-  private fun writeIndex(crc32: CRC32?, indexWriter: IkvIndexBuilder): Int {
-    // write one by one to channel to avoid buffer overflow
-
+  private fun writeIndex(indexWriter: IkvIndexBuilder, buffer: ByteBuf, indexDataSize: Int) {
     // write package class and resource hashes
     val classPackages = indexWriter.classPackages
     val resourcePackages = indexWriter.resourcePackages
     val size = (classPackages.size + resourcePackages.size) * Long.SIZE_BYTES
     val lengthHeaderSize = Int.SIZE_BYTES * 2
 
-    val indexDataSize = indexWriter.dataSize()
-    val indexDataEnd = channelPosition.toInt() + indexDataSize
-    ByteBufAllocator.DEFAULT.directBuffer(indexDataSize + lengthHeaderSize + size).use { buffer ->
-      indexWriter.write(buffer)
-      if (size == 0) {
-        buffer.writeZero(lengthHeaderSize)
-      }
-      else {
-        val classPackageArray = indexWriter.classPackages.toLongArray()
-        val resourcePackageArray = indexWriter.resourcePackages.toLongArray()
+    buffer.ensureWritable(indexDataSize + lengthHeaderSize + size)
+    indexWriter.write(buffer)
+    if (size == 0) {
+      buffer.writeZero(lengthHeaderSize)
+    }
+    else {
+      val classPackageArray = indexWriter.classPackages.toLongArray()
+      val resourcePackageArray = indexWriter.resourcePackages.toLongArray()
 
-        // same content for same data
-        classPackageArray.sort()
-        resourcePackageArray.sort()
+      // same content for same data
+      classPackageArray.sort()
+      resourcePackageArray.sort()
 
-        buffer.writeIntLE(classPackages.size)
-        buffer.writeIntLE(resourcePackages.size)
-        val longBuffer = buffer.nioBuffer(buffer.writerIndex(), size).order(ByteOrder.LITTLE_ENDIAN).asLongBuffer()
-        longBuffer.put(classPackageArray)
-        longBuffer.put(resourcePackageArray)
-        buffer.writerIndex(buffer.writerIndex() + size)
-      }
-
-      crc32?.update(buffer.nioBuffer())
-      writeBuffer(buffer)
+      buffer.writeIntLE(classPackages.size)
+      buffer.writeIntLE(resourcePackages.size)
+      val longBuffer = buffer.nioBuffer(buffer.writerIndex(), size).order(ByteOrder.LITTLE_ENDIAN).asLongBuffer()
+      longBuffer.put(classPackageArray)
+      longBuffer.put(resourcePackageArray)
+      buffer.writerIndex(buffer.writerIndex() + size)
     }
 
     // write names
-    ByteBufAllocator.DEFAULT.directBuffer((indexWriter.names.sumOf { it.size + Short.SIZE_BYTES })).use { buffer ->
-      for (name in indexWriter.names) {
-        buffer.writeShortLE(name.size)
-      }
-
-      for (name in indexWriter.names) {
-        buffer.writeBytes(name)
-      }
-
-      crc32?.update(buffer.nioBuffer())
-      writeBuffer(buffer)
+    buffer.ensureWritable(indexWriter.names.sumOf { it.size + Short.SIZE_BYTES })
+    for (name in indexWriter.names) {
+      buffer.writeShortLE(name.size)
     }
-    return indexDataEnd
+
+    for (name in indexWriter.names) {
+      buffer.writeBytes(name)
+    }
   }
 
   internal fun finish(indexWriter: IkvIndexBuilder?) {
-    if (finished) {
-      throw IOException("This archive has already been finished")
-    }
+    flushBufferIfNeeded()
 
-    val indexOffset = if (indexWriter == null || zipIndexWriter.entryCount == 0) {
+    val indexDataEnd = if (indexWriter == null || zipIndexWriter.entryCount == 0) {
       -1
     }
     else {
-      writeIndexFile(indexWriter, INDEX_FILENAME_BYTES)
+      // ditto on macOS doesn't like arbitrary data in zip file - wrap into zip entry
+      val indexDataSize = indexWriter.dataSize()
+      val indexDataEnd = flushBufferIfNeeded() + indexDataSize + 30 + INDEX_FILENAME_BYTES.size
+      writeWithCrc(INDEX_FILENAME_BYTES, estimatedSize = indexDataSize, crc32 = if (indexWriter.writeCrc32) CRC32() else null) { buffer ->
+        writeIndex(indexWriter, buffer, indexDataSize)
+      }
+      indexDataEnd.toInt()
     }
+
+    flushBufferIfNeeded(threshold = 0)
 
     buffer.release()
     bufferReleased = true
 
     // write central directory file header
-    val zipIndexData = zipIndexWriter.finish(centralDirectoryOffset = channelPosition, indexWriter = indexWriter, indexOffset = indexOffset)
+    val zipIndexData = zipIndexWriter.finish(centralDirectoryOffset = channelPosition, indexWriter = indexWriter, indexDataEnd = indexDataEnd)
     writeBuffer(zipIndexData)
     zipIndexWriter.release()
 
     finished = true
   }
 
-  private fun writeIndexFile(indexWriter: IkvIndexBuilder, @Suppress("SameParameterValue") name: ByteArray): Int {
-    // ditto on macOS doesn't like arbitrary data in zip file - wrap into zip entry
-    val headerSize = 30 + name.size
-    val headerPosition = getChannelPositionAndAdd(headerSize)
-    val entryDataPosition = channelPosition
-
-    val crc32 = if (indexWriter.writeCrc32) CRC32() else null
-    val indexOffset = writeIndex(crc32, indexWriter)
-
-    val size = (channelPosition - entryDataPosition).toInt()
-    writeEntryHeaderAt(
-      name = name,
-      position = headerPosition,
-      size = size,
-      compressedSize = size,
-      crc = crc32?.value ?: 0,
-      method = ZipEntry.STORED,
-    )
-    return indexOffset
-  }
-
-  internal fun getChannelPosition(): Long = channelPosition
+  internal fun getChannelPosition(): Long = flushBufferIfNeeded(threshold = 0)
 
   internal fun getChannelPositionAndAdd(increment: Int): Long {
-    val p = channelPosition
+    val p = flushBufferIfNeeded(threshold = 0)
     channelPosition += increment.toLong()
     if (fileChannel == null) {
       (channel as SeekableByteChannel).position(channelPosition)
@@ -404,6 +314,8 @@ class ZipArchiveOutputStream(
   }
 
   internal fun transferFrom(source: FileChannel, size: Long) {
+    require(!buffer.isReadable)
+
     var position = 0L
     val to = this.fileChannel!!
     while (position < size) {
@@ -412,11 +324,6 @@ class ZipArchiveOutputStream(
       position += n
       channelPosition += n
     }
-  }
-
-  private fun writeAndClearBuffer() {
-    writeBuffer(buffer)
-    buffer.clear()
   }
 
   private fun writeBuffer(buffer: ByteBuf) {
@@ -467,7 +374,7 @@ class ZipArchiveOutputStream(
   }
 }
 
-fun writeZipLocalFileHeader(name: ByteArray, size: Int, compressedSize: Int, crc32: Long, method: Int, buffer: ByteBuf): Int {
+fun writeZipLocalFileHeader(name: ByteArray, size: Int, compressedSize: Int, crc32: Long, method: Int, buffer: ByteBuf) {
   buffer.writeIntLE(0x04034b50)
   // Version needed to extract (2), General purpose bit flag (2)
   buffer.writeZero(4)
@@ -477,7 +384,6 @@ fun writeZipLocalFileHeader(name: ByteArray, size: Int, compressedSize: Int, crc
   buffer.writeZero(4)
   // CRC-32 of uncompressed data
   buffer.writeIntLE((crc32 and 0xffffffffL).toInt())
-  val compressedSizeOffset = buffer.writerIndex()
   // Compressed size
   buffer.writeIntLE(compressedSize)
   // Uncompressed size
@@ -487,5 +393,4 @@ fun writeZipLocalFileHeader(name: ByteArray, size: Int, compressedSize: Int, crc
   // Extra field length (2)
   buffer.writeZero(2)
   buffer.writeBytes(name)
-  return compressedSizeOffset
 }

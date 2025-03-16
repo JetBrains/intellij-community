@@ -3,23 +3,26 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import androidx.collection.MutableScatterSet
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
-import org.jetbrains.bazel.jvm.emptyList
-import org.jetbrains.bazel.jvm.hashSet
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
+import org.jetbrains.bazel.jvm.emptySet
+import org.jetbrains.bazel.jvm.jps.dependencies.checkDependencies
+import org.jetbrains.bazel.jvm.slowEqualsAwareHashStrategy
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.dependency.Delta
 import org.jetbrains.jps.dependency.NodeSource
+import org.jetbrains.jps.dependency.impl.DependencyGraphImpl
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder
 import org.jetbrains.jps.dependency.impl.PathSource
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.dependencies.LibraryDef
-import org.jetbrains.jps.incremental.dependencies.checkDependencies
 import org.jetbrains.jps.incremental.fs.BuildFSState.CURRENT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
@@ -52,9 +55,12 @@ internal suspend fun markDirtyDependenciesForInitialRound(
     )
   }
 
-  val toCompile = hashSet<NodeSource>()
-  dirtyFilesHolder.processFilesToRecompile {
-    toCompile.add(fileToNodeSource(it, relativizer))
+  val toCompile = ObjectLinkedOpenCustomHashSet<NodeSource>(slowEqualsAwareHashStrategy())
+  dirtyFilesHolder.processFilesToRecompile { files ->
+    toCompile.ensureCapacity(toCompile.size + files.size)
+    for (file in files) {
+      toCompile.add(fileToNodeSource(file, relativizer))
+    }
     true
   }
 
@@ -84,11 +90,20 @@ private fun getRemovedPaths(
   target: BazelModuleBuildTarget,
   dirtyFilesHolder: BazelDirtyFileHolder,
   relativizer: PathTypeAwareRelativizer,
-): List<NodeSource> {
-  if (!dirtyFilesHolder.hasRemovedFiles()) {
-    return emptyList()
+): Set<NodeSource> {
+  val removed = dirtyFilesHolder.getRemoved(target)
+  if (removed.isEmpty()) {
+    return emptySet()
   }
-  return dirtyFilesHolder.getRemoved(target).map { fileToNodeSource(it, relativizer) }
+  else if (removed.size == 1) {
+    return java.util.Set.of(fileToNodeSource(removed.single(), relativizer))
+  }
+
+  val result = ObjectLinkedOpenCustomHashSet<NodeSource>(removed.size, slowEqualsAwareHashStrategy())
+  for (file in removed) {
+    result.add(fileToNodeSource(file, relativizer))
+  }
+  return result
 }
 
 /**
@@ -98,7 +113,7 @@ private fun getRemovedPaths(
  */
 private fun updateDependencyGraph(
   context: BazelCompileContext,
-  delta: Delta?,
+  delta: Delta,
   chunk: ModuleChunk,
   target: BazelModuleBuildTarget,
   span: Span,
@@ -107,24 +122,35 @@ private fun updateDependencyGraph(
   val errorsDetected = Utils.errorsDetected(context)
   val dataManager = context.projectDescriptor.dataManager
   val graphConfig = dataManager.getDependencyGraph()
-  val dependencyGraph = graphConfig.graph
+  val dependencyGraph = graphConfig.graph as DependencyGraphImpl
 
   val isRebuild = context.scope.isRebuild
-  val params = DifferentiateParametersBuilder.create(chunk.presentableShortName)
+  val differentiateParams = DifferentiateParametersBuilder.create(chunk.presentableShortName)
     .compiledWithErrors(errorsDetected)
     .calculateAffected(!isRebuild && context.shouldDifferentiate(chunk))
     .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally)
     .withAffectionFilter { !LibraryDef.isLibraryPath(it) }
-  val differentiateParams = params.get()
-  val diffResult = dependencyGraph.differentiate(delta, differentiateParams)
+    .get()
+  val diffResult = dependencyGraph.differentiate(
+    delta = delta,
+    allProcessedSources = delta.deletedSources,
+    nodesAfter = emptySet(),
+    params = differentiateParams,
+    getBeforeNodes = { dependencyGraph.getNodes(it) },
+  )
 
   if (!diffResult.isIncremental) {
     // non-incremental mode
     throw RebuildRequestedException(RuntimeException("diffResult is non incremental: $diffResult"))
   }
 
+  @Suppress("UNCHECKED_CAST")
+  val affectedSources = diffResult.affectedSources as Collection<NodeSource>
   val relativizer = dataProvider.relativizer
-  val affectedFiles = diffResult.affectedSources.mapTo(hashSet()) { relativizer.toAbsoluteFile(it.toString(), RelativePathType.SOURCE) }
+  val affectedFiles = MutableScatterSet<Path>(affectedSources.size)
+  for (source in affectedSources) {
+    affectedFiles.add(relativizer.toAbsoluteFile(source.toString(), RelativePathType.SOURCE))
+  }
 
   if (differentiateParams.isCalculateAffected) {
     span.addEvent("affected file count", Attributes.of(AttributeKey.longKey("count"), affectedFiles.size.toLong()))
@@ -132,14 +158,16 @@ private fun updateDependencyGraph(
 
   if (!affectedFiles.isEmpty()) {
     if (span.isRecording) {
-      span.addEvent("affected files", Attributes.of(AttributeKey.stringArrayKey("count"), affectedFiles.map { it.toString() }))
+      span.addEvent("affected files", Attributes.of(AttributeKey.stringArrayKey("count"), affectedSources.map { it.toString() }))
     }
 
     markAffectedFilesDirty(
       context = context,
       dataProvider = dataProvider,
       target = target,
-      affectedFiles = affectedFiles.asSequence(),
+      affectedFiles = sequence {
+        affectedFiles.forEach { yield(it) }
+      },
     )
   }
 

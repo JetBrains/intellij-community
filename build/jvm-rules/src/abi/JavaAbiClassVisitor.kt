@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.abi
 
+import androidx.collection.MutableScatterSet
 import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.FieldVisitor
 import org.jetbrains.org.objectweb.asm.MethodVisitor
@@ -10,7 +11,7 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode
 
 internal class JavaAbiClassVisitor(
   classVisitor: ClassVisitor,
-  private val classesToBeDeleted: MutableSet<String>,
+  private val classesToBeDeleted: MutableScatterSet<String>,
 ) : ClassVisitor(Opcodes.API_VERSION, classVisitor) {
   var isApiClass: Boolean = true
     private set
@@ -90,7 +91,7 @@ internal class JavaAbiClassVisitor(
     }
   }
 
-  override fun visitInnerClass(name: String?, outerName: String?, innerName: String?, access: Int) {
+  override fun visitInnerClass(name: String, outerName: String?, innerName: String?, access: Int) {
     if (innerName == null || !classesToBeDeleted.contains(name)) {
       super.visitInnerClass(name, outerName, innerName, access)
     }

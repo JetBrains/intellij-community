@@ -53,15 +53,13 @@ internal class BazelDirtyFileHolder(
 
   override fun getRemovedFiles(target: ModuleBuildTarget): Collection<String> = getRemoved(target).map { it.toString() }
 
-  inline fun processFilesToRecompile(processor: (Path) -> Boolean): Boolean {
+  inline fun processFilesToRecompile(processor: (Set<Path>) -> Boolean): Boolean {
     val delta = fsState.getEffectiveFilesDelta(context, target)
     delta.lockData()
     try {
       for (fileSet in delta.sourceMapToRecompile.values) {
-        for (file in fileSet) {
-          if (!processor(file)) {
-            return false
-          }
+        if (!processor(fileSet)) {
+          return false
         }
       }
       return true

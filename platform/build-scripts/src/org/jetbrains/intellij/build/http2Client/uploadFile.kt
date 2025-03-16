@@ -169,7 +169,7 @@ private suspend fun compressDir(
       }
     })
 
-    val zipIndexData = zipIndexWriter.finish(centralDirectoryOffset = uncompressedPosition, indexWriter = null, indexOffset = -1)
+    val zipIndexData = zipIndexWriter.finish(centralDirectoryOffset = uncompressedPosition, indexWriter = null, indexDataEnd = -1)
     var toRead = zipIndexData.readableBytes()
     uncompressedPosition += toRead
 

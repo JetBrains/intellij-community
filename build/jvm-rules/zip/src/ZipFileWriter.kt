@@ -104,7 +104,9 @@ class ZipFileWriter(
       FileChannel.open(file, READ).use { channel ->
         size = channel.size().toInt()
         if (size == 0) {
-          resultStream.writeEmptyFile(name = name)
+          resultStream.writeWithCrc(path = name, estimatedSize = 0, crc32 = crc32) {
+            // empty file
+          }
           return
         }
 
@@ -295,66 +297,20 @@ class ZipFileWriter(
   }
 
   fun uncompressedData(nameString: String, data: ByteArray) {
-    val name = nameString.toByteArray()
-
-    val size = data.size
-    if (size == 0) {
-      resultStream.writeEmptyFile(name)
-      return
+    resultStream.writeWithCrc(nameString.toByteArray(), data.size, crc32) {
+      it.writeBytes(data)
     }
-
-    crc32.reset()
-    crc32.update(data)
-    val crc = crc32.value
-
-    resultStream.writeDataRawEntry(name = name, data = data, size = size, crc = crc)
   }
 
   fun uncompressedData(nameString: String, data: ByteBuffer) {
-    val name = nameString.toByteArray()
-
-    val size = data.remaining()
-    if (size == 0) {
-      resultStream.writeEmptyFile(name = name)
-      return
+    resultStream.writeWithCrc(nameString.toByteArray(), data.remaining(), crc32) {
+      it.writeBytes(data)
     }
-
-    data.mark()
-    crc32.reset()
-    crc32.update(data)
-    val crc = crc32.value
-    data.reset()
-
-    resultStream.writeDataRawEntry(data = data, name = name, size = size, compressedSize = size, method = ZipEntry.STORED, crc = crc)
   }
 
   fun uncompressedData(nameString: String, maxSize: Int, dataWriter: (ByteBuf) -> Unit) {
-    val name = nameString.toByteArray()
-    val headerSize = 30 + name.size
-
-    val bufCapacity = headerSize + maxSize
-    ByteBufAllocator.DEFAULT.ioBuffer(bufCapacity, bufCapacity).use { data ->
-      data.writerIndex(headerSize)
-      dataWriter(data)
-      val size = data.readableBytes() - headerSize
-
-      crc32.reset()
-      crc32.update(data.nioBuffer(headerSize, size))
-      val crc = crc32.value
-
-      data.writerIndex(0)
-      writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = crc, method = ZipEntry.STORED, buffer = data)
-      data.writerIndex(headerSize + size)
-      assert(data.readableBytes() == (size + headerSize))
-      resultStream.writeRawEntry(
-        data = data,
-        name = name,
-        size = size,
-        compressedSize = size,
-        method = ZipEntry.STORED,
-        crc = crc,
-        headerSize = headerSize,
-      )
+    resultStream.writeWithCrc(nameString.toByteArray(), maxSize, crc32) {
+      dataWriter(it)
     }
   }
 

@@ -11,10 +11,10 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.emptyMap
-import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
@@ -23,6 +23,7 @@ import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuilder
 import org.jetbrains.bazel.jvm.jps.output.OutputSink
+import org.jetbrains.bazel.jvm.slowEqualsAwareHashStrategy
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectPaths
@@ -142,9 +143,11 @@ internal class BazelJavaBuilder(
   ): ExitCode {
     val filesToCompile: Sequence<Path> = if (isIncremental) {
       val modified = ArrayList<Path>()
-      dirtyFilesHolder.processFilesToRecompile { file ->
-        if (file.toString().endsWith(".java")) {
-          modified.add(file)
+      dirtyFilesHolder.processFilesToRecompile { files ->
+        for (file in files) {
+          if (file.toString().endsWith(".java")) {
+            modified.add(file)
+          }
         }
         true
       }
@@ -386,7 +389,7 @@ private fun logJavacCall(options: Iterable<String>, mode: String, span: Span) {
 private fun collectAdditionalRequires(options: Iterable<String>): Collection<String> {
   // --add-reads module=other-module(,other-module)*
   // The option specifies additional modules to be considered as required by a given module.
-  val result = hashSet<String>()
+  val result = ObjectLinkedOpenCustomHashSet<String>(slowEqualsAwareHashStrategy())
   val it = options.iterator()
   while (it.hasNext()) {
     val option = it.next()

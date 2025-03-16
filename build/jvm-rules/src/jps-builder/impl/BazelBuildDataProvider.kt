@@ -2,6 +2,7 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import androidx.collection.ScatterMap
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.emptyStringArray
 import org.jetbrains.bazel.jvm.jps.state.DependencyStateStorage
@@ -20,7 +21,7 @@ import java.nio.file.attribute.BasicFileAttributes
 
 internal class BazelBuildDataProvider(
   @JvmField val relativizer: BazelPathTypeAwareRelativizer,
-  private val sourceToDescriptor: Map<Path, SourceDescriptor>,
+  private val sourceToDescriptor: ScatterMap<Path, SourceDescriptor>,
   @JvmField val storeFile: Path,
   @JvmField val allocator: RootAllocator,
   @JvmField val isCleanBuild: Boolean,
@@ -48,8 +49,13 @@ internal class BazelBuildDataProvider(
   }
 
   fun getFinalList(): Array<SourceDescriptor> {
-    val result = synchronized(sourceToDescriptor) {
-      sourceToDescriptor.values.toTypedArray()
+    @Suppress("UNCHECKED_CAST") val result = synchronized(sourceToDescriptor) {
+      val r = arrayOfNulls<SourceDescriptor>(sourceToDescriptor.size)
+      var index = 0
+      sourceToDescriptor.forEachValue {
+        r[index++] = it
+      }
+      r as Array<SourceDescriptor>
     }
     result.sortBy { it.sourceFile }
     return result
@@ -82,7 +88,7 @@ internal class BazelBuildDataProvider(
   }
 }
 
-internal class BazelStampStorage(private val map: Map<Path, SourceDescriptor>) : StampsStorage<ByteArray> {
+internal class BazelStampStorage(private val map: ScatterMap<Path, SourceDescriptor>) : StampsStorage<ByteArray> {
   override fun updateStamp(sourceFile: Path, buildTarget: BuildTarget<*>?, currentFileTimestamp: Long) {
     throw IllegalStateException()
   }
@@ -112,7 +118,7 @@ internal class BazelStampStorage(private val map: Map<Path, SourceDescriptor>) :
 }
 
 internal class BazelSourceToOutputMapping(
-  private val map: Map<Path, SourceDescriptor>,
+  private val map: ScatterMap<Path, SourceDescriptor>,
   private val relativizer: PathTypeAwareRelativizer,
 ) : SourceToOutputMapping {
   override fun setOutputs(sourceFile: Path, outputPaths: List<Path>) {
@@ -222,7 +228,7 @@ internal class BazelSourceToOutputMapping(
   fun findAffectedSources(affectedSources: List<Array<String>>): List<SourceDescriptor> {
     val result = ArrayList<SourceDescriptor>(affectedSources.size)
     synchronized(map) {
-      for (descriptor in map.values) {
+      map.forEachValue { descriptor ->
         for (output in descriptor.outputs) {
           // see KTIJ-197
           if (!output.endsWith(".kotlin_module") && affectedSources.any { it.contains(output) }) {

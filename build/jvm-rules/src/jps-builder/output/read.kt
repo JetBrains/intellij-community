@@ -24,12 +24,12 @@ fun createOutputSink(oldJar: Path?, oldAbiJar: Path?, withAbi: Boolean): OutputS
   val zipFile = (if (oldJar == null) null else HashMapZipFile.loadIfNotEmpty(oldJar)) ?: return createEmptyOutputSink(withAbi)
   var ok = false
   try {
-    val fileToData = computeMap(zipFile)
+    val fileToData = computeMap(zipFile, isAbiFile = false)
 
     val abiZipFile = HashMapZipFile.loadIfNotEmpty(requireNotNull(oldAbiJar) {
       "If ABI JAR is missing, you must perform a full rebuild (delete existing output JAR)"
     })
-    val abiFileToData = if (abiZipFile == null) TreeMap() else computeMap(abiZipFile)
+    val abiFileToData = if (abiZipFile == null) TreeMap() else computeMap(abiZipFile, isAbiFile = true)
 
     val outputSink = OutputSink(
       fileToData = fileToData,
@@ -47,7 +47,7 @@ fun createOutputSink(oldJar: Path?, oldAbiJar: Path?, withAbi: Boolean): OutputS
   }
 }
 
-private fun computeMap(zipFile: HashMapZipFile): TreeMap<String, Any> {
+private fun computeMap(zipFile: HashMapZipFile, isAbiFile: Boolean): TreeMap<String, Any> {
   val fileToData = TreeMap<String, Any>()
   var ok = false
   try {
@@ -57,7 +57,7 @@ private fun computeMap(zipFile: HashMapZipFile): TreeMap<String, Any> {
       }
 
       val name = entry.name
-      if (name != "__index__") {
+      if (name != "__index__" && (!isAbiFile || name != NODE_INDEX_FILENAME)) {
         fileToData.put(name, entry)
       }
     }

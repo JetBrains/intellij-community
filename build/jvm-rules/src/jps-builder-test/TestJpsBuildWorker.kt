@@ -10,11 +10,12 @@ import org.jetbrains.bazel.jvm.configureOpenTelemetry
 import org.jetbrains.bazel.jvm.getTestWorkerPaths
 import org.jetbrains.bazel.jvm.jps.buildUsingJps
 import org.jetbrains.bazel.jvm.jps.configureGlobalJps
+import org.jetbrains.bazel.jvm.jps.dependencies.DependencyAnalyzer
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.performTestInvocation
 import org.jetbrains.bazel.jvm.span
-import org.jetbrains.jps.incremental.dependencies.DependencyAnalyzer
+import org.jetbrains.bazel.jvm.toScatterMap
 import java.nio.file.Files
 import java.security.MessageDigest
 import kotlin.io.path.ExperimentalPathApi
@@ -26,7 +27,7 @@ internal object TestJpsBuildWorker {
     val testPaths = getTestWorkerPaths()
     val baseDir = testPaths.baseDir
 
-    val testModule = TestModules.UTIL_BASE_KMP
+    val testModule = TestModules.LANG_IMPL
     val sources = testModule.sourcePaths.flatMap { collectSources(sourceDirPath = it, paths = testPaths) }
     require(sources.isNotEmpty())
     val testParams = testModule.getParams(baseDir)
@@ -52,17 +53,17 @@ internal object TestJpsBuildWorker {
             args = args,
             out = out,
             sources = sources,
-            dependencyFileToDigest = args.optionalList(JvmBuilderFlags.CP).associate {
-              val file = baseDir.resolve(it).normalize()
+            dependencyFileToDigest = args.optionalList(JvmBuilderFlags.CP).toScatterMap { item, map ->
+              val file = baseDir.resolve(item).normalize()
               val digest = messageDigest.digest(Files.readAllBytes(file))
               messageDigest.reset()
-              file to digest
+              map.put(file, digest)
             },
-            sourceFileToDigest = sources.associate {
-              val file = baseDir.resolve(it).normalize()
+            sourceFileToDigest = sources.toScatterMap { item, map ->
+              val file = baseDir.resolve(item).normalize()
               val digest = messageDigest.digest(Files.readAllBytes(file))
               messageDigest.reset()
-              file to digest
+              map.put(file, digest)
             },
             isDebugEnabled = true,
             allocator = allocator,

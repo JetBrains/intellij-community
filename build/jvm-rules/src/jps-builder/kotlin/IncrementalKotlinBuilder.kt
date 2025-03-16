@@ -3,6 +3,8 @@
 
 package org.jetbrains.bazel.jvm.jps.kotlin
 
+import androidx.collection.MutableScatterSet
+import androidx.collection.ScatterSet
 import com.intellij.openapi.vfs.VirtualFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -12,7 +14,6 @@ import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.concat
 import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.emptySet
-import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
@@ -163,7 +164,7 @@ internal class IncrementalKotlinBuilder(
       delegate = BazelDirtyFileHolder(context, context.projectDescriptor.fsState, moduleTarget),
     )
 
-    val removedClasses = hashSet<String>()
+    val removedClasses = MutableScatterSet<String>()
     // dependent caches are not required, since we are not going to update caches
     val incrementalCaches = kotlinChunk.loadCaches(loadDependent = false)
     val targetDirtyFiles = dirtyFilesHolder.byTarget.get(moduleTarget)
@@ -184,7 +185,7 @@ internal class IncrementalKotlinBuilder(
     }
 
     val changeCollector = ChangesCollector()
-    for (it in removedClasses) {
+    removedClasses.forEach {
       changeCollector.collectSignature(FqName(it), areSubclassesAffected = true)
     }
     val affectedByRemovedClasses = getDirtyFiles(
@@ -381,7 +382,10 @@ internal class IncrementalKotlinBuilder(
     updateLookupStorage(lookupTracker, kotlinContext.lookupStorageManager, dirtyByTarget)
 
     if (!isChunkRebuilding) {
-      val dirtyFilesAsPathList = dirtyByTarget.dirty.keys.mapTo(hashSet(dirtyByTarget.dirty.keys.size)) { it.toPath() }
+      val dirtyFilesAsPathList = MutableScatterSet<Path>(dirtyByTarget.dirty.keys.size)
+      for (file in dirtyByTarget.dirty.keys) {
+        dirtyFilesAsPathList.add(file.toPath())
+      }
       doProcessChangesUsingLookups(
         collector = changeCollector,
         compiledFiles = dirtyFilesAsPathList,
@@ -731,7 +735,7 @@ private class BazelJpsICReporter(private val span: Span) : ICReporterBase() {
 
 private fun doProcessChangesUsingLookups(
   collector: ChangesCollector,
-  compiledFiles: Set<Path>,
+  compiledFiles: ScatterSet<Path>,
   lookupStorageManager: JpsLookupStorageManager,
   fsOperations: BazelKotlinFsOperationsHelper,
   caches: Iterable<JpsIncrementalCache>,
@@ -749,11 +753,12 @@ private fun doProcessChangesUsingLookups(
   // If a list of inheritors of sealed class has changed, it should be recompiled with all the inheritors
   // Here we have a small optimization. Do not recompile the bunch if ALL these files were recompiled during the previous round.
   val forceRecompileTogether = dirtyFiles.forceRecompileTogether
-  val excludeFiles = if (forceRecompileTogether.isEmpty() || compiledFiles.containsAll(forceRecompileTogether.map { it.toPath() })) {
+  val excludeFiles = if (forceRecompileTogether.isEmpty() || forceRecompileTogether.all { compiledFiles.contains(it.toPath()) }) {
     compiledFiles
   }
   else {
-    val result = hashSet(compiledFiles)
+    val result = MutableScatterSet<Path>(compiledFiles.size)
+    result.addAll(compiledFiles)
     for (file in forceRecompileTogether) {
       result.remove(file.toPath())
     }

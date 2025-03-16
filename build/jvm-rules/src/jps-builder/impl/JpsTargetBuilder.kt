@@ -3,6 +3,7 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import androidx.collection.MutableScatterMap
 import com.intellij.openapi.util.text.Formats.formatDuration
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -10,12 +11,12 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import kotlinx.coroutines.ensureActive
-import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.bazel.jvm.jps.output.OutputSink
-import org.jetbrains.bazel.jvm.jps.state.SourceFileStateResult
 import org.jetbrains.bazel.jvm.jps.state.RemovedFileInfo
-import org.jetbrains.bazel.jvm.linkedSet
+import org.jetbrains.bazel.jvm.jps.state.SourceFileStateResult
+import org.jetbrains.bazel.jvm.slowEqualsAwareHashStrategy
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.ModuleChunk
@@ -79,8 +80,8 @@ internal class JpsTargetBuilder(
   private val tracer: Tracer,
   private val dataManager: BazelBuildDataProvider?,
 ) {
-  private val builderToDuration = hashMap<Builder, AtomicLong>()
-  private val numberOfSourcesProcessedByBuilder = hashMap<Builder, AtomicInteger>()
+  private val builderToDuration = MutableScatterMap<Builder, AtomicLong>()
+  private val numberOfSourcesProcessedByBuilder = MutableScatterMap<Builder, AtomicInteger>()
 
   suspend fun build(
     context: BazelCompileContext,
@@ -108,7 +109,7 @@ internal class JpsTargetBuilder(
         }
       }
 
-      for ((builder, time) in builderToDuration) {
+      builderToDuration.forEach { builder, time ->
         val processedSources = numberOfSourcesProcessedByBuilder.get(builder)?.get() ?: 0
         val time = time.get().toDuration(DurationUnit.NANOSECONDS)
         val message = "Build duration: ${builder.presentableName} took ${formatDuration(time.toJavaDuration())}; " +
@@ -389,8 +390,8 @@ internal class JpsTargetBuilder(
   }
 
   private fun storeBuilderStatistics(builder: Builder, elapsedTime: Long, processedFiles: Int) {
-    builderToDuration.computeIfAbsent(builder) { AtomicLong() }.addAndGet(elapsedTime)
-    numberOfSourcesProcessedByBuilder.computeIfAbsent(builder) { AtomicInteger() }.addAndGet(processedFiles)
+    builderToDuration.getOrPut(builder) { AtomicLong() }.addAndGet(elapsedTime)
+    numberOfSourcesProcessedByBuilder.getOrPut(builder) { AtomicInteger() }.addAndGet(processedFiles)
   }
 }
 
@@ -458,7 +459,7 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
     context.putUserData(Utils.REMOVED_SOURCES_KEY, Map.of(target, deletedFiles.map { it.sourceFile } as Collection<Path>))
   }
   else {
-    val set = linkedSet<Path>()
+    val set = ObjectLinkedOpenCustomHashSet(removedSources.size + deletedFiles.size, slowEqualsAwareHashStrategy<Path>())
     set.addAll(removedSources)
     deletedFiles.mapTo(set) { it.sourceFile }
     context.putUserData(Utils.REMOVED_SOURCES_KEY, Map.of(target, set as Collection<Path>))
@@ -510,4 +511,3 @@ private fun completeRecompiledSourcesSet(context: CompileContext, target: BazelM
     }
   }
 }
-

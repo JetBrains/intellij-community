@@ -2,10 +2,10 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import org.jetbrains.bazel.jvm.jps.dependencies.DependencyAnalyzer
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetType
 import org.jetbrains.jps.incremental.CompileScope
-import org.jetbrains.jps.incremental.dependencies.DependencyAnalyzer
 import java.nio.file.Path
 
 internal class BazelCompileScope(

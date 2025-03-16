@@ -3,6 +3,8 @@
 
 package org.jetbrains.bazel.jvm.jps.state
 
+import androidx.collection.MutableScatterMap
+import androidx.collection.ScatterMap
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -21,7 +23,6 @@ import org.apache.arrow.vector.types.pojo.Schema
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.emptyStringArray
-import org.jetbrains.bazel.jvm.hashMap
 import java.io.IOException
 import java.nio.file.Path
 
@@ -59,7 +60,7 @@ fun loadBuildState(
   buildStateFile: Path,
   relativizer: PathRelativizer,
   allocator: RootAllocator,
-  sourceFileToDigest: Map<Path, ByteArray>,
+  sourceFileToDigest: ScatterMap<Path, ByteArray>,
 ): SourceFileStateResult? {
   return loadBuildState(
     buildStateFile = buildStateFile,
@@ -75,7 +76,7 @@ fun loadBuildState(
   buildStateFile: Path,
   relativizer: PathRelativizer,
   allocator: RootAllocator,
-  sourceFileToDigest: Map<Path, ByteArray>,
+  sourceFileToDigest: ScatterMap<Path, ByteArray>,
   targetDigests: TargetConfigurationDigestContainer?,
   parentSpan: Span?,
 ): SourceFileStateResult? {
@@ -106,9 +107,9 @@ fun loadBuildState(
   }
 }
 
-fun createInitialSourceMap(actualDigestMap: Map<Path, ByteArray>): Map<Path, SourceDescriptor> {
-  val result = hashMap<Path, SourceDescriptor>(actualDigestMap.size)
-  for ((path, digest) in actualDigestMap) {
+fun createInitialSourceMap(actualDigestMap: ScatterMap<Path, ByteArray>): ScatterMap<Path, SourceDescriptor> {
+  val result = MutableScatterMap<Path, SourceDescriptor>(actualDigestMap.size)
+  actualDigestMap.forEach { path, digest ->
     result.put(path, SourceDescriptor(sourceFile = path, digest = digest, outputs = emptyStringArray, isChanged = true))
   }
   return result
@@ -171,7 +172,7 @@ suspend fun saveBuildState(
 data class SourceFileStateResult(
   @JvmField val rebuildRequested: String?,
 
-  @JvmField val map: Map<Path, SourceDescriptor>,
+  @JvmField val map: ScatterMap<Path, SourceDescriptor>,
   @JvmField val changedOrAddedFiles: List<Path>,
   @JvmField val deletedFiles: List<RemovedFileInfo>,
 )
@@ -184,7 +185,7 @@ class RemovedFileInfo(
 @OptIn(ExperimentalStdlibApi::class)
 private fun doLoad(
   root: VectorSchemaRoot,
-  actualDigestMap: Map<Path, ByteArray>,
+  actualDigestMap: ScatterMap<Path, ByteArray>,
   relativizer: PathRelativizer,
   parentSpan: Span?,
 ): SourceFileStateResult {
@@ -195,8 +196,9 @@ private fun doLoad(
   val outputListInnerVector = outputListVector.addOrGetVector<VarCharVector>(notNullUtfStringFieldType).vector
 
   // init a new state
-  val result = hashMap<Path, SourceDescriptor>(actualDigestMap.size)
-  val newFiles = hashMap(actualDigestMap)
+  val result = MutableScatterMap<Path, SourceDescriptor>(actualDigestMap.size)
+  val newFiles = MutableScatterMap<Path, ByteArray>(actualDigestMap.size)
+  newFiles.putAll(actualDigestMap)
   var outputIndex = 0
   val changedFiles = ArrayList<Path>()
   val deletedFiles = ArrayList<RemovedFileInfo>()
@@ -253,11 +255,13 @@ private fun doLoad(
 
   // if a file was not removed from newFiles, it means that file is unknown and so, a new one
   if (newFiles.isNotEmpty()) {
-    for (entry in newFiles) {
+    newFiles.forEach { path, digest ->
       // for now, missing digest means that file is changed (not compiled)
-      result.put(entry.key, SourceDescriptor(sourceFile = entry.key, digest = entry.value, outputs = emptyStringArray, isChanged = true))
+      result.put(path, SourceDescriptor(sourceFile = path, digest = digest, outputs = emptyStringArray, isChanged = true))
     }
-    changedFiles.addAll(newFiles.keys)
+    newFiles.forEachKey {
+      changedFiles.add(it)
+    }
   }
 
   return SourceFileStateResult(map = result, changedOrAddedFiles = changedFiles, deletedFiles = deletedFiles, rebuildRequested = null)

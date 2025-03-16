@@ -9,16 +9,9 @@ import org.jetbrains.jps.builders.java.dependencyView.Mappings
 import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
 import org.jetbrains.jps.builders.storage.StorageProvider
-import org.jetbrains.jps.dependency.BackDependencyIndex
-import org.jetbrains.jps.dependency.Delta
 import org.jetbrains.jps.dependency.DependencyGraph
-import org.jetbrains.jps.dependency.DifferentiateParameters
-import org.jetbrains.jps.dependency.DifferentiateResult
 import org.jetbrains.jps.dependency.GraphConfiguration
-import org.jetbrains.jps.dependency.Node
-import org.jetbrains.jps.dependency.NodeSource
 import org.jetbrains.jps.dependency.NodeSourcePathMapper
-import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl
 import org.jetbrains.jps.dependency.impl.PathSourceMapper
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
@@ -37,7 +30,7 @@ internal class BuildDataManager private constructor(
   depGraph: DependencyGraph,
   private val containerFactory: BazelPersistentMapletFactory,
 ) {
-  @JvmField val depGraph: DependencyGraph = SynchronizedDependencyGraph(depGraph)
+  @JvmField val depGraph: DependencyGraph = depGraph
   private val depGraphPathMapper: NodeSourcePathMapper
 
   private val targetToStorages = ConcurrentHashMap<Pair<BuildTarget<*>, StorageProvider<StorageOwner>>, StorageOwner>()
@@ -176,46 +169,6 @@ internal class BuildDataManager private constructor(
   @Suppress("unused")
   fun reportUnhandledRelativizerPaths() {
     relativizer.reportUnhandledPaths()
-  }
-}
-
-private class SynchronizedDependencyGraph(private val delegate: DependencyGraph) : DependencyGraph {
-  @Synchronized
-  override fun createDelta(sourcesToProcess: Iterable<NodeSource?>?, deletedSources: Iterable<NodeSource?>?, isSourceOnly: Boolean): Delta? {
-    return delegate.createDelta(sourcesToProcess, deletedSources, isSourceOnly)
-  }
-
-  @Synchronized
-  override fun differentiate(delta: Delta?, params: DifferentiateParameters?): DifferentiateResult? {
-    return delegate.differentiate(delta, params)
-  }
-
-  @Synchronized
-  override fun integrate(diffResult: DifferentiateResult) {
-    delegate.integrate(diffResult)
-  }
-
-  override fun getIndices(): Iterable<BackDependencyIndex?>? {
-    return delegate.indices
-  }
-
-  override fun getIndex(name: String?) = delegate.getIndex(name)
-
-  override fun getSources(id: ReferenceID): Iterable<NodeSource> = delegate.getSources(id)
-
-  override fun getRegisteredNodes(): Iterable<ReferenceID> = delegate.registeredNodes
-
-  override fun getSources(): Iterable<NodeSource> = delegate.sources
-
-  override fun getNodes(source: NodeSource): Iterable<Node<*, *>> = delegate.getNodes(source)
-
-  override fun <T : Node<T, *>> getNodes(src: NodeSource?, nodeSelector: Class<T>): Iterable<T> = delegate.getNodes(src, nodeSelector)
-
-  override fun getDependingNodes(id: ReferenceID) = delegate.getDependingNodes(id)
-
-  @Synchronized
-  override fun close() {
-    delegate.close()
   }
 }
 

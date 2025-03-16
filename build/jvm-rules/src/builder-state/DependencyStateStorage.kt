@@ -3,6 +3,9 @@
 
 package org.jetbrains.bazel.jvm.jps.state
 
+import androidx.collection.MutableObjectList
+import androidx.collection.ObjectList
+import androidx.collection.ScatterMap
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,7 +17,7 @@ import org.apache.arrow.vector.types.pojo.ArrowType
 import org.apache.arrow.vector.types.pojo.Field
 import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
-import org.jetbrains.bazel.jvm.linkedSet
+import org.jetbrains.bazel.jvm.toLinkedSet
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -24,7 +27,7 @@ private val digestField = Field("digest", FieldType.notNullable(ArrowType.Binary
 private val depDescriptorSchema = Schema(java.util.List.of(depFileField, digestField))
 
 data class DependencyStateResult(
-  @JvmField val dependencies: List<DependencyDescriptor>,
+  @JvmField val dependencies: ObjectList<DependencyDescriptor>,
   @JvmField val isSaveNeeded: Boolean,
 )
 
@@ -41,7 +44,9 @@ fun isDependencyTracked(path: String): Boolean = path.endsWith(".abi.jar")
 // do not include state into equals/hashCode - DependencyDescriptor is used as a key for Caffeine cache
 data class DependencyDescriptor(
   @JvmField val file: Path,
-  @JvmField val digest: ByteArray,
+  // we use DependencyDescriptor as a key for cache of diff between old and new versions, so, we must include oldDigest into equals/hashCode
+  @JvmField val oldDigest: ByteArray?,
+  @JvmField val digest: ByteArray?,
   @JvmField val state: DependencyState,
 ) {
   override fun equals(other: Any?): Boolean {
@@ -57,6 +62,7 @@ data class DependencyDescriptor(
   override fun hashCode(): Int {
     var result = file.hashCode()
     result = 31 * result + digest.contentHashCode()
+    result = 31 * result + oldDigest.contentHashCode()
     return result
   }
 }
@@ -64,21 +70,21 @@ data class DependencyDescriptor(
 // please note - in configureClasspath we compute UNTRACKED_DEPENDENCY_DIGEST_LIST, meaning that some files in classpath are untracked,
 // and any change of untracked dependency leads to rebuild (this method will not be called)
 fun loadDependencyState(
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  dependencyFileToDigest: ScatterMap<Path, ByteArray>,
   storageFile: Path,
   allocator: RootAllocator,
   relativizer: PathRelativizer,
-  trackableDependencyFiles: List<Path>,
+  trackableDependencyFiles: ObjectList<Path>,
   span: Span,
 ): DependencyStateResult {
   readArrowFile(storageFile, allocator, span) { fileReader ->
-    val newFiles = linkedSet(trackableDependencyFiles)
+    val newFiles = trackableDependencyFiles.toLinkedSet()
     val root = fileReader.vectorSchemaRoot
 
     val depFileVector = root.getVector(depFileField) as VarCharVector
     val digestVector = root.getVector(digestField) as VarBinaryVector
 
-    val result = ArrayList<DependencyDescriptor>(root.rowCount)
+    val result = MutableObjectList<DependencyDescriptor>(root.rowCount)
     var isSaveNeeded = false
     for (rowIndex in 0 until root.rowCount) {
       val path = depFileVector.get(rowIndex).decodeToString()
@@ -88,7 +94,7 @@ fun loadDependencyState(
 
       val file = relativizer.toAbsoluteFile(path)
 
-      val digest = digestVector.get(rowIndex)
+      val oldDigest = digestVector.get(rowIndex)
       val currentDigest = dependencyFileToDigest.get(file)
       val state = if (currentDigest == null) {
         isSaveNeeded = true
@@ -96,7 +102,7 @@ fun loadDependencyState(
       }
       else {
         newFiles.remove(file)
-        if (currentDigest.contentEquals(digest)) {
+        if (currentDigest.contentEquals(oldDigest)) {
           DependencyState.UNCHANGED
         }
         else {
@@ -104,7 +110,12 @@ fun loadDependencyState(
           DependencyState.CHANGED
         }
       }
-      result.add(DependencyDescriptor(file = file, digest = digest, state = state))
+      result.add(DependencyDescriptor(
+        file = file,
+        digest = currentDigest,
+        oldDigest = oldDigest,
+        state = state,
+      ))
     }
 
     if (!newFiles.isEmpty()) {
@@ -120,11 +131,11 @@ fun loadDependencyState(
 }
 
 fun createNewDependencyList(
-  trackableDependencyFiles: List<Path>,
-  dependencyFileToDigest: Map<Path, ByteArray>
+  trackableDependencyFiles: ObjectList<Path>,
+  dependencyFileToDigest: ScatterMap<Path, ByteArray>
 ): DependencyStateResult {
-  val result = ArrayList<DependencyDescriptor>(trackableDependencyFiles.size)
-  for (file in trackableDependencyFiles) {
+  val result = MutableObjectList<DependencyDescriptor>(trackableDependencyFiles.size)
+  trackableDependencyFiles.forEach { file ->
     result.add(newDependency(file, dependencyFileToDigest))
   }
   return DependencyStateResult(result, isSaveNeeded = true)
@@ -132,11 +143,12 @@ fun createNewDependencyList(
 
 private fun newDependency(
   file: Path,
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  dependencyFileToDigest: ScatterMap<Path, ByteArray>,
 ): DependencyDescriptor {
   return DependencyDescriptor(
     file = file,
     digest = requireNotNull(dependencyFileToDigest.get(file)) { "cannot find actual digest for $file" },
+    oldDigest = null,
     state = DependencyState.ADDED,
   )
 }
@@ -158,7 +170,7 @@ class DependencyStateStorage(
       return
     }
 
-    val sorted = state.dependencies.toTypedArray()
+    val sorted = Array(state.dependencies.size) { state.dependencies[it] }
     sorted.sortBy { it.file }
 
     VectorSchemaRoot.create(depDescriptorSchema, allocator).use { root ->
@@ -172,6 +184,10 @@ class DependencyStateStorage(
       digestVector.allocateNew(sorted.size)
       var rowIndex = 0
       for (descriptor in sorted) {
+        if (descriptor.state == DependencyState.DELETED) {
+          // for now, we perform a full rebuild if a dependency chain is changed (removed or added)
+          throw IllegalStateException("saving deleted dependency not yet supported")
+        }
         depFileVector.setSafe(rowIndex, relativizer.toRelative(descriptor.file).toByteArray())
         digestVector.setSafe(rowIndex, descriptor.digest)
 

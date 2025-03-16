@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("UnstableApiUsage", "SSBasedInspection")
+@file:Suppress("UnstableApiUsage", "SSBasedInspection", "ReplaceGetOrSet")
 
 package org.jetbrains.bazel.jvm.jps.storage
 
+import androidx.collection.MutableIntObjectMap
+import androidx.collection.MutableObjectIntMap
 import com.dynatrace.hash4j.hashing.HashValue128
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.diagnostic.logger
@@ -10,12 +12,9 @@ import com.intellij.util.io.Unmappable
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
 import kotlinx.collections.immutable.PersistentSet
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
-import org.jetbrains.bazel.jvm.slowEqualsAwareHashStrategy
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.Externalizer
 import org.jetbrains.jps.dependency.Maplet
@@ -32,8 +31,6 @@ import java.io.IOException
 import java.lang.AutoCloseable
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.IntFunction
-import java.util.function.ToIntFunction
 
 private class StoreErrorHandler(
   @JvmField var log: (Throwable) -> Unit,
@@ -197,26 +194,18 @@ internal inline fun <Out, In : AutoCloseable> executeOrCloseStorage(storageToClo
 
 private class CachingStringEnumerator(
   private val enumerator: StringEnumerator,
-) : StringEnumerator, ToIntFunction<String>, IntFunction<String> {
+) : StringEnumerator {
   // synchronized - we access data mostly in a single-threaded manner (cache per target)
-  private val idToStringCache = Int2ObjectOpenHashMap<String>()
-  private val stringToIdCache = Object2IntOpenCustomHashMap<String>(slowEqualsAwareHashStrategy())
-
-  override fun applyAsInt(value: String): Int {
-    return enumerator.enumerate(value)
-  }
-
-  override fun apply(value: Int): String {
-    return enumerator.valueOf(value)
-  }
+  private val idToStringCache = MutableIntObjectMap<String>()
+  private val stringToIdCache = MutableObjectIntMap<String>()
 
   @Synchronized
   override fun enumerate(string: String): Int {
-    return stringToIdCache.computeIfAbsent(string, this)
+    return stringToIdCache.getOrPut(string) { enumerator.enumerate(string) }
   }
 
   @Synchronized
   override fun valueOf(id: Int): String {
-    return idToStringCache.computeIfAbsent(id, this)
+    return idToStringCache.getOrPut(id) { enumerator.valueOf(id) }
   }
 }

@@ -2,25 +2,47 @@
 
 package org.jetbrains.bazel.jvm.jps.output
 
-import com.dynatrace.hash4j.hashing.Hashing
+import androidx.collection.MutableLongObjectMap
+import androidx.collection.MutableScatterSet
 import com.intellij.util.lang.HashMapZipFile
-import io.netty.buffer.ByteBufAllocator
-import org.jetbrains.bazel.jvm.hashSet
-import org.jetbrains.intellij.build.io.use
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.writeZipUsingTempFile
 import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder
 import org.jetbrains.jps.dependency.storage.NettyBufferGraphDataOutput
+import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import java.io.File
+import java.nio.ByteOrder
 import java.nio.file.Path
 import java.util.*
+
+internal const val NODE_INDEX_FILENAME = "__node_index__"
+private val NODE_INDEX_FILENAME_BYTES = "__node_index__".toByteArray()
 
 internal class IncrementalAbiHelper(
   private val abiFileToData: TreeMap<String, Any>,
   internal val oldAbiZipFile: HashMapZipFile?,
 ) {
-  private val classesToBeDeleted = hashSet<String>()
+  private val classesToBeDeleted = MutableScatterSet<String>()
+
+  // IncrementalAbiHelper is created _before_ we check that we need to recompile something, so, read node index only if needed
+  private val nodeIndex: Lazy<NodeIndex>
+
+  init {
+    if (oldAbiZipFile == null) {
+      nodeIndex = lazyOf(NodeIndex(MutableLongObjectMap()))
+    }
+    else {
+      val data = oldAbiZipFile.getByteBuffer(NODE_INDEX_FILENAME)
+        ?: throw RebuildRequestedException(IllegalStateException("old abi file is provided ($oldAbiZipFile) " +
+          "but does not contain $NODE_INDEX_FILENAME"))
+      nodeIndex = lazy(LazyThreadSafetyMode.NONE) {
+        readNodeIndex(data)
+      }
+    }
+  }
 
   fun createAbiForJava(path: String, data: ByteArray) {
     val abiData = org.jetbrains.bazel.jvm.abi.createAbiForJava(data, classesToBeDeleted) ?: return
@@ -44,39 +66,63 @@ internal class IncrementalAbiHelper(
   }
 
   fun remove(path: String): Boolean {
-    return abiFileToData.remove(abiClassPathToIncrementalNodePath(path)) != null
+    nodeIndex.value.remove(path)
+    return abiFileToData.remove(path) != null
   }
 
   fun write(abiJar: Path) {
-    writeZipUsingTempFile(file = abiJar, indexWriter = null) { stream ->
+    val nodeIndex = nodeIndex.value
+    val packageIndexBuilder = PackageIndexBuilder(writeCrc32 = false)
+    writeZipUsingTempFile(file = abiJar, indexWriter = packageIndexBuilder.indexWriter) { stream ->
       doWriteToZip(
         oldZipFile = oldAbiZipFile,
         fileToData = abiFileToData,
         packageIndexBuilder = null,
         stream = stream,
+        oldDataProcessor = f@ { path, pathBytes ->
+          if (!path.endsWith(".class") || path.startsWith("META-INF/")) {
+            return@f
+          }
+
+          val pathHash = pathToKey(pathBytes)
+          val nodeInfo = requireNotNull(nodeIndex.getInfo(pathHash)) {
+            "Cannot find old ABI IC node for path $path, corrupted ABI?"
+          }
+          stream.writeUndeclaredData { buffer, offsetInFile ->
+            val start = nodeInfo.offset
+            val size = nodeInfo.size
+            val slice = oldAbiZipFile!!.__getRawSlice().slice(start, size)
+            slice.order(ByteOrder.LITTLE_ENDIAN)
+            require(slice.getInt(0) == ABI_IC_NODE_FORMAT_VERSION) {
+              "Incorrect slice for path $path, corrupted ABI?"
+            }
+
+            buffer.writeBytes(slice)
+
+            nodeIndex.updateOffset(pathHash, offsetInFile, oldNodeIndexEntry = nodeInfo)
+          }
+        },
         newDataProcessor = f@ { data, path, pathBytes ->
           // we must write kotlin_module
           if (!path.endsWith(".class") || path.startsWith("META-INF/")) {
             return@f
           }
 
+          val pathHash = pathToKey(pathBytes)
+
           val reader = ClassReader(data)
           val node = JvmClassNodeBuilder.createForLibrary(filePath = path, classReader = reader).build(
             isLibraryMode = true,
             // here path to class, not to the node
-            outFilePathHash = Hashing.xxh3_64().hashBytesToLong(pathBytes),
+            outFilePathHash = pathHash,
             skipPrivateMethodsAndFields = false,
           )
 
-          val abiPathBytes = abiClassPathToIncrementalNodePath(path).toByteArray()
-          ByteBufAllocator.DEFAULT.directBuffer(1024).use { buffer ->
-            val headerSize = 30 + abiPathBytes.size
-            buffer.writerIndex(headerSize)
-
+          stream.writeUndeclaredData { buffer, offsetInFile ->
+            val wI = buffer.writerIndex()
             buffer.writeIntLE(ABI_IC_NODE_FORMAT_VERSION)
             node.write(NettyBufferGraphDataOutput(buffer))
-
-            stream.writeEntryWithHalfBackedBuffer(path = abiPathBytes, unwrittenHeaderAndData = buffer)
+            nodeIndex.put(pathHash, data, offsetInFile, buffer.writerIndex() - wI)
           }
         },
       )
@@ -84,6 +130,13 @@ internal class IncrementalAbiHelper(
       abiFileToData.clear()
       // now, close the old file before writing to it
       oldAbiZipFile?.close()
+
+      // write node index after ^^^ to reduce memory usage
+      stream.write(NODE_INDEX_FILENAME_BYTES, estimatedSize = nodeIndex.serializedSize()) { buffer ->
+        nodeIndex.write(buffer)
+      }
+
+      packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.NONE)
     }
   }
 
@@ -91,5 +144,3 @@ internal class IncrementalAbiHelper(
     oldAbiZipFile?.close()
   }
 }
-
-private fun abiClassPathToIncrementalNodePath(path: String): String = "$path.n"

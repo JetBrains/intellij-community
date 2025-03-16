@@ -19,13 +19,6 @@ class NettyBufferGraphDataOutput(private val buffer: ByteBuf) : GraphDataOutput 
     doWriteGraphElement(this, element)
   }
 
-  override fun <T : ExternalizableGraphElement> writeGraphElementCollection(
-    elementType: Class<out T>,
-    collection: Iterable<T>
-  ) {
-    doWriteGraphElementCollection(this, elementType, collection)
-  }
-
   override fun writeRawLong(v: Long) {
     buffer.writeLongLE(v)
   }

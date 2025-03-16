@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.build.GeneratedFile
 import java.io.File
 import java.nio.file.Path
 import java.util.*
-import java.util.zip.ZipEntry
 
 internal const val ABI_IC_NODE_FORMAT_VERSION: Int = 1
 
@@ -175,11 +174,20 @@ class OutputSink internal constructor(
   fun writeToZip(outJar: Path) {
     val packageIndexBuilder = PackageIndexBuilder(writeCrc32 = false)
     writeZipUsingTempFile(outJar, packageIndexBuilder.indexWriter) { stream ->
-      doWriteToZip(oldZipFile = oldZipFile, fileToData = fileToData, packageIndexBuilder = packageIndexBuilder, stream = stream) { _, _, _ ->}
-      packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
+      doWriteToZip(
+        oldZipFile = oldZipFile,
+        fileToData = fileToData,
+        packageIndexBuilder = packageIndexBuilder,
+        stream = stream,
+        oldDataProcessor = { _, _ -> },
+        newDataProcessor = { _, _, _ -> },
+      )
 
+      fileToData.clear()
       // now, close the old file, before writing to it
       oldZipFile?.close()
+
+      packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
     }
   }
 
@@ -217,6 +225,7 @@ internal inline fun doWriteToZip(
   fileToData: TreeMap<String, Any>,
   packageIndexBuilder: PackageIndexBuilder?,
   stream: ZipArchiveOutputStream,
+  crossinline oldDataProcessor: (String, ByteArray) -> Unit,
   crossinline newDataProcessor: (ByteArray, String, ByteArray) -> Unit,
 ) {
   for ((path, info) in fileToData.entries) {
@@ -224,18 +233,18 @@ internal inline fun doWriteToZip(
     val name = path.toByteArray()
     if (info is ImmutableZipEntry) {
       val hashMapZipFile = oldZipFile!!
-      val buffer = info.getByteBuffer(hashMapZipFile, null)
-      try {
-        val size = info.uncompressedSize
-        stream.writeDataRawEntry(name = name, data = buffer, crc = 0, size = size, compressedSize = size, method = ZipEntry.STORED)
+      val data = info.getByteBuffer(hashMapZipFile, null)
+      stream.write(name, estimatedSize = data.remaining()) { buffer ->
+        buffer.writeBytes(data)
       }
-      finally {
-        hashMapZipFile.releaseBuffer(buffer)
-      }
+
+      oldDataProcessor(path, name)
     }
     else {
       val data = info as ByteArray
-      stream.writeDataRawEntryWithoutCrc(name = name, data = data)
+      stream.write(name, estimatedSize = data.size) { buffer ->
+        buffer.writeBytes(data)
+      }
       newDataProcessor(data, path, name)
     }
   }

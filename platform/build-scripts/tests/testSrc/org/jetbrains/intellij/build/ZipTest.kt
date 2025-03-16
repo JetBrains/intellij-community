@@ -10,15 +10,16 @@ import com.intellij.util.lang.ZipFile
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
-import org.jetbrains.intellij.build.io.AddDirEntriesMode
-import org.jetbrains.intellij.build.io.zip
-import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractTest.Companion.data
+import org.jetbrains.intellij.build.io.*
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.ForkJoinTask
 import java.util.function.BiConsumer
 import java.util.function.Predicate
@@ -321,6 +322,33 @@ class ZipTest {
     checkZip(archiveFile) { zipFile ->
       val entry = zipFile.getResource("largeFile1")
       assertThat(entry).isNotNull()
+    }
+  }
+
+  @Test
+  fun uncompressedData(@TempDir tempDir: Path) {
+    val dir = tempDir.resolve("dir")
+    Files.createDirectories(dir)
+    val random = Random(42)
+
+    val archiveFile = tempDir.resolve("archive.zip")
+    val size = 2 * 1024
+    ZipFileWriter(
+      channel = FileChannel.open(archiveFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE),
+      deflater = null,
+      zipIndexWriter = ZipIndexWriter(indexWriter = null),
+    ).use { writer ->
+      repeat(3) {
+        writer.uncompressedData("file $it", data = random.nextBytes(size))
+      }
+    }
+
+    checkZip(archiveFile) { zipFile ->
+      repeat(3) {
+        val entry = zipFile.getData("file $it")
+        assertThat(entry).isNotNull()
+        assertThat(entry!!.size).isEqualTo(size)
+      }
     }
   }
 

@@ -9,9 +9,16 @@ import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.util.*
 import kotlin.random.Random
+
+private fun sizeAwareIkvWriter(file: Path): IkvWriter {
+  return IkvWriter(channel = FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)))
+}
 
 private fun generateDb(file: Path, count: Int, random: Random): List<Pair<Long, ByteArray>> {
   Files.createDirectories(file.parent)

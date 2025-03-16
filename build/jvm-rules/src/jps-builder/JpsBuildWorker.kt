@@ -5,14 +5,13 @@ package org.jetbrains.bazel.jvm.jps
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.Logger
 import io.opentelemetry.api.trace.Tracer
-import kotlinx.coroutines.AbstractCoroutine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
+import org.jetbrains.bazel.jvm.jps.dependencies.DependencyAnalyzer
 import org.jetbrains.bazel.jvm.processRequests
 import org.jetbrains.jps.api.GlobalOptions
-import org.jetbrains.jps.incremental.dependencies.DependencyAnalyzer
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import java.io.Writer
 import java.nio.file.Path

@@ -4,13 +4,6 @@ package org.jetbrains.intellij.build.io
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import java.nio.channels.FileChannel
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption
-import java.util.*
-
-fun sizeAwareIkvWriter(file: Path): IkvWriter {
-  return IkvWriter(channel = FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)))
-}
 
 class IkvWriter(private val channel: FileChannel) : AutoCloseable {
   private val indexBuilder = IkvIndexBuilder()

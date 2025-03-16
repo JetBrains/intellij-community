@@ -1,5 +1,6 @@
 package org.jetbrains.jps.dependency.impl
 
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentSet
 import org.h2.mvstore.MVMap
 import org.jetbrains.bazel.jvm.jps.storage.IntLong
@@ -23,29 +24,25 @@ abstract class GraphImpl(
   extraIndex: BackDependencyIndex,
 ) : Graph {
   // nodeId -> nodes referencing the nodeId
-  private val dependencyIndex: BackDependencyIndex
-  private val indices: List<BackDependencyIndex>
+  private val dependencyIndex = NodeDependenciesIndex(mapletFactory = containerFactory, isInMemory = false)
+  private val indices = arrayOf(dependencyIndex, extraIndex).asList()
+
   @JvmField
   protected val nodeToSourcesMap: MultiMapletEx<ReferenceID, NodeSource>
   @JvmField
   protected val sourceToNodesMap: MultiMapletEx<IntLong, Node<*, *>>
 
+  @JvmField
+  protected val registeredIndices: Set<String> = indices.mapTo(ObjectLinkedOpenHashSet(indices.size)) { it.name }
+
   init {
-    val indices = arrayOfNulls<BackDependencyIndex>(2)
-    dependencyIndex = NodeDependenciesIndex(containerFactory, false).also {
-      indices[0] = it
-    }
-
-    indices[1] = extraIndex
-    @Suppress("UNCHECKED_CAST")
-    this.indices = indices.asList() as List<BackDependencyIndex>
-
     @Suppress("UNCHECKED_CAST")
     nodeToSourcesMap = createNodeIdToSourcesMap(containerFactory, containerFactory.getStringEnumerator())
     @Suppress("UNCHECKED_CAST")
     sourceToNodesMap = createSourceToNodesMap(containerFactory, containerFactory.getStringEnumerator())
   }
 
+  @Synchronized
   final override fun getDependingNodes(id: ReferenceID): Iterable<ReferenceID> {
     return dependencyIndex.getDependencies(id)
   }
@@ -56,18 +53,22 @@ abstract class GraphImpl(
     return indices.firstOrNull { it.name == name }
   }
 
+  @Synchronized
   override fun getSources(id: ReferenceID): Iterable<NodeSource> {
     return nodeToSourcesMap.get(id)
   }
 
+  @Synchronized
   override fun getRegisteredNodes(): Iterable<ReferenceID> {
     return nodeToSourcesMap.keys
   }
 
+  @Synchronized
   override fun getSources(): Iterable<NodeSource> {
     throw UnsupportedOperationException("Supported only for delta graphs")
   }
 
+  @Synchronized
   override fun getNodes(source: NodeSource): Iterable<Node<*, *>> {
     return sourceToNodesMap.get((source as PathSource).pathHash)
   }

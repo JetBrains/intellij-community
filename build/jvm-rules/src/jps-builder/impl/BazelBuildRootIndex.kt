@@ -2,8 +2,8 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import androidx.collection.MutableScatterMap
 import com.intellij.openapi.util.io.FileFilters
-import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildRootIndex
 import org.jetbrains.jps.builders.BuildTarget
@@ -15,7 +15,7 @@ import java.io.FileFilter
 import java.nio.file.Path
 
 internal class BazelBuildRootIndex(target: BazelModuleBuildTarget) : BuildRootIndex {
-  @JvmField val fileToDescriptors = hashMap<Path, JavaSourceRootDescriptor>()
+  @JvmField val fileToDescriptors = MutableScatterMap<Path, JavaSourceRootDescriptor>()
   @JvmField val descriptors = target.computeRootDescriptors()
 
   init {

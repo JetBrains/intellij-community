@@ -8,6 +8,7 @@ import org.jetbrains.bazel.jvm.jps.state.PathRelativizer
 import org.jetbrains.bazel.jvm.jps.state.SourceDescriptor
 import org.jetbrains.bazel.jvm.jps.state.loadBuildState
 import org.jetbrains.bazel.jvm.jps.state.saveBuildState
+import org.jetbrains.bazel.jvm.toScatterMap
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -25,7 +26,7 @@ internal object BuildStateTest {
 }
 
 private val relativizer = object : PathRelativizer {
-  override fun toRelative(path: Path): String = path.invariantSeparatorsPathString
+  override fun toRelative(file: Path): String = file.invariantSeparatorsPathString
 
   override fun toAbsoluteFile(path: String): Path = Path.of(path)
 }
@@ -59,12 +60,12 @@ internal suspend fun testSerialization() {
         buildStateFile = file,
         relativizer = relativizer,
         allocator = allocator,
-        sourceFileToDigest = sourceDescriptors.associate { it.sourceFile to it.digest },
+        sourceFileToDigest = sourceDescriptors.toScatterMap { item, map -> map.put(item.sourceFile, item.digest) },
       )!!.map
-      if (result.keys.sorted() != sourceDescriptors.map { it.sourceFile }) {
+      if (result.asMap().keys.sorted() != sourceDescriptors.map { it.sourceFile }) {
         throw AssertionError("Expected: $sourceDescriptors, actual: $result")
       }
-      if (result.values.sortedBy { it.sourceFile } != sourceDescriptors.asList()) {
+      if (result.asMap().values.sortedBy { it.sourceFile } != sourceDescriptors.asList()) {
         throw AssertionError("Expected: $sourceDescriptors, actual: $result")
       }
     }

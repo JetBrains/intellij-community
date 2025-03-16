@@ -54,7 +54,11 @@ abstract class BackDependencyIndexImpl protected constructor(
     }
   }
 
-  final override fun integrate(deletedNodes: Iterable<Node<*, *>>, updatedNodes: Iterable<Node<*, *>>, deltaIndex: BackDependencyIndex) {
+  final override fun integrate(
+    deletedNodes: Iterable<Node<*, *>>,
+    updatedNodes: Iterable<Node<*, *>>,
+    deltaIndex: BackDependencyIndex?,
+  ) {
     val depsToRemove = MutableScatterMap<ReferenceID, MutableScatterSet<ReferenceID>>()
 
     for (node in deletedNodes) {
@@ -65,7 +69,7 @@ abstract class BackDependencyIndexImpl protected constructor(
       map.remove(node.referenceID)
     }
 
-    if (deltaIndex !is BackDependencyIndexImpl) {
+    if (deltaIndex == null || deltaIndex !is BackDependencyIndexImpl) {
       // the only another impl is empty (BackDependencyIndex.createEmpty)
       return
     }

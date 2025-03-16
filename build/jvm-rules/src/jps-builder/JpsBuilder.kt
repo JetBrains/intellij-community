@@ -3,6 +3,8 @@
 
 package org.jetbrains.bazel.jvm.jps
 
+import androidx.collection.MutableScatterMap
+import androidx.collection.ScatterMap
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
@@ -16,7 +18,7 @@ import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.ArgMap
-import org.jetbrains.bazel.jvm.hashMap
+import org.jetbrains.bazel.jvm.jps.dependencies.DependencyAnalyzer
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileScope
@@ -44,7 +46,6 @@ import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
-import org.jetbrains.jps.incremental.dependencies.DependencyAnalyzer
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.BuildDataManager
 import org.jetbrains.jps.model.JpsModel
@@ -63,8 +64,8 @@ internal suspend fun incrementalBuild(
   allocator: RootAllocator,
   dependencyAnalyzer: DependencyAnalyzer,
 ): Int {
-  val dependencyFileToDigest = hashMap<Path, ByteArray>()
-  val sourceFileToDigest = hashMap<Path, ByteArray>(request.inputPaths.size)
+  val dependencyFileToDigest = MutableScatterMap<Path, ByteArray>()
+  val sourceFileToDigest = MutableScatterMap<Path, ByteArray>(request.inputPaths.size)
   val sources = ArrayList<Path>()
   val isDebugEnabled = request.verbosity > 0
   val sourceFileToDigestDebugString = if (isDebugEnabled) StringBuilder() else null
@@ -127,8 +128,8 @@ suspend fun buildUsingJps(
   args: ArgMap<JvmBuilderFlags>,
   out: Writer,
   sources: List<Path>,
-  dependencyFileToDigest: Map<Path, ByteArray>,
-  sourceFileToDigest: Map<Path, ByteArray>,
+  dependencyFileToDigest: ScatterMap<Path, ByteArray>,
+  sourceFileToDigest: ScatterMap<Path, ByteArray>,
   isDebugEnabled: Boolean,
   allocator: RootAllocator,
   parentSpan: Span,

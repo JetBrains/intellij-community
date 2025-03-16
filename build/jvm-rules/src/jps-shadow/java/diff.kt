@@ -139,14 +139,15 @@ private fun <T : DiffCapable<T, D>, D : Difference> computeChanged(
   return changed
 }
 
-internal object DiffCapableHashStrategy : Strategy<DiffCapable<*, *>> {
+object DiffCapableHashStrategy : Strategy<DiffCapable<*, *>> {
   override fun hashCode(o: DiffCapable<*, *>?): Int = o?.diffHashCode() ?: 0
 
   override fun equals(a: DiffCapable<*, *>?, b: DiffCapable<*, *>?): Boolean {
     return when {
       a == null -> b == null
       b == null -> false
-      else -> a === b || a.isSame(b)
+      a === b -> true
+      else -> a.isSame(b)
     }
   }
 }

@@ -14,7 +14,6 @@ import org.jetbrains.jps.incremental.BuildListener
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.Utils
-import org.jetbrains.jps.incremental.dependencies.DependencyAnalyzer
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent

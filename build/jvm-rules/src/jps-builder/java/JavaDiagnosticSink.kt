@@ -4,7 +4,8 @@
 package org.jetbrains.bazel.jvm.jps.java
 
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.bazel.jvm.hashSet
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
+import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.jps.incremental.java.CustomOutputDataListener
 import org.jetbrains.jps.incremental.messages.BuildMessage
@@ -27,9 +28,9 @@ internal class JavaDiagnosticSink(
 ) : DiagnosticOutputConsumer {
   private val errorCounter = AtomicInteger(0)
   private val warningCounter = AtomicInteger(0)
-  private val filesWithErrors = hashSet<File>()
+  private val filesWithErrors = ObjectLinkedOpenHashSet<File>()
 
-  fun getFilesWithErrors(): Set<File> = filesWithErrors
+  fun getFilesWithErrors(): Set<File> = filesWithErrors.ifEmpty { emptySet() }
 
   val errorCount: Int
     get() = errorCounter.get()

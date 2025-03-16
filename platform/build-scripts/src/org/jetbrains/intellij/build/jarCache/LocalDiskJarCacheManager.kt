@@ -29,7 +29,7 @@ import kotlin.time.Duration.Companion.days
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".bin"
 
-private const val cacheVersion: Byte = 11
+private const val cacheVersion: Byte = 14
 
 internal class LocalDiskJarCacheManager(
   private val cacheDir: Path,
@@ -57,7 +57,7 @@ internal class LocalDiskJarCacheManager(
 
     val targetFileNamePrefix = targetFile.fileName.toString().removeSuffix(jarSuffix)
 
-    val hash = Hashing.komihash5_0().hashStream()
+    val hash = Hashing.xxh3_64().hashStream()
     hash.putByte(cacheVersion)
     for (source in items) {
       source.updateAssetDigest(hash)

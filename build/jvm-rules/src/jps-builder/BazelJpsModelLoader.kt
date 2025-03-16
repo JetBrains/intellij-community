@@ -3,6 +3,9 @@
 
 package org.jetbrains.bazel.jvm.jps
 
+import androidx.collection.MutableObjectList
+import androidx.collection.ObjectList
+import androidx.collection.ScatterMap
 import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
@@ -60,17 +63,19 @@ private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: e
 
 private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
 
+private const val TOOL_VERSION: Long = 36
+
 internal fun loadJpsModel(
   sources: List<Path>,
   args: ArgMap<JvmBuilderFlags>,
   classPathRootDir: Path,
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  dependencyFileToDigest: ScatterMap<Path, ByteArray>,
 ): Pair<JpsModel, TargetConfigurationDigestContainer> {
   val model = jpsElementFactory.createModel()
 
   val digests = TargetConfigurationDigestContainer()
   digests.set(TargetConfigurationDigestProperty.KOTLIN_VERSION, KOTLINC_VERSION_HASH)
-  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 30)
+  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, TOOL_VERSION)
 
   // properties not needed for us (not implemented for java)
   // extension.loadModuleOptions not needed for us (not implemented for java)
@@ -208,7 +213,7 @@ internal class BazelConfigurationHolder(
   @JvmField val kotlinArgs: K2JVMCompilerArguments,
   @JvmField val classPathRootDir: Path,
   @JvmField val sources: List<Path>,
-  @JvmField val trackableDependencyFiles: List<Path>,
+  @JvmField val trackableDependencyFiles: ObjectList<Path>,
 ) : JpsElementBase<BazelConfigurationHolder>() {
   companion object {
     @JvmField val KIND: JpsElementChildRoleBase<BazelConfigurationHolder> = JpsElementChildRoleBase.create<BazelConfigurationHolder>("kotlin facet extension")
@@ -237,10 +242,10 @@ private fun configureClasspath(
   module: JpsModuleImpl<JpsDummyElement>,
   dependencyList: JpsDependenciesList,
   files: Array<Path>,
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  dependencyFileToDigest: ScatterMap<Path, ByteArray>,
   digests: TargetConfigurationDigestContainer,
   classPathRaw: List<String>,
-): List<Path> {
+): ObjectList<Path> {
   val lib = BazelJpsLibrary("class-path-lib", files.asList())
   module.addModuleLibrary(lib)
   dependencyList.addLibraryDependency(lib)
@@ -254,7 +259,7 @@ private fun configureClasspath(
   hash.reset()
 
   var untrackedCount = 0
-  val trackableDependencyFiles = ArrayList<Path>(files.size)
+  val trackableDependencyFiles = MutableObjectList<Path>(files.size)
   for (file in files) {
     if (isDependencyTracked(file)) {
       trackableDependencyFiles.add(file)
@@ -265,7 +270,7 @@ private fun configureClasspath(
 
     val digest = requireNotNull(dependencyFileToDigest.get(file)) {
       "Missing digest for $file.\n" +
-        "Available digests: ${dependencyFileToDigest.keys.joinToString(separator = ",\n") { it.invariantSeparatorsPathString }}"
+        "Available digests: ${dependencyFileToDigest.asMap().keys.joinToString(separator = ",\n") { it.invariantSeparatorsPathString }}"
     }
     hash.putByteArray(digest)
   }
