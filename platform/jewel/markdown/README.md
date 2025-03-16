@@ -62,7 +62,7 @@ If you want to use extensions, you also need to add them **alongside** the `jewe
 dependencies {
     implementation(libs.jewel.standalone)
     implementation(libs.jewel.markdown.intUiStandaloneStyling)
-    implementation(libs.jewel.markdown.extension.gfm.alerts) // Optional
+    implementation(libs.jewel.markdown.extensions.gfm.alerts) // Optional
     // Et cetera...
 }
 ```

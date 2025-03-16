@@ -13,10 +13,10 @@ dependencies {
     sarif(projects.intUi.intUiDecoratedWindow)
     sarif(projects.intUi.intUiStandalone)
     sarif(projects.markdown.core)
-    sarif(projects.markdown.extension.autolink)
-    sarif(projects.markdown.extension.gfmAlerts)
-    sarif(projects.markdown.extension.gfmStrikethrough)
-    sarif(projects.markdown.extension.gfmTables)
+    sarif(projects.markdown.extensions.autolink)
+    sarif(projects.markdown.extensions.gfmAlerts)
+    sarif(projects.markdown.extensions.gfmStrikethrough)
+    sarif(projects.markdown.extensions.gfmTables)
     sarif(projects.markdown.ideLafBridgeStyling)
     sarif(projects.markdown.intUiStandaloneStyling)
     sarif(projects.samples.idePlugin)
@@ -179,13 +179,7 @@ tasks {
 
     register<Delete>("cleanTestPublishArtifacts") { delete(rootProject.layout.buildDirectory.dir("maven-test")) }
 
-    register<Delete>("clean") {
-        delete(
-            rootProject.layout.buildDirectory, // /build
-            rootProject.file(".kotlin"), // /.kotlin
-            rootProject.file(".intellijPlatform"), // /.intellijPlatform
-        )
-    }
+    register<Delete>("clean") { delete(rootProject.layout.buildDirectory) }
 
     wrapper { distributionType = Wrapper.DistributionType.ALL }
 }
