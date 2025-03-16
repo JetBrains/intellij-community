@@ -11,6 +11,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/syntax/syntax-api:syntax",
     "@lib//:jetbrains-annotations",
+    "//platform/util/base/kmp:util-base-kmp",
   ]
 )
 ### auto-generated section `build intellij.platform.syntax.util` end
