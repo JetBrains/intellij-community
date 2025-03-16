@@ -830,7 +830,7 @@
               icon="AllIcons.Nodes.ResourceBundle"/>
       <action id="DevKit.NewStartupActivity" class="org.jetbrains.idea.devkit.actions.templates.NewStartupActivityAction"
               icon="AllIcons.Toolwindows.ToolWindowRun"/>
-      <add-to-group group-id="NewGroup" anchor="last"/>
+      <add-to-group group-id="NewGroup" relative-to-action="CreateResourceBundle" anchor="before"/>
     </group>
 
     <action id="NewRemoteDevModule" class="org.jetbrains.idea.devkit.actions.NewRemoteDevModuleAction" icon="AllIcons.Nodes.Module">
