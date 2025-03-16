@@ -134,7 +134,7 @@ public final class JavaParserUtil {
   public static @NotNull PsiBuilder createBuilder(final ASTNode chameleon) {
     return BasicJavaParserUtil.createBuilder(chameleon,
                                              (psi) -> PsiUtil.getLanguageLevel(psi),
-                                             (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level),
+                                             (level) -> JavaParserDefinition.createLexer(level),
                                              (psi) -> obtainTokensOutdated(psi));
   }
 
@@ -146,7 +146,7 @@ public final class JavaParserUtil {
   public static @NotNull PsiBuilder createBuilder(final LighterLazyParseableNode chameleon) {
     return BasicJavaParserUtil.createBuilder(chameleon,
                                              (psi) -> PsiUtil.getLanguageLevel(psi),
-                                             (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level));
+                                             (level) -> JavaParserDefinition.createLexer(level));
   }
 
   /**

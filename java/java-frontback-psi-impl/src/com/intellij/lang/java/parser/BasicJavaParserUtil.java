@@ -7,7 +7,6 @@ import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.lexer.BasicJavaLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -375,7 +374,7 @@ public final class BasicJavaParserUtil {
   @Deprecated
   public static @NotNull PsiBuilder createBuilder(final @NotNull ASTNode chameleon,
                                                   @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
-                                                  @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction,
+                                                  @NotNull Function<LanguageLevel, com.intellij.lexer.Lexer> lexerFunction,
                                                   @NotNull Function<PsiFile, com.intellij.lexer.TokenList> psiAsLexer) {
     final PsiElement psi = chameleon.getPsi();
     assert psi != null : chameleon;
@@ -410,7 +409,7 @@ public final class BasicJavaParserUtil {
   @Deprecated
   public static @NotNull PsiBuilder createBuilder(@NotNull LighterLazyParseableNode chameleon,
                                                   @NotNull Function<PsiElement, LanguageLevel> languageLevelFunction,
-                                                  @NotNull Function<LanguageLevel, BasicJavaLexer> lexerFunction) {
+                                                  @NotNull Function<LanguageLevel, com.intellij.lexer.Lexer> lexerFunction) {
     final PsiElement psi = chameleon.getContainingFile();
     assert psi != null : chameleon;
     final Project project = psi.getProject();
