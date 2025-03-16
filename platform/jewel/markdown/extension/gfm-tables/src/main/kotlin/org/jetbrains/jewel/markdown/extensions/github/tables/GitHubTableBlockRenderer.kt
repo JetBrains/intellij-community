@@ -34,6 +34,7 @@ public class GitHubTableBlockRenderer(
         blockRenderer: MarkdownBlockRenderer,
         inlineRenderer: InlineMarkdownRenderer,
         enabled: Boolean,
+        modifier: Modifier,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
@@ -121,6 +122,7 @@ public class GitHubTableBlockRenderer(
             cellBorderColor = tableStyling.colors.borderColor,
             cellBorderWidth = tableStyling.metrics.borderWidth,
             rows = rows,
+            modifier = modifier,
         )
     }
 
@@ -162,6 +164,7 @@ public class GitHubTableBlockRenderer(
                 enabled = enabled,
                 onUrlClick = onUrlClick,
                 onTextClick = onTextClick,
+                modifier = Modifier,
             )
         }
     }

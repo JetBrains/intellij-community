@@ -77,10 +77,10 @@ public fun Markdown(
     blockRenderer: MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(markdownStyling),
 ) {
     if (selectable) {
-        SelectionContainer(modifier.semantics { rawMarkdown = markdown }) {
-            Column(verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing)) {
+        SelectionContainer(Modifier.semantics { rawMarkdown = markdown }) {
+            Column(modifier, verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing)) {
                 for (block in markdownBlocks) {
-                    blockRenderer.render(block, enabled, onUrlClick, onTextClick)
+                    blockRenderer.render(block, enabled, onUrlClick, onTextClick, Modifier)
                 }
             }
         }
@@ -90,7 +90,7 @@ public fun Markdown(
             verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
         ) {
             for (block in markdownBlocks) {
-                blockRenderer.render(block, enabled, onUrlClick, onTextClick)
+                blockRenderer.render(block, enabled, onUrlClick, onTextClick, Modifier)
             }
         }
     }
@@ -117,7 +117,9 @@ public fun LazyMarkdown(
                 contentPadding = contentPadding,
                 verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
             ) {
-                items(markdownBlocks) { block -> blockRenderer.render(block, enabled, onUrlClick, onTextClick) }
+                items(markdownBlocks) { block ->
+                    blockRenderer.render(block, enabled, onUrlClick, onTextClick, Modifier)
+                }
             }
         }
     } else {
@@ -127,7 +129,7 @@ public fun LazyMarkdown(
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
         ) {
-            items(markdownBlocks) { block -> blockRenderer.render(block, enabled, onUrlClick, onTextClick) }
+            items(markdownBlocks) { block -> blockRenderer.render(block, enabled, onUrlClick, onTextClick, Modifier) }
         }
     }
 }
