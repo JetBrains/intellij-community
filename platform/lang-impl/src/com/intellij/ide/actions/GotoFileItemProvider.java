@@ -89,7 +89,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       // For example, if there are too many results,
       // `ContainerUtil.process(matchedFiles, trackingProcessor)` in `SuffixMatcher.processFiles()` returns false
       // and `processItems == false`
-      if (!processItems && (!Registry.is("search.everywhere.fuzzy.file.search.enabled", false) || hasSuggestions.get())) {
+      if (!processItems && (!FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled() || hasSuggestions.get())) {
         return false;
       }
 
@@ -99,12 +99,12 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         // With fuzzy search: The process was interrupt but there are suggestions.
         if (fixedPattern != null &&
             !processItemsForPattern(base, parameters.withCompletePattern(fixedPattern), consumer, indicator, hasSuggestionsFixedPattern) &&
-            (!Registry.is("search.everywhere.fuzzy.file.search.enabled", false) || hasSuggestionsFixedPattern.get())) {
+            (!FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled() || hasSuggestionsFixedPattern.get())) {
           return false;
         }
       }
 
-      return !Registry.is("search.everywhere.fuzzy.file.search.enabled", false) ||
+      return !FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled() ||
              hasSuggestions.get() ||
              hasSuggestionsFixedPattern.get() ||
              processItemsForPatternWithLevenshtein(parameters, consumer, indicator);
@@ -210,7 +210,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     // Different number of directories can be processed on different iterations of the while loop.
     // So let's collect all directories and process children if matchingDirectories.size() == 1.
-    if (Registry.is("search.everywhere.fuzzy.file.search.enabled", false) && matchingDirectories.size() == 1) {
+    if (FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled() && matchingDirectories.size() == 1) {
       List<FoundItemDescriptor<PsiFileSystemItem>> childElements = getListWithChildItems(matchingDirectories.get(0), myProject);
       if (!ContainerUtil.process(childElements, consumer)) {
         return false;
@@ -545,7 +545,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
         matchedFiles = moveDirectoriesToEnd(matchedFiles);
 
-        if (Registry.is("search.everywhere.fuzzy.file.search.enabled", false)) {
+        if (FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled()) {
           JBIterable.from(matchedFiles)
             .filter(descriptor -> descriptor.getItem() instanceof PsiDirectory)
             .map(descriptor -> (PsiDirectory)descriptor.getItem())

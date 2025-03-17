@@ -1,0 +1,27 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.util.gotoByName
+
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
+import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
+import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
+import com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
+
+internal class FuzzyFileSearchExperimentOption : ABExperimentOption {
+  override val id: ABExperimentOptionId = ABExperimentOptionId("fuzzyFileSearch")
+
+  override fun getGroupSizeForIde(isPopularIde: Boolean): ABExperimentOptionGroupSize {
+    return ABExperimentOptionGroupSize(128)
+  }
+
+  override fun checkIdeIsSuitable(): Boolean = true
+
+  override fun checkIdeVersionIsSuitable(): Boolean = true
+
+  companion object {
+    @JvmStatic
+    val isFuzzyFileSearchEnabled: Boolean
+      get() = `is`("search.everywhere.fuzzy.file.search.enabled", false) ||
+              ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(FuzzyFileSearchExperimentOption::class.java)
+  }
+}
