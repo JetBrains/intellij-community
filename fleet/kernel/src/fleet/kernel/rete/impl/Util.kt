@@ -2,7 +2,6 @@
 package fleet.kernel.rete.impl
 
 import fleet.util.toUnmodifiableSet
-import java.util.function.BiConsumer
 
 internal inline fun <K, V> MutableMap<K, V>.removeIf(key: K, p: (V) -> Boolean) {
   get(key)?.let { value ->
@@ -245,7 +244,38 @@ internal class AdaptiveMap<K, V> : MutableMap<K, V> {
   }
 
   override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
-    get() = TODO("Not yet implemented")
+    get() = when (state) {
+      EMPTY_STATE -> mutableSetOf()
+      ONE_STATE -> mutableSetOf(object : MutableMap.MutableEntry<K, V> {
+        override val key: K get() = f1 as K
+        override val value: V get() = f2 as V
+        override fun setValue(newValue: V): V {
+          val oldValue = f2 as V
+          f2 = newValue
+          return oldValue
+        }
+      })
+      LIST_STATE -> mutableSetOf<MutableMap.MutableEntry<K, V>>().apply {
+        val r = f1 as ArrayList<Any?>
+        var i = 0
+        while (i < r.size) {
+          val key = r[i] as K
+          val value = r[i + 1] as V
+          add(object : MutableMap.MutableEntry<K, V> {
+            override val key: K get() = key
+            override val value: V get() = value
+            override fun setValue(newValue: V): V {
+              val oldValue = r[i + 1] as V
+              r[i + 1] = newValue
+              return oldValue
+            }
+          })
+          i += 2
+        }
+      }
+      SET_STATE -> (f1 as HashMap<K, V>).entries
+      else -> error("unreachable")
+    }
 
   override val values: MutableCollection<V>
     get() = TODO("Not yet implemented")
@@ -413,25 +443,6 @@ internal class AdaptiveMap<K, V> : MutableMap<K, V> {
           }
           res
         }
-      }
-      else -> error("unreachable")
-    }
-  }
-
-  override fun forEach(action: BiConsumer<in K, in V>) {
-    when (state) {
-      EMPTY_STATE -> {}
-      ONE_STATE -> action.accept(f1 as K, f2 as V)
-      LIST_STATE -> {
-        val r = (f1 as ArrayList<Any?>)
-        var i = 0
-        while (i < r.size) {
-          action.accept(r[i] as K, r[i + 1] as V)
-          i += 2
-        }
-      }
-      SET_STATE -> {
-        (f1 as HashMap<K, V>).forEach(action)
       }
       else -> error("unreachable")
     }
