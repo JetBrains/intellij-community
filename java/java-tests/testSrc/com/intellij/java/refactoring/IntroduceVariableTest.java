@@ -393,6 +393,10 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTestWithFailure("input", "Object", "The selected expression refers to pattern variable 's', which will be out of scope.");
   }
 
+  public void testDisallowInInterface() {
+    doTestWithFailure("", "", "Cannot extract variable in an interface.");
+  }
+
   public void testOneLineLambdaVoidCompatible() {UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Runnable: () -> {...}"))); doTest("c", false, false, false, JAVA_LANG_STRING); }
   public void testOneLineLambdaValueCompatible() { doTest("c", false, false, false, "int"); }
   public void testStatementsBeforeSuper() {
