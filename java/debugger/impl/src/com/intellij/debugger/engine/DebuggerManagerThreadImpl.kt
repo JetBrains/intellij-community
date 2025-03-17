@@ -552,13 +552,16 @@ fun executeOnDMT(
 @ApiStatus.Experimental
 suspend fun <T> withDebugContext(
   suspendContext: SuspendContextImpl,
-  priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
+  priority: PrioritizedTask.Priority? = null,
   block: suspend CoroutineScope.() -> T,
-): T = runWithContext(
-  context = Dispatchers.Debugger(suspendContext.managerThread) + SuspendContextCommandProvider(suspendContext, priority),
-  parentScope = suspendContext.coroutineScope,
-  block = block
-)
+): T {
+  val resultPriority = priority ?: priorityInContextOrDefault()
+  return runWithContext(
+    context = Dispatchers.Debugger(suspendContext.managerThread) + SuspendContextCommandProvider(suspendContext, resultPriority),
+    parentScope = suspendContext.coroutineScope,
+    block = block
+  )
+}
 
 /**
  * Runs [block] in the debugger manager thread as a [DebuggerCommandImpl].
@@ -598,13 +601,16 @@ suspend fun <T> withDebugContext(
 @ApiStatus.Experimental
 suspend fun <T> withDebugContext(
   managerThread: DebuggerManagerThreadImpl,
-  priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
+  priority: PrioritizedTask.Priority? = null,
   block: suspend CoroutineScope.() -> T,
-): T = runWithContext(
-  context = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(priority),
-  parentScope = managerThread.coroutineScope,
-  block = block
-)
+): T {
+  val resultPriority = priority ?: priorityInContextOrDefault()
+  return runWithContext(
+    context = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(resultPriority),
+    parentScope = managerThread.coroutineScope,
+    block = block
+  )
+}
 
 /**
  * Runs [block] in the debugger manager thread as a [com.intellij.debugger.engine.events.DebuggerContextCommandImpl].
@@ -646,15 +652,21 @@ suspend fun <T> withDebugContext(
 @ApiStatus.Experimental
 suspend fun <T> withDebugContext(
   debuggerContext: DebuggerContextImpl,
-  priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
+  priority: PrioritizedTask.Priority? = null,
   block: suspend CoroutineScope.() -> T,
 ): T {
   val managerThread = debuggerContext.managerThread!!
+  val resultPriority = priority ?: priorityInContextOrDefault()
   return runWithContext(
-    context = Dispatchers.Debugger(managerThread) + DebuggerContextCommandProvider(debuggerContext, priority),
+    context = Dispatchers.Debugger(managerThread) + DebuggerContextCommandProvider(debuggerContext, resultPriority),
     parentScope = managerThread.coroutineScope,
     block = block
   )
+}
+
+private suspend fun priorityInContextOrDefault(): PrioritizedTask.Priority {
+  val currentProvider = currentCoroutineContext()[DebuggerDispatchedCommandProvider.Key]
+  return currentProvider?.priority ?: PrioritizedTask.Priority.LOW
 }
 
 /**

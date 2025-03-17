@@ -74,14 +74,14 @@ internal fun Dispatchers.Debugger(managerThread: DebuggerManagerThreadImpl): Cor
 /**
  * Debugger command factory passed to the [DebuggerThreadDispatcher] for correct command scheduling.
  */
-internal sealed interface DebuggerDispatchedCommandProvider : CoroutineContext.Element {
-  fun createDebuggerCommand(block: Runnable, cancellationAction: (() -> Unit)): DebuggerCommandImpl
+internal sealed class DebuggerDispatchedCommandProvider(val priority: PrioritizedTask.Priority) : CoroutineContext.Element {
+  abstract fun createDebuggerCommand(block: Runnable, cancellationAction: (() -> Unit)): DebuggerCommandImpl
   override val key: CoroutineContext.Key<*> get() = Key
 
   companion object Key : CoroutineContext.Key<DebuggerDispatchedCommandProvider>
 }
 
-internal class DebuggerCommandProvider(val priority: PrioritizedTask.Priority) : DebuggerDispatchedCommandProvider {
+internal class DebuggerCommandProvider(priority: PrioritizedTask.Priority) : DebuggerDispatchedCommandProvider(priority) {
   override fun createDebuggerCommand(block: Runnable, cancellationAction: (() -> Unit)): DebuggerCommandImpl =
     object : DebuggerCommandImpl(priority) {
       override fun action() = block.run()
@@ -91,8 +91,8 @@ internal class DebuggerCommandProvider(val priority: PrioritizedTask.Priority) :
 
 internal class SuspendContextCommandProvider(
   val suspendContext: SuspendContextImpl,
-  val priority: PrioritizedTask.Priority,
-) : DebuggerDispatchedCommandProvider {
+  priority: PrioritizedTask.Priority,
+) : DebuggerDispatchedCommandProvider(priority) {
   override fun createDebuggerCommand(block: Runnable, cancellationAction: () -> Unit): DebuggerCommandImpl =
     object : SuspendContextCommandImpl(suspendContext) {
       override val priority: PrioritizedTask.Priority get() = this@SuspendContextCommandProvider.priority
@@ -103,8 +103,8 @@ internal class SuspendContextCommandProvider(
 
 internal class DebuggerContextCommandProvider(
   val debuggerContext: DebuggerContextImpl,
-  val priority: PrioritizedTask.Priority,
-) : DebuggerDispatchedCommandProvider {
+  priority: PrioritizedTask.Priority,
+) : DebuggerDispatchedCommandProvider(priority) {
   override fun createDebuggerCommand(block: Runnable, cancellationAction: () -> Unit): DebuggerCommandImpl =
     object : DebuggerContextCommandImpl(debuggerContext) {
       override val priority: PrioritizedTask.Priority get() = this@DebuggerContextCommandProvider.priority
