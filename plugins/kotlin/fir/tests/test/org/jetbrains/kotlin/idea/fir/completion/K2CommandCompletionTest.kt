@@ -135,6 +135,19 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
+    fun testLastIndex() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            package pack
+
+            c<caret>
+            """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.find { element -> element.lookupString.contains("Recent", ignoreCase = true) } !=null)
+    }
+
     fun testCopyFqn() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(

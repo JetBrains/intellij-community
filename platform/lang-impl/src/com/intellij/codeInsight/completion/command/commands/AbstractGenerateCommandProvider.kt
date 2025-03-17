@@ -58,6 +58,7 @@ abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
     val lineStartOffset = document.getLineStartOffset(lineNumber)
     val immutableCharSequence = document.immutableCharSequence
     for (i in lineStartOffset..offset) {
+      if (i >= immutableCharSequence.length) break
       if (!immutableCharSequence[i].isWhitespace()) {
         return false
       }
