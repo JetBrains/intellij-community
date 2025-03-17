@@ -25,7 +25,6 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "@lib//:kotlinx-coroutines-slf4j",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-datetime-jvm",
     "//fleet/util/core:fleet-util-core",
