@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue
 
 import com.intellij.openapi.application.readAction
@@ -25,6 +25,7 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
@@ -414,7 +415,10 @@ class IndexUpdateRunner(
      * Single file may be bigger, but until memory is freed indexing is suspended.
      * @see UsedMemorySoftLimiter
      */
-    private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = INDEXING_PARALLELIZATION * 4L * FileUtilRt.MEGABYTE
+    private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY: Long = SystemProperties.getLongProperty(
+      "idea.indexing.total-loaded-file-content-soft-limit-bytes",        
+      INDEXING_PARALLELIZATION * 4L * FileUtilRt.MEGABYTE
+    )
 
     private val loadedFileContentLimiter = UsedMemorySoftLimiter(SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY)
 
