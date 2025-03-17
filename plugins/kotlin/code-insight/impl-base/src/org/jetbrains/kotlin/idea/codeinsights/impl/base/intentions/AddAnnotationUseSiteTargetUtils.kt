@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTarget
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTargetInCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -86,33 +86,39 @@ object AddAnnotationUseSiteTargetUtils {
         return candidateTargets
     }
 
-
-    fun KtAnnotationEntry.addUseSiteTarget(useSiteTargets: List<AnnotationUseSiteTarget>, editor: Editor?) {
+    /**
+     * Add a single explicit annotation use-site target for the annotation entry.
+     *
+     * The first target (if present) is chosen automatically when there's only one target, the file is non-physical, or there's no editor.
+     * Otherwise, a popup dialog will be shown.
+     * The PSI update is done in a command action only for physical elements.
+     */
+    fun KtAnnotationEntry.addOrChooseUseSiteTarget(useSiteTargets: List<AnnotationUseSiteTarget>, editor: Editor?) {
         val project = this.project
         if (!isPhysical) { // For preview
             if (useSiteTargets.isNotEmpty()) {
-                doAddUseSiteTarget(useSiteTargets.first())
+                addUseSiteTarget(useSiteTargets.first())
             }
             return
         }
         CommandProcessor.getInstance().runUndoTransparentAction {
-            if (useSiteTargets.size == 1 || editor == null) addUseSiteTarget(useSiteTargets.first(), project)
+            if (useSiteTargets.size == 1 || editor == null) addUseSiteTargetInCommand(useSiteTargets.first(), project)
             else JBPopupFactory.getInstance().createListPopup(createListPopupStep(this, useSiteTargets, project))
                 .showInBestPositionFor(editor)
         }
     }
 
-    fun KtAnnotationEntry.addUseSiteTarget(
+    fun KtAnnotationEntry.addUseSiteTargetInCommand(
         useSiteTarget: AnnotationUseSiteTarget, project: Project
     ) {
         project.executeWriteCommand(KotlinBundle.message("add.use.site.target")) {
-            doAddUseSiteTarget(useSiteTarget)
+            addUseSiteTarget(useSiteTarget)
         }
     }
-}
 
-private fun KtAnnotationEntry.doAddUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget) {
-    replace(KtPsiFactory(project).createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
+    fun KtAnnotationEntry.addUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget) {
+        replace(KtPsiFactory(project).createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
+    }
 }
 
 private fun createListPopupStep(
@@ -123,7 +129,7 @@ private fun createListPopupStep(
 
         override fun onChosen(selectedValue: AnnotationUseSiteTarget, finalChoice: Boolean): PopupStep<*>? {
             if (finalChoice) {
-                annotationEntry.addUseSiteTarget(selectedValue, project)
+                annotationEntry.addUseSiteTargetInCommand(selectedValue, project)
             }
             return PopupStep.FINAL_CHOICE
         }
