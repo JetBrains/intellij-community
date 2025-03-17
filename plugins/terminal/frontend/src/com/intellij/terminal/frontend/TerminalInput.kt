@@ -96,8 +96,8 @@ class TerminalInput(
   }
 
   fun sendBytes(data: ByteArray) {
-    val writeBytesEvent = TerminalWriteBytesEvent(data)
     val fusActivity = ReworkedTerminalUsageCollector.getCurrentKeyEventTypingActivityOrNull()
+    val writeBytesEvent = TerminalWriteBytesEvent(bytes = data, id = fusActivity?.id)
     fusActivity?.startTerminalInputEventProcessing(writeBytesEvent)
     sendEvent(writeBytesEvent)
   }

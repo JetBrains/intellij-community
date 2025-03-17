@@ -59,6 +59,12 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     DURATION_FIELD,
   )
 
+  private val backendTypingLatencyEvent = GROUP.registerVarargEvent(
+    "terminal.backend.typing.latency",
+    INPUT_EVENT_ID_FIELD,
+    DURATION_FIELD,
+  )
+
   @JvmStatic
   fun logLocalShellStarted(project: Project, shellCommand: Array<String>) {
     localShellStartedEvent.log(project,
@@ -88,6 +94,13 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     )
   }
 
+  internal fun logBackendLatency(inputEventId: Int, duration: Duration) {
+    backendTypingLatencyEvent.log(
+      INPUT_EVENT_ID_FIELD with inputEventId,
+      DURATION_FIELD with duration
+    )
+  }
+
   fun startFrontendTypingActivity(e: KeyEvent): FrontendTypingActivity? {
     ThreadingAssertions.softAssertEventDispatchThread()
     if (e.id != KeyEvent.KEY_TYPED) return null
@@ -104,6 +117,18 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   fun getFrontendTypingActivityOrNull(event: TerminalInputEvent): FrontendTypingActivity? {
     return frontendTypingActivityByInputEvent[InputEventIdentityWrapper(event)]
   }
+
+  fun tryStartBackendTypingActivity(event: TerminalWriteBytesEvent) {
+    val id = event.id ?: return
+    val bytes = event.bytes
+    val activity = BackendTypingActivityImpl(id, bytes)
+    backendTypingActivityByByteArray[bytes] = activity
+  }
+
+  @JvmStatic
+  fun getBackendTypingActivityOrNull(bytes: ByteArray): BackendTypingActivity? {
+    return backendTypingActivityByByteArray[bytes]
+  }
 }
 
 @ApiStatus.Internal
@@ -115,9 +140,18 @@ interface FrontendTypingActivity {
   fun finishTerminalInputEventProcessing()
 }
 
+@ApiStatus.Internal
+interface BackendTypingActivity {
+  val id: Int
+  fun reportDuration()
+  fun finishBytesProcessing()
+}
+
 private val frontendTypingActivityId = AtomicInteger()
 private var currentKeyEventTypingActivity: FrontendTypingActivityImpl? = null
 private val frontendTypingActivityByInputEvent = ConcurrentHashMap<InputEventIdentityWrapper, FrontendTypingActivityImpl>()
+
+private val backendTypingActivityByByteArray = ConcurrentHashMap<ByteArray, BackendTypingActivityImpl>()
 
 // TerminalWriteBytesEvent is a data class, but we need to track individual events, not their content
 private class InputEventIdentityWrapper(private val event: TerminalInputEvent) {
@@ -158,6 +192,22 @@ private class FrontendTypingActivityImpl(override val id: Int) : FrontendTypingA
     if (inputEvent != null) {
       frontendTypingActivityByInputEvent.remove(InputEventIdentityWrapper(inputEvent))
     }
+  }
+}
+
+private class BackendTypingActivityImpl(override val id: Int, private val bytes: ByteArray) : BackendTypingActivity {
+  private val start = TimeSource.Monotonic.markNow()
+
+  override fun reportDuration() {
+    val duration = start.elapsedNow()
+    ReworkedTerminalUsageCollector.logBackendLatency(
+      inputEventId = id,
+      duration = duration,
+    )
+  }
+
+  override fun finishBytesProcessing() {
+    backendTypingActivityByByteArray.remove(bytes)
   }
 }
 
