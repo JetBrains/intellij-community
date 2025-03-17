@@ -1,0 +1,34 @@
+<html>
+<body>
+Reports guard conditions with the <code>||</code> operator without clarifying parentheses.
+<p>
+    The <code>||</code> operator can be confusing when used in guard conditions without parentheses.
+    In a branch with a guarded condition <code>a if b || c</code> the operations have the following priority: <code>a if (b || c)</code>.
+    In a branch with a regular condition <code>a && b || c</code> the precedence is different: <code>(a && b) || c</code>.
+    To avoid confusion, clarifying parentheses are recommended.
+</p>
+<p>
+    Example:
+</p>
+<pre><code>
+fun example(param: Any, flag: Boolean) {
+    when (param) {
+        is Int if param < 0 || flag -> println("foo")
+        else -> println("bar")
+    }
+}
+</code></pre>
+<p>
+    After the quick-fix is applied:
+</p>
+<pre><code>
+fun example(param: Any, flag: Boolean) {
+    when (param) {
+        is Int if (param < 0 || flag) -> println("foo")
+        else -> println("bar")
+    }
+}
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

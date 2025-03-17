@@ -610,6 +610,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "removeRedundantLabel", // quick fix in K1
                     "contextParametersMigration", // K2-only
                     "defaultAnnotationTarget", // K2-only
+                    "orInWhenGuard", // K2-only
                 )
             )
         }

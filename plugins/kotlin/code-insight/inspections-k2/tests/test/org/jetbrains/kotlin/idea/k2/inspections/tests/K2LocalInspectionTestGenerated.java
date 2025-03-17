@@ -12981,6 +12981,75 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard")
+    public static class OrInWhenGuard extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("exampleSubstring.kt")
+        public void testExampleSubstring() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/exampleSubstring.kt");
+        }
+
+        @TestMetadata("inapplicableDisabledFeature.kt")
+        public void testInapplicableDisabledFeature() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableDisabledFeature.kt");
+        }
+
+        @TestMetadata("inapplicableNoGuards.kt")
+        public void testInapplicableNoGuards() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableNoGuards.kt");
+        }
+
+        @TestMetadata("inapplicableNoWhenGuardsFeature.kt")
+        public void testInapplicableNoWhenGuardsFeature() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableNoWhenGuardsFeature.kt");
+        }
+
+        @TestMetadata("inapplicableNotOr.kt")
+        public void testInapplicableNotOr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableNotOr.kt");
+        }
+
+        @TestMetadata("inapplicableOrNotOnTop.kt")
+        public void testInapplicableOrNotOnTop() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableOrNotOnTop.kt");
+        }
+
+        @TestMetadata("inapplicableParenthesized.kt")
+        public void testInapplicableParenthesized() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/inapplicableParenthesized.kt");
+        }
+
+        @TestMetadata("singleBranch.kt")
+        public void testSingleBranch() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/singleBranch.kt");
+        }
+
+        @TestMetadata("singleBranchComments.kt")
+        public void testSingleBranchComments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/singleBranchComments.kt");
+        }
+
+        @TestMetadata("subConditions.kt")
+        public void testSubConditions() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/subConditions.kt");
+        }
+
+        @TestMetadata("twoBranches.kt")
+        public void testTwoBranches() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/orInWhenGuard/twoBranches.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override
