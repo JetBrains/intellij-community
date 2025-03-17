@@ -17,7 +17,6 @@ import com.intellij.openapi.module.impl.DeprecatedModuleOptionManager
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -27,7 +26,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import io.opentelemetry.api.metrics.Meter
@@ -41,13 +39,6 @@ internal class ModuleBridgeImpl(
   override var entityStorage: VersionedEntityStorage,
   override var diff: MutableEntityStorage?
 ) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
-  init {
-    // This is a temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
-    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-    val corePluginDescriptor = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
-                               ?: error("Core plugin with id: ${PluginManagerCore.CORE_ID} should be available")
-    registerService(TestModuleProperties::class.java, TestModulePropertiesBridge::class.java, corePluginDescriptor, false)
-  }
 
   //override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTime {
   //  val moduleEntityChanges = event.getChanges(ModuleEntity::class.java)
