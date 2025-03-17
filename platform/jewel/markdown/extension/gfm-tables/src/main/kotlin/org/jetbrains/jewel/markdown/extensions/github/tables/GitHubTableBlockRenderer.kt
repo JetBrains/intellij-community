@@ -139,7 +139,6 @@ public class GitHubTableBlockRenderer(
             emphasis = emphasis.copy(fontWeight = newFontWeight),
             strongEmphasis = strongEmphasis.copy(fontWeight = newFontWeight),
             inlineHtml = inlineHtml.copy(fontWeight = newFontWeight),
-            renderInlineHtml = renderInlineHtml,
         )
 
     @Composable
