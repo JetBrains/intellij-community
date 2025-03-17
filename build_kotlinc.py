@@ -21,7 +21,7 @@ def main():
     assert workspace.joinpath('WORKSPACE').exists(), 'failed to find workspace root'
 
     # Set properties not currently exposed as flags.
-    args.kotlinc_version = '2.1.255-dev-255'  # JetBrains uses this version for local builds.
+    args.kotlinc_version = '2.2.255-dev-255'  # JetBrains uses this version for local builds.
     args.intellij_dir = workspace.joinpath('tools/idea')
     args.kotlinc_dir = workspace.joinpath('external/jetbrains/kotlin')
     args.gradlew = args.kotlinc_dir.joinpath('gradlew')
@@ -45,7 +45,7 @@ def build_kotlin_compiler(args):
         'publishIdeArtifacts',
         ':prepare:ide-plugin-dependencies:kotlin-dist-for-ide:publish',
         '-Ppublish.ide.plugin.dependencies=true',
-        '-PkotlinLanguageVersion=2.0',
+        '-PkotlinLanguageVersion=2.1',
         f'-PdeployVersion={args.kotlinc_version}',
         f'-Pbuild.number={args.kotlinc_version}',
         '-Pteamcity=true',  # Makes this a release build rather than a dev build.

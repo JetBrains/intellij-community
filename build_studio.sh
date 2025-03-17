@@ -27,6 +27,9 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+# Build the Kotlin compiler, which is a dependency of the Kotlin IDE plugin.
+"${PROG_DIR}/build_kotlinc.py"
+
 readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/__BUILD_NUMBER__/" "${PROG_DIR}/build.txt")"
 
 declare -ar BUILD_PROPERTIES=(
