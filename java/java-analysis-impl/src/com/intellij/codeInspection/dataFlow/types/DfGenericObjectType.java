@@ -188,7 +188,8 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     }
     TypeConstraint constraint = getConstraint().join(type.getConstraint());
     if (constraint == TypeConstraints.BOTTOM) {
-      throw new AssertionError("Join failed: " + this + " | " + other);
+      throw new AssertionError(
+        "Join failed: " + this + "(" + getConstraint().debugInfo() + ") | " + other + " (" + type.getConstraint().debugInfo() + ")");
     }
     DfaNullability nullability = getNullability().unite(type.getNullability());
     Mutability mutability = getMutability().join(type.getMutability());
