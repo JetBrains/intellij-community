@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.async
 
+import fleet.multiplatform.shims.multiplatformIO
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -15,4 +16,4 @@ especially
  not restricted by the `Dispatchers.IO` parallelism.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-val UnlimitedDispatcher = Dispatchers.IO.limitedParallelism(8192)
+val UnlimitedDispatcher = Dispatchers.multiplatformIO.limitedParallelism(8192)
