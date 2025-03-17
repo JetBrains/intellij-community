@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
 import java.io.IOException
@@ -7,17 +7,6 @@ import java.nio.file.Path
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
-import java.text.DecimalFormat
-import kotlin.math.log10
-import kotlin.math.pow
-
-fun formatFileSize(fileSize: Long): String {
-  if (fileSize == 0L) return "0 B"
-  val rank = ((log10(fileSize.toDouble()) + 0.0000021714778384307465) / 3).toInt()
-  val value = fileSize / 1000.0.pow(rank.toDouble())
-  val units = arrayOf("B", "kB", "MB", "GB", "TB", "PB", "EB")
-  return DecimalFormat("0.##").format(value) + units[rank]
-}
 
 fun setExecutable(path: Path) {
   val view = Files.getFileAttributeView(path, PosixFileAttributeView::class.java)
@@ -55,4 +44,3 @@ fun setReadOnly(path: Path, value: Boolean) {
   ?: Files.getFileAttributeView(path, DosFileAttributeView::class.java)?.setReadOnly(value)
   ?: throw IOException("Not supported: " + path.fileSystem)
 }
-
