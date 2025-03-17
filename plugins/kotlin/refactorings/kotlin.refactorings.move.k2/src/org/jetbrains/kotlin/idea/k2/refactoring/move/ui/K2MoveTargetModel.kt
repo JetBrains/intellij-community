@@ -83,31 +83,32 @@ sealed interface K2MoveTargetModel {
                 }
             }
 
-            fun updateDirectory() {
-                val selected = destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper
-                if (selected == null || selected == DirectoryChooser.ItemWrapper.NULL) {
-                    ReadAction.nonBlocking<PsiDirectory> {
-                        val projectIndex = ProjectFileIndex.getInstance(project)
-                        projectIndex.getSourceRootForFile(initialDirectory.virtualFile)?.toPsiDirectory(project) ?: initialDirectory
-                    }.finishOnUiThread(ModalityState.stateForComponent(destinationChooser)) { rootDir ->
-                        directory = rootDir
-                    }.submit(AppExecutorUtil.getAppExecutorService())
-                } else {
-                    directory = selected.directory ?: directory
-                }
-                revalidateButtons()
-            }
-
             destinationChooser.comboBox.addPropertyChangeListener { // Invoked from package chooser update
                 if (it.propertyName != "model") return@addPropertyChangeListener
                 pkgName = FqName(pkgChooser.text)
                 RecentsManager.getInstance(project).registerRecentEntry(RECENT_PACKAGE_KEY, pkgChooser.text)
-                updateDirectory()
+                updateDirectory(onError, revalidateButtons)
             }
             destinationChooser.comboBox.addActionListener {
-                updateDirectory()
+                updateDirectory(onError, revalidateButtons)
             }
             destinationChooser.setData(project, directory, { s -> onError(s, destinationChooser) }, pkgChooser.childComponent)
+        }
+
+        protected open fun updateDirectory(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+            val project = directory.project
+            val selected = destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper
+            if (selected == null || selected == DirectoryChooser.ItemWrapper.NULL) {
+                ReadAction.nonBlocking<PsiDirectory> {
+                    val projectIndex = ProjectFileIndex.getInstance(project)
+                    projectIndex.getSourceRootForFile(initialDirectory.virtualFile)?.toPsiDirectory(project) ?: initialDirectory
+                }.finishOnUiThread(ModalityState.stateForComponent(destinationChooser)) { rootDir ->
+                    directory = rootDir
+                }.submit(AppExecutorUtil.getAppExecutorService())
+            } else {
+                directory = selected.directory ?: directory
+            }
+            revalidateButtons()
         }
 
         private companion object {
@@ -133,6 +134,18 @@ sealed interface K2MoveTargetModel {
         var fileName: String = fileName
             protected set
 
+        private var selectedFile: KtFile? = null
+
+        override fun updateDirectory(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+            super.updateDirectory(onError, revalidateButtons)
+            val selectedFile = selectedFile
+            if (selectedFile != null && selectedFile.packageFqName != pkgName) {
+                onError("Existing file package does not match selected package", pkgChooser)
+            } else {
+                onError(null, pkgChooser)
+            }
+        }
+
         protected lateinit var fileChooser: TextFieldWithBrowseButton
         protected fun Row.installFileChooser(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = directory.project
@@ -146,8 +159,8 @@ sealed interface K2MoveTargetModel {
                     null
                 )
                 dialog.showDialog()
-                val selectedFile = if (dialog.isOK) dialog.selected else null
-                if (selectedFile != null) {
+                selectedFile = if (dialog.isOK) dialog.selected else null
+                selectedFile?.let { selectedFile ->
                     fileChooser.text = selectedFile.name
                     pkgChooser.prependItem(selectedFile.packageFqName.asString())
                     ReadAction.nonBlocking<VirtualFile> {
