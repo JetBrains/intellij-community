@@ -4,13 +4,23 @@ package org.jetbrains.plugins.terminal.fus
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
+import com.intellij.terminal.session.TerminalInputEvent
+import com.intellij.terminal.session.TerminalWriteBytesEvent
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.system.OS
+import fleet.multiplatform.shims.ConcurrentHashMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.KNOWN_SHELLS
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.getShellNameForStat
+import java.awt.event.KeyEvent
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.TimeSource
 
 private const val GROUP_ID = "terminal"
 
@@ -24,6 +34,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
   private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
+  private val INPUT_EVENT_ID_FIELD = EventFields.Int("input_event_id")
+  private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MICROSECONDS, "duration_micros")
 
   private val localShellStartedEvent = GROUP.registerEvent("local.exec",
                                                            OS_VERSION_FIELD,
@@ -40,6 +52,12 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                                                                TerminalCommandUsageStatistics.subCommandField,
                                                                EXIT_CODE_FIELD,
                                                                EXECUTION_TIME_FIELD)
+
+  private val frontendTypingLatencyEvent = GROUP.registerVarargEvent(
+    "terminal.frontend.typing.latency",
+    INPUT_EVENT_ID_FIELD,
+    DURATION_FIELD,
+  )
 
   @JvmStatic
   fun logLocalShellStarted(project: Project, shellCommand: Array<String>) {
@@ -62,4 +80,85 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                              EXIT_CODE_FIELD with exitCode,
                              EXECUTION_TIME_FIELD with executionTime.inWholeMilliseconds)
   }
+
+  internal fun logFrontendLatency(inputEventId: Int, duration: Duration) {
+    frontendTypingLatencyEvent.log(
+      INPUT_EVENT_ID_FIELD with inputEventId,
+      DURATION_FIELD with duration
+    )
+  }
+
+  fun startFrontendTypingActivity(e: KeyEvent): FrontendTypingActivity? {
+    ThreadingAssertions.softAssertEventDispatchThread()
+    if (e.id != KeyEvent.KEY_TYPED) return null
+    val activity = FrontendTypingActivityImpl(frontendTypingActivityId.incrementAndGet())
+    currentKeyEventTypingActivity = activity
+    return activity
+  }
+
+  fun getCurrentKeyEventTypingActivityOrNull(): FrontendTypingActivity? {
+    ThreadingAssertions.softAssertEventDispatchThread()
+    return currentKeyEventTypingActivity
+  }
+
+  fun getFrontendTypingActivityOrNull(event: TerminalInputEvent): FrontendTypingActivity? {
+    return frontendTypingActivityByInputEvent[InputEventIdentityWrapper(event)]
+  }
 }
+
+@ApiStatus.Internal
+interface FrontendTypingActivity {
+  val id: Int
+  fun startTerminalInputEventProcessing(writeBytesEvent: TerminalWriteBytesEvent)
+  fun finishKeyEventProcessing()
+  fun reportDuration()
+  fun finishTerminalInputEventProcessing()
+}
+
+private val frontendTypingActivityId = AtomicInteger()
+private var currentKeyEventTypingActivity: FrontendTypingActivityImpl? = null
+private val frontendTypingActivityByInputEvent = ConcurrentHashMap<InputEventIdentityWrapper, FrontendTypingActivityImpl>()
+
+// TerminalWriteBytesEvent is a data class, but we need to track individual events, not their content
+private class InputEventIdentityWrapper(private val event: TerminalInputEvent) {
+  override fun equals(other: Any?): Boolean = event === (other as? InputEventIdentityWrapper)?.event
+  override fun hashCode(): Int = System.identityHashCode(event)
+}
+
+private class FrontendTypingActivityImpl(override val id: Int) : FrontendTypingActivity {
+  private val start = TimeSource.Monotonic.markNow()
+  private var writeBytesEvent: TerminalWriteBytesEvent? = null
+
+  override fun startTerminalInputEventProcessing(writeBytesEvent: TerminalWriteBytesEvent) {
+    this.writeBytesEvent = writeBytesEvent
+    frontendTypingActivityByInputEvent[InputEventIdentityWrapper(writeBytesEvent)] = this
+    if (frontendTypingActivityByInputEvent.size > 10000) {
+      LOG.error(Throwable(
+        "Too many simultaneous frontend typing activities, likely a leak!" +
+        " Ensure that startTerminalInputEventProcessing() calls are paired with finishTerminalInputEventProcessing()"
+      ))
+    }
+  }
+
+  override fun finishKeyEventProcessing() {
+    ThreadingAssertions.softAssertEventDispatchThread()
+    currentKeyEventTypingActivity = null
+  }
+
+  override fun reportDuration() {
+    val duration = start.elapsedNow()
+    ReworkedTerminalUsageCollector.logFrontendLatency(
+      inputEventId = id,
+      duration,
+    )
+  }
+
+  override fun finishTerminalInputEventProcessing() {
+    val inputEvent = writeBytesEvent
+    if (inputEvent != null) {
+      frontendTypingActivityByInputEvent.remove(InputEventIdentityWrapper(inputEvent))
+    }
+  }
+}
+
+private val LOG = logger<FrontendTerminalSession>()
