@@ -104,7 +104,13 @@ class IjentWslNioFsToggleStrategy(
     recomputeEel(distro) { underlyingProvider, previousFs ->
       LOG.info("Switching $distro to the original file system but with tracing")
 
-      previousFs?.close()
+      try {
+        previousFs?.close()
+      }
+      catch (_: UnsupportedOperationException) {
+        // It is expected that the default file system always throws that exception on calling close(),
+        // but for the sake of following contracts, this method is nonetheless called.
+      }
       TracingFileSystemProvider(underlyingProvider).getLocalFileSystem()
     }
   }
