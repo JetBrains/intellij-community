@@ -123,8 +123,14 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiAnnotationMemberValue, AnnotationValueErrorContext> ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE =
     parameterized(PsiAnnotationMemberValue.class, AnnotationValueErrorContext.class, 
                   "annotation.attribute.incompatible.type").withRawDescription((value, context) -> {
-      String text = value instanceof PsiAnnotation annotation ? requireNonNull(annotation.getNameReferenceElement()).getText() :
-                    PsiTypesUtil.removeExternalAnnotations(requireNonNull(((PsiExpression)value).getType())).getInternalCanonicalText();
+      String text;
+      if (value instanceof PsiAnnotation annotation) {
+        text = requireNonNull(annotation.getNameReferenceElement()).getText();
+      }
+      else {
+        PsiType type = ((PsiExpression)value).getType();
+        text = type == null ? PsiKeyword.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
+      }
       return message("annotation.attribute.incompatible.type", context.typeText(), text);
     });
   public static final Parameterized<PsiArrayInitializerMemberValue, AnnotationValueErrorContext> ANNOTATION_ATTRIBUTE_ILLEGAL_ARRAY_INITIALIZER =
