@@ -4,9 +4,7 @@ package com.intellij.execution.wsl.ijent.nio.toggle
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
-import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
@@ -36,7 +34,6 @@ class IjentWslNioFsToggleStrategy(
   init {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       unregisterAll()
-      enabledInDistros.clear()
     }
   }
 
@@ -115,8 +112,13 @@ class IjentWslNioFsToggleStrategy(
   fun unregisterAll() {
     val service = EelNioBridgeService.getInstanceSync()
 
-    enabledInDistros.forEachGuaranteed { distro ->
-      service.deregister(WslEelDescriptor(distro))
+    val distros = mutableListOf<WSLDistribution>()
+    enabledInDistros.removeIf {
+      distros += it
+      true
+    }
+    for (distro in distros) {
+      service.unregister(WslEelDescriptor(distro))
     }
   }
 }

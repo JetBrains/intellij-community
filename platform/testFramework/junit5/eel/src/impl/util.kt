@@ -70,7 +70,7 @@ internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFile
   apiRef.set(eelApi)
   val root = Path.of(fakeRoot)
   initialized(IsolatedFileSystemImpl(root, descriptor, eelApi)) {
-    service.deregister(descriptor)
+    service.unregister(descriptor)
     directory.delete(true)
   }
 }
