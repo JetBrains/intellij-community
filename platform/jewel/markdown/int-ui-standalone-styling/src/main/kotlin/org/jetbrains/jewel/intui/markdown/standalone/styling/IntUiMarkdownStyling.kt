@@ -43,13 +43,7 @@ import org.jetbrains.jewel.ui.component.Typography
 public fun MarkdownStyling.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling =
-        InlinesStyling.light(
-            baseTextStyle,
-            editorTextStyle
-                .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
-                .toSpanStyle(),
-        ),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, editorTextStyle),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.light(inlinesStyling),
     heading: Heading = Heading.light(baseTextStyle),
@@ -65,13 +59,7 @@ public fun MarkdownStyling.Companion.light(
 public fun MarkdownStyling.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling =
-        InlinesStyling.dark(
-            baseTextStyle,
-            editorTextStyle
-                .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColorDark)
-                .toSpanStyle(),
-        ),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(defaultTextStyle, editorTextStyle),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.dark(inlinesStyling),
     heading: Heading = Heading.dark(baseTextStyle),
@@ -84,11 +72,13 @@ public fun MarkdownStyling.Companion.dark(
 ): MarkdownStyling =
     MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
-public fun Paragraph.Companion.light(inlinesStyling: InlinesStyling = InlinesStyling.light()): Paragraph =
-    Paragraph(inlinesStyling)
+public fun Paragraph.Companion.light(
+    inlinesStyling: InlinesStyling = InlinesStyling.light(defaultTextStyle, defaultEditorTextStyle)
+): Paragraph = Paragraph(inlinesStyling)
 
-public fun Paragraph.Companion.dark(inlinesStyling: InlinesStyling = InlinesStyling.dark()): Paragraph =
-    Paragraph(inlinesStyling)
+public fun Paragraph.Companion.dark(
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(defaultTextStyle, defaultEditorTextStyle)
+): Paragraph = Paragraph(inlinesStyling)
 
 public fun Heading.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -203,7 +193,7 @@ public fun Heading.H1.Companion.light(
             lineHeight = defaultTextSize * 2 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFFD8DEE4),
     underlineGap: Dp = 10.dp,
@@ -217,7 +207,7 @@ public fun Heading.H1.Companion.dark(
             lineHeight = defaultTextSize * 2 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFF21262d),
     underlineGap: Dp = 10.dp,
@@ -231,7 +221,7 @@ public fun Heading.H2.Companion.light(
             lineHeight = defaultTextSize * 1.5 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFFD8DEE4),
     underlineGap: Dp = 6.dp,
@@ -245,7 +235,7 @@ public fun Heading.H2.Companion.dark(
             lineHeight = defaultTextSize * 1.5 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFF21262d),
     underlineGap: Dp = 6.dp,
@@ -260,7 +250,7 @@ public fun Heading.H3.Companion.light(
             lineHeight = defaultTextSize * 1.25 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -275,7 +265,7 @@ public fun Heading.H3.Companion.dark(
             lineHeight = defaultTextSize * 1.25 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -290,7 +280,7 @@ public fun Heading.H4.Companion.light(
             lineHeight = defaultTextSize * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -305,7 +295,7 @@ public fun Heading.H4.Companion.dark(
             lineHeight = defaultTextSize * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -320,7 +310,7 @@ public fun Heading.H5.Companion.light(
             lineHeight = defaultTextSize * .875 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -335,7 +325,7 @@ public fun Heading.H5.Companion.dark(
             lineHeight = defaultTextSize * .875 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -351,7 +341,7 @@ public fun Heading.H6.Companion.light(
             lineHeight = defaultTextSize * .85 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -367,7 +357,7 @@ public fun Heading.H6.Companion.dark(
             lineHeight = defaultTextSize * .85 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -594,20 +584,32 @@ public fun HtmlBlock.Companion.dark(
 
 public fun InlinesStyling.Companion.light(
     textStyle: TextStyle = defaultTextStyle,
+    editorTextStyle: TextStyle = defaultEditorTextStyle,
     inlineCode: SpanStyle =
-        defaultEditorTextStyle
-            .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
+        editorTextStyle
+            .merge(
+                fontSize = textStyle.fontSize * .85,
+                background = inlineCodeBackgroundColorLight,
+                color = textStyle.color,
+            )
             .toSpanStyle(),
-    link: SpanStyle = textStyle.copy(color = IntUiLightTheme.colors.blue(2)).toSpanStyle(),
-    linkDisabled: SpanStyle = link.copy(color = IntUiLightTheme.colors.gray(8)),
-    linkHovered: SpanStyle = link.copy(textDecoration = TextDecoration.Underline),
-    linkFocused: SpanStyle = link.copy(background = Color(0x12000000), textDecoration = TextDecoration.Underline),
-    linkPressed: SpanStyle = link.copy(background = Color(0x1D000000), textDecoration = TextDecoration.Underline),
+    link: SpanStyle = SpanStyle(color = IntUiLightTheme.colors.blue(2)),
+    linkDisabled: SpanStyle = SpanStyle(color = IntUiLightTheme.colors.gray(8)),
+    linkHovered: SpanStyle =
+        SpanStyle(color = IntUiLightTheme.colors.blue(2), textDecoration = TextDecoration.Underline),
+    linkFocused: SpanStyle = SpanStyle(background = Color(0x12000000), textDecoration = TextDecoration.Underline),
+    linkPressed: SpanStyle = SpanStyle(background = Color(0x1D000000), textDecoration = TextDecoration.Underline),
     linkVisited: SpanStyle = link,
-    emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
-    strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
-    inlineHtml: SpanStyle = textStyle.toSpanStyle(),
-    renderInlineHtml: Boolean = true,
+    emphasis: SpanStyle = SpanStyle(fontStyle = FontStyle.Italic),
+    strongEmphasis: SpanStyle = SpanStyle(fontWeight = FontWeight.Bold),
+    inlineHtml: SpanStyle =
+        editorTextStyle
+            .merge(
+                fontSize = textStyle.fontSize * .85,
+                color = IntUiLightTheme.colors.gray(8),
+                background = Color.Unspecified,
+            )
+            .toSpanStyle(),
 ): InlinesStyling =
     InlinesStyling(
         textStyle = textStyle,
@@ -621,9 +623,90 @@ public fun InlinesStyling.Companion.light(
         emphasis = emphasis,
         strongEmphasis = strongEmphasis,
         inlineHtml = inlineHtml,
-        renderInlineHtml = renderInlineHtml,
     )
 
+@Deprecated(
+    "Use the new variant, without renderInlineHtml and with editorTextStyle, instead",
+    level = DeprecationLevel.HIDDEN,
+)
+public fun InlinesStyling.Companion.light(
+    textStyle: TextStyle = defaultTextStyle,
+    inlineCode: SpanStyle =
+        defaultEditorTextStyle
+            .merge(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
+            .toSpanStyle(),
+    link: SpanStyle = textStyle.copy(color = IntUiLightTheme.colors.blue(2)).toSpanStyle(),
+    linkDisabled: SpanStyle = link.copy(color = IntUiLightTheme.colors.gray(8)),
+    linkHovered: SpanStyle = link.copy(textDecoration = TextDecoration.Underline),
+    linkFocused: SpanStyle = link.copy(background = Color(0x12000000), textDecoration = TextDecoration.Underline),
+    linkPressed: SpanStyle = link.copy(background = Color(0x1D000000), textDecoration = TextDecoration.Underline),
+    linkVisited: SpanStyle = link,
+    emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
+    strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
+    inlineHtml: SpanStyle = textStyle.toSpanStyle(),
+    @Suppress("UnusedParameter") renderInlineHtml: Boolean = true,
+): InlinesStyling =
+    InlinesStyling(
+        textStyle = textStyle,
+        inlineCode = inlineCode,
+        link = link,
+        linkDisabled = linkDisabled,
+        linkFocused = linkFocused,
+        linkHovered = linkHovered,
+        linkPressed = linkPressed,
+        linkVisited = linkVisited,
+        emphasis = emphasis,
+        strongEmphasis = strongEmphasis,
+        inlineHtml = inlineHtml,
+    )
+
+public fun InlinesStyling.Companion.dark(
+    textStyle: TextStyle = defaultTextStyle,
+    editorTextStyle: TextStyle = defaultEditorTextStyle,
+    inlineCode: SpanStyle =
+        editorTextStyle
+            .merge(
+                fontSize = textStyle.fontSize * .85,
+                background = inlineCodeBackgroundColorLight,
+                color = textStyle.color,
+            )
+            .toSpanStyle(),
+    link: SpanStyle = SpanStyle(color = IntUiDarkTheme.colors.blue(9)),
+    linkDisabled: SpanStyle = SpanStyle(color = IntUiDarkTheme.colors.gray(8)),
+    linkHovered: SpanStyle =
+        SpanStyle(color = IntUiDarkTheme.colors.blue(9), textDecoration = TextDecoration.Underline),
+    linkFocused: SpanStyle = SpanStyle(background = Color(0x16FFFFFF), textDecoration = TextDecoration.Underline),
+    linkPressed: SpanStyle = SpanStyle(background = Color(0x26FFFFFF), textDecoration = TextDecoration.Underline),
+    linkVisited: SpanStyle = link,
+    emphasis: SpanStyle = SpanStyle(fontStyle = FontStyle.Italic),
+    strongEmphasis: SpanStyle = SpanStyle(fontWeight = FontWeight.Bold),
+    inlineHtml: SpanStyle =
+        editorTextStyle
+            .merge(
+                fontSize = textStyle.fontSize * .85,
+                color = IntUiDarkTheme.colors.gray(8),
+                background = Color.Unspecified,
+            )
+            .toSpanStyle(),
+): InlinesStyling =
+    InlinesStyling(
+        textStyle = textStyle,
+        inlineCode = inlineCode,
+        link = link,
+        linkDisabled = linkDisabled,
+        linkFocused = linkFocused,
+        linkHovered = linkHovered,
+        linkPressed = linkPressed,
+        linkVisited = linkVisited,
+        emphasis = emphasis,
+        strongEmphasis = strongEmphasis,
+        inlineHtml = inlineHtml,
+    )
+
+@Deprecated(
+    "Use the new variant, without renderInlineHtml and with editorTextStyle, instead",
+    level = DeprecationLevel.HIDDEN,
+)
 public fun InlinesStyling.Companion.dark(
     textStyle: TextStyle = defaultTextStyle,
     inlineCode: SpanStyle =
@@ -639,7 +722,7 @@ public fun InlinesStyling.Companion.dark(
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
-    renderInlineHtml: Boolean = true,
+    @Suppress("UnusedParameter") renderInlineHtml: Boolean = true,
 ): InlinesStyling =
     InlinesStyling(
         textStyle = textStyle,
@@ -653,7 +736,6 @@ public fun InlinesStyling.Companion.dark(
         emphasis = emphasis,
         strongEmphasis = strongEmphasis,
         inlineHtml = inlineHtml,
-        renderInlineHtml = renderInlineHtml,
     )
 
 private val blockBackgroundColorLight = Color(0xFFF6F8FA)

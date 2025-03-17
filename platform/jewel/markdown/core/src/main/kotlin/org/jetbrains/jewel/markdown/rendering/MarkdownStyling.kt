@@ -917,8 +917,35 @@ public class InlinesStyling(
     public val emphasis: SpanStyle,
     public val strongEmphasis: SpanStyle,
     public val inlineHtml: SpanStyle,
-    public val renderInlineHtml: Boolean,
 ) {
+    @Deprecated("Use variant without renderInlineHtml instead.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        textStyle: TextStyle,
+        inlineCode: SpanStyle,
+        link: SpanStyle,
+        linkDisabled: SpanStyle,
+        linkFocused: SpanStyle,
+        linkHovered: SpanStyle,
+        linkPressed: SpanStyle,
+        linkVisited: SpanStyle,
+        emphasis: SpanStyle,
+        strongEmphasis: SpanStyle,
+        inlineHtml: SpanStyle,
+        @Suppress("UnusedPrivateProperty") renderInlineHtml: Boolean,
+    ) : this(
+        textStyle,
+        inlineCode,
+        link,
+        linkDisabled,
+        linkFocused,
+        linkHovered,
+        linkPressed,
+        linkVisited,
+        emphasis,
+        strongEmphasis,
+        inlineHtml,
+    )
+
     public val textLinkStyles: TextLinkStyles =
         TextLinkStyles(style = link, focusedStyle = linkFocused, hoveredStyle = linkHovered, pressedStyle = linkPressed)
 
@@ -928,7 +955,6 @@ public class InlinesStyling(
 
         other as InlinesStyling
 
-        if (renderInlineHtml != other.renderInlineHtml) return false
         if (textStyle != other.textStyle) return false
         if (inlineCode != other.inlineCode) return false
         if (link != other.link) return false
@@ -946,8 +972,7 @@ public class InlinesStyling(
     }
 
     override fun hashCode(): Int {
-        var result = renderInlineHtml.hashCode()
-        result = 31 * result + textStyle.hashCode()
+        var result = textStyle.hashCode()
         result = 31 * result + inlineCode.hashCode()
         result = 31 * result + link.hashCode()
         result = 31 * result + linkDisabled.hashCode()
@@ -975,7 +1000,6 @@ public class InlinesStyling(
             "emphasis=$emphasis, " +
             "strongEmphasis=$strongEmphasis, " +
             "inlineHtml=$inlineHtml, " +
-            "renderInlineHtml=$renderInlineHtml, " +
             "textLinkStyles=$textLinkStyles" +
             ")"
     }
