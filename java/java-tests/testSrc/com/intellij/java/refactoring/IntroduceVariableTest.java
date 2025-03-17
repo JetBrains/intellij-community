@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -364,7 +364,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("sum", true, true, false, "int") {
       @Override
       protected void showErrorMessage(Project project, Editor editor, String message) {
-        assertEquals("Cannot perform refactoring.\nExtracting selected expression would change the semantic of the whole expression.", message);
+        assertEquals("Cannot perform refactoring.\nExtracting the selected expression changes the semantics of the surrounding expression.", message);
       }
     });
   }
