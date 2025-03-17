@@ -113,7 +113,7 @@ common_attr = add_dicts(
             providers = [_JavacOptions],
         ),
         "_jvm_builder": attr.label(
-            default = "//src/jps-builder:worker-jvm",
+            default = "//src/jps-builder:jvm-builder",
             executable = True,
             allow_files = True,
             cfg = "exec",

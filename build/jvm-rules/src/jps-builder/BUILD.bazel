@@ -4,7 +4,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//:src/jvm-args.bzl", "get_jvm_flags")
 
 kt_jvm_library(
-    name = "worker-lib",
+    name = "jvm-builder-lib",
     srcs = glob(["**/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
@@ -56,8 +56,8 @@ kt_jvm_library(
 )
 
 java_binary(
-    name = "worker-jvm",
-    runtime_deps = [":worker-lib"],
+    name = "jvm-builder",
+    runtime_deps = [":jvm-builder-lib"],
     main_class = "org.jetbrains.bazel.jvm.jps.JpsBuildWorker",
     jvm_flags = get_jvm_flags([
         "-Dkotlin.environment.keepalive=true",

@@ -10,7 +10,7 @@ kt_jvm_library(
     deps = [
         "@lib//:kotlin-stdlib",
         "@lib//:assert_j",
-        "//src/jps-builder:worker-lib",
+        "//src/jps-builder:jvm-builder-lib",
     ],
 )
 
