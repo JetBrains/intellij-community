@@ -2732,9 +2732,11 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$General
 - sf:QuestionDialog:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:ReaderMode:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Refresh:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:RefreshAuto:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Remove:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Reset:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:RunWithCoverage:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:SelectIn:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:SeparatorH:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Settings:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Show:org.jetbrains.jewel.ui.icon.IntelliJIconKey
