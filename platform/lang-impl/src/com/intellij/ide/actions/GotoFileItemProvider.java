@@ -32,6 +32,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.*;
 import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +108,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       return !FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled() ||
              hasSuggestions.get() ||
              hasSuggestionsFixedPattern.get() ||
-             processItemsForPatternWithLevenshtein(parameters, consumer, indicator);
+             processItemsForPatternWithLevenshteinV2(base, parameters, consumer, indicator);
     }
     finally {
       if (LOG.isDebugEnabled()) {
@@ -154,7 +155,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
             if (fileItem instanceof PsiDirectory directory) {
               matchingItems.add(new FoundItemDescriptor<>(fileItem, Math.max(1, weight - 10)));
               matchingDirectories.add(directory);
-            } else {
+            }
+            else {
               matchingItems.add(new FoundItemDescriptor<>(fileItem, weight));
             }
           }
@@ -180,6 +182,154 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     return true;
+  }
+
+  /**
+   * Implementation uses the {@code processLimitedTwoComponentPattern} function,
+   * which processes only patterns consisting of max two components and processes a limited number of cases.
+   */
+  private boolean processItemsForPatternWithLevenshteinV2(final @NotNull ChooseByNameViewModel base,
+                                                          @NotNull FindSymbolParameters parameters,
+                                                          @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
+                                                          @NotNull ProgressIndicator indicator) {
+
+    long startEnd = System.currentTimeMillis();
+
+    List<FoundItemDescriptor<PsiFileSystemItem>> matchingItems =
+      processLimitedTwoComponentPattern(base, parameters.getCompletePattern(), parameters, consumer, indicator);
+
+    Processor<FoundItemDescriptor<?>> trackingProcessor = res -> {
+      return consumer.process(res);
+    };
+    if (!ContainerUtil.process(matchingItems, trackingProcessor)) {
+      return false;
+    }
+
+    long timeEnd = System.currentTimeMillis();
+
+    return true;
+  }
+
+  /**
+   * Processes a pattern containing up to two components.
+   *
+   * @return A list of matching {@code FoundItemDescriptor<PsiFileSystemItem>} objects,
+   * or an empty list if no matches are found or if the pattern contains more than two components.
+   */
+  private List<FoundItemDescriptor<PsiFileSystemItem>> processLimitedTwoComponentPattern(
+    final @NotNull ChooseByNameViewModel base, @NotNull String pattern,
+                                                                                @NotNull FindSymbolParameters parameters,
+                                                                                @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
+                                                                                @NotNull ProgressIndicator indicator) {
+    List<String> patternComponents = LevenshteinCalculator.normalizeString(pattern);
+
+    if (patternComponents.size() > 2 || patternComponents.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    // Find files that fit the pattern in the original order
+    List<FoundItemDescriptor<PsiFileSystemItem>> matchingItems =
+      new ArrayList<>(findItemsByParentChildPattern(base, patternComponents, parameters, consumer, indicator));
+
+    // If there are no results, find files that fit the pattern in the inverted order
+    if (matchingItems.isEmpty() && patternComponents.size() == 2) {
+      List<String> invertedPatternComponents = new ArrayList<>(patternComponents);
+      Collections.reverse(invertedPatternComponents);
+
+      matchingItems.addAll(findItemsByParentChildPattern(base, invertedPatternComponents, parameters, consumer, indicator));
+    }
+
+    return matchingItems;
+  }
+
+  /**
+   * Processes specific pattern cases.
+   * <p>
+   * 1. If the pattern consists of a single component, the method searches for all directories
+   * and files similar to this component.
+   * If exactly one directory is found, it returns all names within that directory.
+   * 2. If the pattern consists of two components, it assumes that the second component
+   * is the name of a file or directory and the first component is its parent.
+   */
+  private List<FoundItemDescriptor<PsiFileSystemItem>> findItemsByParentChildPattern(final @NotNull ChooseByNameViewModel base,
+                                                                                      @NotNull List<String> patternComponents,
+                                                                                      @NotNull FindSymbolParameters parameters,
+                                                                                      @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
+                                                                                      @NotNull ProgressIndicator indicator) {
+    // processing only two specific cases: when the patternComponents.size() == 1 and 2
+    if (patternComponents.isEmpty() || patternComponents.size() > 2) {
+      return Collections.emptyList();
+    }
+
+    GlobalSearchScope searchScope = parameters.getSearchScope();
+
+    // Find all directories and files names similar to the last component in patternComponents
+    List<MatchResult> matchingNames = new ArrayList<>();
+    String lastPatternComponent = patternComponents.get(patternComponents.size() - 1);
+    MinusculeMatcher matcher = buildPatternMatcher(lastPatternComponent, true);
+    var nameMatchingCheck = new ProcessorWithThrottledCancellationCheck<>(
+      (CharSequence fileNameCharSeq) -> {
+        indicator.checkCanceled();
+        if (fileNameCharSeq != null) {
+          String fileName = fileNameCharSeq.toString();
+          MatchResult result = matches(base, parameters.getCompletePattern(), matcher, fileName);
+          if (result != null) {
+            matchingNames.add(result);
+          }
+          else {
+            String nameWithoutExtension = FileUtil.getNameWithoutExtension(fileName); // FIXME: directories can contain a dot
+            float distance = LevenshteinCalculator.distanceBetweenStrings(nameWithoutExtension, lastPatternComponent);
+            if (distance > LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE) {
+              matchingNames.add(new MatchResult(fileName, LevenshteinCalculator.weightFromDistance(distance), false));
+            }
+          }
+        }
+        return true;
+      }
+    );
+    FilenameIndex.processAllFileNames(nameMatchingCheck, searchScope, parameters.getIdFilter());
+
+    if (matchingNames.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    Function<String, Object[]> indexResult = key -> myModel.getElementsByName(key, parameters.withScope(searchScope), indicator);
+    JBIterable<FoundItemDescriptor<PsiFileSystemItem>> filesMatchingPath = JBIterable.from(matchingNames)
+      .flatMap(nameGroup -> getItemsForNames(searchScope, Collections.singletonList(nameGroup), indexResult));
+
+    List<FoundItemDescriptor<PsiFileSystemItem>> matchingItems = new ArrayList<>();
+    List<PsiDirectory> matchingDirectories = new ArrayList<>();
+    for (FoundItemDescriptor<PsiFileSystemItem> itemDescriptor : filesMatchingPath) {
+      PsiFileSystemItem psiFileItem = itemDescriptor.getItem();
+      int psiFileItemWeight = itemDescriptor.getWeight();
+
+      if (patternComponents.size() == 2) { // Narrowing down filename with directory
+        VirtualFile parentVirtualFile = psiFileItem.getVirtualFile().getParent();
+        if (parentVirtualFile == null) {
+          continue;
+        }
+        String parentName = parentVirtualFile.getName();
+        String parentInPattern = patternComponents.get(0);
+        float distance = LevenshteinCalculator.distanceBetweenStrings(parentName, parentInPattern);
+        if (distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE) {
+          int avgWeight = (psiFileItemWeight + LevenshteinCalculator.weightFromDistance(distance)) / 2;
+          matchingItems.add(new FoundItemDescriptor<>(psiFileItem, avgWeight));
+        }
+      }
+      else {
+        matchingItems.add(itemDescriptor);
+        if (psiFileItem instanceof PsiDirectory directory) {
+          matchingDirectories.add(directory);
+        }
+      }
+    }
+
+    if (matchingDirectories.size() == 1) {
+      List<FoundItemDescriptor<PsiFileSystemItem>> childElements = getListWithChildItems(matchingDirectories.get(0), myProject);
+      matchingItems.addAll(childElements);
+    }
+
+    return matchingItems;
   }
 
   private boolean processItemsForPattern(@NotNull ChooseByNameViewModel base,
