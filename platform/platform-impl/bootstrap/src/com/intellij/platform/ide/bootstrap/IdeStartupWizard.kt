@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import kotlinx.coroutines.*
@@ -35,15 +36,20 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
     .getExtensionPoint<IdeStartupWizard>("com.intellij.ideStartupWizard") as ExtensionPointImpl<IdeStartupWizard>
   val sortedAdapters = point.sortedAdapters
   var firstWizardExecuted = false // we need to do certain checks only for the first time
+  val wizardPairs = arrayListOf<Pair<IdeStartupWizard, PluginDescriptor>>()
   for (adapter in sortedAdapters) {
-    val pluginDescriptor = adapter.pluginDescriptor
+    val pluginDescriptor: PluginDescriptor = adapter.pluginDescriptor
     if (!pluginDescriptor.isBundled) {
       LOG.error(PluginException("ideStartupWizard extension can be implemented only by a bundled plugin", pluginDescriptor.pluginId))
       continue
     }
+    val wizard = adapter.createInstance<IdeStartupWizard>(app) ?: continue
+    wizardPairs.add(Pair(wizard, pluginDescriptor))
+  }
 
+  for (wizardPair in wizardPairs) {
+    val wizard = wizardPair.first
     try {
-      val wizard = adapter.createInstance<IdeStartupWizard>(app) ?: continue
       if (!firstWizardExecuted) {
         val timeoutMs = System.getProperty("intellij.startup.wizard.initial.timeout").orEmpty().toIntOrNull() ?: 2000
 
@@ -69,7 +75,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
       }
 
       LOG.info("Executing the onboarding flow for adapter $wizard.")
-      span("${adapter.assignableToClassName}.run", Dispatchers.EDT) block@{
+      span("${wizard::class.java}.run", Dispatchers.EDT) block@{
         if (!firstWizardExecuted) {
           val startupStatus = com.intellij.platform.ide.bootstrap.isInitialStart
           LOG.info("Inside the onboarding flow for adapter $wizard. StartupStatus.isCompleted: ${startupStatus?.isCompleted}")
@@ -105,7 +111,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
         break
     }
     catch (e: Throwable) {
-      LOG.error(PluginException(e, pluginDescriptor.pluginId))
+      LOG.error(PluginException(e, wizardPair.second.pluginId))
     }
   }
   point.reset()
