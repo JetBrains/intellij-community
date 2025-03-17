@@ -187,7 +187,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
         return insertAddendum(ResourceUtil.loadText(descriptionStream),
                               new HtmlBuilder()
                                 .append(getTool().getDescriptionAddendum())
-                                .append(HtmlChunk.p().child(HtmlChunk.tag("small").addText("Inspection ID: " + getID())))
+                                .append(HtmlChunk.p().child(HtmlChunk.tag("small").addText("Inspection ID: " + getShortName())))
                                 .toFragment());
       }
       return null;
