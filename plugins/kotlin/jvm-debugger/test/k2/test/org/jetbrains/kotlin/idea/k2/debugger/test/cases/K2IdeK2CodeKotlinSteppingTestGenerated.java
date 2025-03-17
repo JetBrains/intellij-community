@@ -290,6 +290,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/stepInto/interfacesJvmDefaultDisable.kt");
         }
 
+        @TestMetadata("localDelegatedPropertyAndClinit.kt")
+        public void testLocalDelegatedPropertyAndClinit() throws Exception {
+            runTest("../testData/stepping/stepInto/localDelegatedPropertyAndClinit.kt");
+        }
+
         @TestMetadata("localFun.kt")
         public void testLocalFun() throws Exception {
             runTest("../testData/stepping/stepInto/localFun.kt");
