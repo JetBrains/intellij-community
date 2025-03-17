@@ -23,6 +23,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import java.awt.AWTEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -60,7 +61,13 @@ internal abstract class TerminalEventDispatcher(
 
   override fun dispatch(e: AWTEvent): Boolean {
     if (e is KeyEvent) {
-      dispatchKeyEvent(e)
+      val fusActivity = ReworkedTerminalUsageCollector.startFrontendTypingActivity(e)
+      try {
+        dispatchKeyEvent(e)
+      }
+      finally {
+        fusActivity?.finishKeyEventProcessing()
+      }
     }
     return false
   }

@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 
@@ -30,7 +31,13 @@ internal class TerminalInput(
   /**
    * Use this channel to buffer the input events before we get the actual channel from the backend.
    */
-  private val bufferChannel = Channel<TerminalInputEvent>(capacity = 10000, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val bufferChannel = Channel<TerminalInputEvent>(
+    capacity = 10000,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    onUndeliveredElement = { event ->
+      ReworkedTerminalUsageCollector.getFrontendTypingActivityOrNull(event)?.finishTerminalInputEventProcessing()
+    }
+  )
 
   private val inputChannelDeferred: Deferred<SendChannel<TerminalInputEvent>> =
     coroutineScope.async(Dispatchers.IO + CoroutineName("Get input channel")) {
@@ -41,9 +48,15 @@ internal class TerminalInput(
     val job = coroutineScope.launch {
       val targetChannel = inputChannelDeferred.await()
 
+      var currentEvent: TerminalInputEvent? = null
       try {
         for (event in bufferChannel) {
+          currentEvent = event
           targetChannel.send(event)
+          val fusActivity = ReworkedTerminalUsageCollector.getFrontendTypingActivityOrNull(event)
+          fusActivity?.reportDuration()
+          fusActivity?.finishTerminalInputEventProcessing()
+          currentEvent = null
         }
       }
       catch (e: CancellationException) {
@@ -54,6 +67,11 @@ internal class TerminalInput(
       }
       catch (t: Throwable) {
         LOG.error("Error while sending input event", t)
+      }
+      finally {
+        if (currentEvent != null) {
+          ReworkedTerminalUsageCollector.getFrontendTypingActivityOrNull(currentEvent)?.finishTerminalInputEventProcessing()
+        }
       }
     }
     job.invokeOnCompletion {
@@ -76,7 +94,10 @@ internal class TerminalInput(
   }
 
   fun sendBytes(data: ByteArray) {
-    sendEvent(TerminalWriteBytesEvent(data))
+    val writeBytesEvent = TerminalWriteBytesEvent(data)
+    val fusActivity = ReworkedTerminalUsageCollector.getCurrentKeyEventTypingActivityOrNull()
+    fusActivity?.startTerminalInputEventProcessing(writeBytesEvent)
+    sendEvent(writeBytesEvent)
   }
 
   fun sendClearBuffer() {
@@ -92,7 +113,12 @@ internal class TerminalInput(
   }
 
   private fun sendEvent(event: TerminalInputEvent) {
+    val fusActivity = ReworkedTerminalUsageCollector.getFrontendTypingActivityOrNull(event)
     val result = bufferChannel.trySend(event)
+    if (fusActivity != null && result.isFailure) {
+      fusActivity.finishTerminalInputEventProcessing()
+    }
+
     if (result.isClosed) {
       LOG.warn("Terminal input channel is closed, $event won't be sent", result.exceptionOrNull())
     }
