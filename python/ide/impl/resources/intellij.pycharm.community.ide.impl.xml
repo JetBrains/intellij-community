@@ -88,7 +88,7 @@
     <applicationService serviceImplementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeSettings"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector"/>
-    <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
+    <notificationGroup id="PyCharm Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
                        bundle="messages.PyCharmCommunityCustomizationBundle" key="notification.group.pro.advertiser"/>
 
     <ignoredFileProvider implementation="com.intellij.pycharm.community.ide.impl.configuration.PyTemporarilyIgnoredFileProvider"/>
