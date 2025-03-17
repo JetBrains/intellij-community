@@ -217,7 +217,7 @@ public class JDParser {
       l.set(i, line);
     }
 
-    if (mySettings.JD_KEEP_EMPTY_LINES) {
+    if (mySettings.shouldKeepEmptyTrailingLines()) {
       // counting for the empty lines in the prefix and the suffix of the javadoc to restore them in the future
       int prefixLineCount = 0;
       int suffixLineCount = 0;

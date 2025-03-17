@@ -793,9 +793,11 @@ public final class CommonJavaRefactoringUtil {
     boolean javadocEnabled = settings.ENABLE_JAVADOC_FORMATTING;
     try {
       settings.ENABLE_JAVADOC_FORMATTING = true;
+      settings.JD_KEEP_TRAILING_EMPTY_LINES = false;
       CommentFormatter formatter = new CommentFormatter(method.getContainingFile());
       formatter.processComment(docComment.getNode());
     } finally {
+      settings.JD_KEEP_TRAILING_EMPTY_LINES = true;
       settings.ENABLE_JAVADOC_FORMATTING = javadocEnabled;
     }
   }

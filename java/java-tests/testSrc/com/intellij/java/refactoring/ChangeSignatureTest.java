@@ -22,16 +22,6 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   private CommonCodeStyleSettings getCommonSettings() {
     return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
   }
-  
-  private JavaCodeStyleSettings getJavaSettings() {
-    return getCurrentCodeStyleSettings().getCustomSettings(JavaCodeStyleSettings.class);
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    getJavaSettings().JD_KEEP_EMPTY_LINES = false;
-  }
 
   public void testSimple() {
     doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);

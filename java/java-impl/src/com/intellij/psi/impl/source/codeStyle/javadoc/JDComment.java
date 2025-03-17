@@ -194,7 +194,7 @@ public class JDComment {
   }
 
   private boolean shouldAddExtraLines(int lineCount) {
-    return lineCount > 0 && myFormatter.getSettings().JD_KEEP_EMPTY_LINES;
+    return lineCount > 0 && myFormatter.getSettings().shouldKeepEmptyTrailingLines();
   }
 
   private boolean hasEmptyTrimmedLines() {

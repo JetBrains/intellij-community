@@ -237,6 +237,7 @@ public final class FixDocCommentAction extends EditorAction {
           LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
         if (langProvider != null) {
           DocCommentSettings docCommentSettings = langProvider.getDocCommentSettings(tempSettings);
+          docCommentSettings.setRemoveEmptyLines(true);
           docCommentSettings.setRemoveEmptyTags(false);
         }
         CodeStyleManager.getInstance(project).reformatText(file, start, end);

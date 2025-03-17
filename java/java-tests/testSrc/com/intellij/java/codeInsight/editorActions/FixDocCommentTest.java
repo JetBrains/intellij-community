@@ -6,13 +6,6 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
 public class FixDocCommentTest extends AbstractEditorTest {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    JavaCodeStyleSettings settings = getCustomSettings(JavaCodeStyleSettings.class);
-    settings.JD_KEEP_EMPTY_LINES = false;
-  }
-
   public void testGenerateMethodDoc() {
     String initial = """
       class Test {

@@ -261,6 +261,12 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   @Property(externalName = "doc_keep_invalid_tags")
   public boolean JD_KEEP_INVALID_TAGS = true;
+  /**
+   * This option is internal and not visible to the user.
+   *
+   * @see JavaCodeStyleSettings#shouldKeepEmptyTrailingLines()
+   */
+  public boolean JD_KEEP_TRAILING_EMPTY_LINES = true;
   @Property(externalName = "doc_keep_empty_lines")
   public boolean JD_KEEP_EMPTY_LINES = true;
   @Property(externalName = "doc_do_not_wrap_if_one_line")
@@ -286,6 +292,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean JD_INDENT_ON_CONTINUATION = false;
 
   // endregion
+
+  public boolean shouldKeepEmptyTrailingLines() {
+    return JD_KEEP_TRAILING_EMPTY_LINES && JD_KEEP_EMPTY_LINES;
+  }
 
   @Override
   public boolean isLayoutStaticImportsSeparately() {
