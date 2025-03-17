@@ -380,8 +380,8 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
     ) {
       currentIndex++
     }
-    if (currentIndex <= 1 || offset - currentIndex>=0 && text[offset - currentIndex] != '\n') return 0
-    while (currentIndex >= 0 && offset - currentIndex>=0 && text[offset - currentIndex].isWhitespace()) {
+    if (currentIndex <= 1 || offset - currentIndex >= 0 && text[offset - currentIndex] != '\n') return 0
+    while (currentIndex >= 0 && offset - currentIndex >= 0 && text[offset - currentIndex].isWhitespace()) {
       currentIndex--
     }
     if (currentIndex >= 0) indexOf = currentIndex
