@@ -131,7 +131,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon MoveToRightTop = load("expui/actions/moveToRightTop.svg", "actions/moveToRightTop.svg", 2034850953, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToTopLeft = load("actions/moveToTopLeft.svg", 1557541143, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToTopRight = load("actions/moveToTopRight.svg", 1602400676, 2);
-    /** 16x16 */ public static final @NotNull Icon MoveToWindow = load("actions/moveToWindow.svg", 434637226, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToWindow = load("expui/actions/moveToWindow.svg", "actions/moveToWindow.svg", 434637226, 2);
     /** 16x16 */ public static final @NotNull Icon MoveUp = load("expui/general/moveUp.svg", "actions/moveUp.svg", 462475104, 2);
     /** 16x16 */ public static final @NotNull Icon New = load("actions/new.svg", 418266197, 2);
     /** 16x16 */ public static final @NotNull Icon NewFolder = load("expui/actions/newFolder.svg", "actions/newFolder.svg", 1755918051, 2);
@@ -144,7 +144,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Play_first = load("expui/actions/playFirst.svg", "actions/play_first.svg", -987505166, 2);
     /** 16x16 */ public static final @NotNull Icon Play_forward = load("expui/actions/playForward.svg", "actions/play_forward.svg", 84808551, 2);
     /** 16x16 */ public static final @NotNull Icon Play_last = load("expui/actions/playLast.svg", "actions/play_last.svg", 1200003259, 2);
-    /** 16x16 */ public static final @NotNull Icon PopFrame = load("actions/popFrame.svg", -2061379356, 2);
+    /** 16x16 */ public static final @NotNull Icon PopFrame = load("expui/actions/popFrame.svg", "actions/popFrame.svg", -2061379356, 2);
     /** 26x26 */ public static final @NotNull Icon PresentationAssistantSettings = load("actions/presentationAssistantSettings.svg", -1777013294, 0);
     /** 16x16 */ public static final @NotNull Icon PreserveCase = load("expui/inline/preserveCase.svg", "actions/preserveCase.svg", 1309462994, 0);
     /** 16x16 */ public static final @NotNull Icon PreserveCaseHover = load("expui/inline/preserveCase.svg", "actions/preserveCaseHover.svg", 819147333, 0);
@@ -603,9 +603,11 @@ public class AllIcons {
     /** 32x32 */ public static final @NotNull Icon QuestionDialog = load("expui/general/questionDialog.svg", "general/questionDialog.svg", -1957202168, 0);
     /** 16x16 */ public static final @NotNull Icon ReaderMode = load("expui/general/readerMode.svg", "general/readerMode.svg", -808241020, 2);
     /** 16x16 */ public static final @NotNull Icon Refresh = load("expui/general/refresh.svg", 323445437, 2);
+    /** 16x16 */ public static final @NotNull Icon RefreshAuto = load("expui/general/refreshAuto.svg", -1813763351, 2);
     /** 16x16 */ public static final @NotNull Icon Remove = load("expui/general/remove.svg", "general/remove.svg", 1967957495, 2);
     /** 16x16 */ public static final @NotNull Icon Reset = load("expui/general/reset.svg", "general/reset.svg", 505829495, 2);
     /** 16x16 */ public static final @NotNull Icon RunWithCoverage = load("expui/run/runWithCoverage.svg", "general/runWithCoverage.svg", 259168745, 2);
+    /** 16x16 */ public static final @NotNull Icon SelectIn = load("expui/general/selectIn.svg", -1402413017, 2);
     /** 16x16 */ public static final @NotNull Icon SeparatorH = load("expui/general/separatorHorizontal.svg", "general/separatorH.svg", 89692098, 2);
     /** 16x16 */ public static final @NotNull Icon Settings = load("expui/general/settings.svg", "general/settings.svg", -2083563258, 2);
     /** 16x16 */ public static final @NotNull Icon Show = load("expui/general/show.svg", 1378226210, 2);
