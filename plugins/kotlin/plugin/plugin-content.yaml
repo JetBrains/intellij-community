@@ -103,7 +103,7 @@
   - name: kotlin.base.external-build-system
   - name: kotlin.base.scripting
     libraries:
-      amper.dependency.resolution:
+      amper.dependency.resolution.kotlin.base.scripting:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0/dependency-resolution-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0/concurrency-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2/slf4j-api-2.jar
