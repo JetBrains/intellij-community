@@ -76,7 +76,7 @@ sealed interface PluginAdvertiserService {
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
     val pyCharmProfessional: SuggestedIde = SuggestedIde(
-      name = "PyCharm Professional",
+      name = "PyCharm",
       productCode = "PY",
       defaultDownloadUrl = "https://www.jetbrains.com/pycharm/download/",
       platformSpecificDownloadUrlTemplate = "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}",

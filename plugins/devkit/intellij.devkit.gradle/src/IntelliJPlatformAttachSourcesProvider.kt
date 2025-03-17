@@ -78,7 +78,7 @@ internal class IntelliJPlatformAttachSourcesProvider(private val cs: CoroutineSc
   /**
    * Resolve and attach IntelliJ Platform sources to the currently handled dependency in a requested version.
    *
-   * Requests PyCharm Community sources if PyCharm Community or PyCharm Professional.
+   * Requests PyCharm Community sources if PyCharm Community or PyCharm.
    * Requests IntelliJ IDEA Ultimate sources if IntelliJ IDEA Ultimate 2024.2+.
    * In all other cases, requests IntelliJ IDEA Community sources.
    *
@@ -268,7 +268,7 @@ internal class IntelliJPlatformAttachSourcesProvider(private val cs: CoroutineSc
 
   private fun resolveProductCoordinates(product: IntelliJPlatformProduct, majorVersion: Int) =
     when (product) {
-      // For PyCharm Community and PyCharm Professional, we use PC sources.
+      // For PyCharm Community and PyCharm, we use PC sources.
       IntelliJPlatformProduct.PYCHARM, IntelliJPlatformProduct.PYCHARM_PC -> IntelliJPlatformProduct.PYCHARM_PC
 
       // IntelliJ IDEA Ultimate has sources published since 242; otherwise we use IC.
