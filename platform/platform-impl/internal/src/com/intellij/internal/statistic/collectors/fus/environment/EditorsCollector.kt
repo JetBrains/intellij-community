@@ -20,7 +20,7 @@ private const val ZED_ID = ".zed"
 private const val VISUAL_STUDIO_ID = "VisualStudio"
 
 internal class EditorsCollector :  ApplicationUsagesCollector() {
-  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 6)
+  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 7)
 
   override fun getGroup(): EventLogGroup = EDITORS_GROUP
 
@@ -50,7 +50,7 @@ internal class EditorsCollector :  ApplicationUsagesCollector() {
 
   private val VISUAL_STUDIO_VERSIONS_INSTALLED: EventId1<List<String>> = EDITORS_GROUP.registerEvent(
     "visual.studio.versions.installed",
-    EventFields.StringListValidatedByRegexp("versions", "{regexp#version}")
+    EventFields.StringListValidatedByRegexp("versions", "version")
   )
 
   override suspend fun getMetricsAsync(): Set<MetricEvent> {
