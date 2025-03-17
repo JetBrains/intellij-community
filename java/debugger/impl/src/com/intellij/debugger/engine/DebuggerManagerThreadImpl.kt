@@ -394,9 +394,31 @@ internal fun <T> invokeCommandAsCompletableFuture(block: suspend CoroutineScope.
 }
 
 /**
- * Runs [block] in debugger manager thread as a [SuspendContextCommandImpl].
+ * Schedules [block] execution in the debugger manager thread as a [SuspendContextCommandImpl].
  *
- * This is similar to [DebuggerManagerThreadImpl.schedule] call.
+ * This method is a useful shortcut for accessing the debugger manager thread from non-coroutine context (e.g., from actions).
+ * When already in coroutine context, prefer [withDebugContext] option, as it will preserve the [CoroutineScope].
+ *
+ * The started [Job] is canceled if the [suspendContext] is resumed.
+ * This also includes all the coroutines started from [block] -- all of them will be canceled after [suspendContext] is resumed.
+ *
+ * Having an ability to work with the debugger manager thread in coroutine context helps to reduce the work performed in
+ * the debugger manager thread:
+ * ```
+ * // e.g. in actionPerformed
+ * executeOnDMT(suspendContext) {
+ *   val jdiData = getJdiData() // compute in DMT
+ *   val psiElement = withContext(Dispatchers.Default) {
+ *     // switch to BGT to release DMT for other tasks
+ *     findPsi(jdiData.name)
+ *   }
+ *   // back to DMT to continue with psiElement computed
+ * }
+ * ```
+ * @param suspendContext context for starting [SuspendContextCommandImpl]
+ * @param priority task priority in the manager thread
+ * @param block block to execute
+ * @return [Job] of the started coroutine.
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -410,9 +432,31 @@ fun executeOnDMT(
 )
 
 /**
- * Runs [block] in debugger manager thread as a [DebuggerCommandImpl].
+ * Schedules [block] execution in the debugger manager thread as a [DebuggerCommandImpl].
  *
- * This is similar to [DebuggerManagerThreadImpl.schedule] call.
+ * This method is a useful shortcut for accessing the debugger manager thread from non-coroutine context (e.g., from actions).
+ * When already in coroutine context, prefer [withDebugContext] option, as it will preserve the [CoroutineScope].
+ *
+ * The [Job] is started in the manager thread's [CoroutineScope], so it gets canceled when the manager thread is stoped.
+ *
+ * Having an ability to work with the debugger manager thread in coroutine context helps to reduce the work performed in
+ * the debugger manager thread:
+ * ```
+ * // e.g. in actionPerformed
+ * executeOnDMT(mangerThread) {
+ *   val jdiData = getJdiData() // compute in DMT
+ *   val psiElement = withContext(Dispatchers.Default) {
+ *     // switch to BGT to release DMT for other tasks
+ *     findPsi(jdiData.name)
+ *   }
+ *   // back to DMT to continue with psiElement computed
+ * }
+ * ```
+ *
+ * @param managerThread debugger manager thread to schedule the task
+ * @param priority task priority in the manager thread
+ * @param block block to execute
+ * @return [Job] of the started coroutine
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -427,9 +471,33 @@ fun executeOnDMT(
 
 
 /**
- * Runs [block] in debugger manager thread as a [com.intellij.debugger.engine.events.DebuggerContextCommandImpl].
+ * Schedules [block] execution in the debugger manager thread as a [com.intellij.debugger.engine.events.DebuggerContextCommandImpl].
  *
- * This is similar to [DebuggerManagerThreadImpl.schedule] call.
+ * This method is a useful shortcut for accessing the debugger manager thread from non-coroutine context (e.g., from actions).
+ * When already in coroutine context, prefer [withDebugContext] option, as it will preserve the [CoroutineScope].
+ *
+ * The started [Job] is canceled if the [SuspendContextImpl] selected by
+ * [com.intellij.debugger.engine.events.DebuggerContextCommandImpl] is resumed.
+ * This also includes all the coroutines started from [block] -- all of them will be canceled after [SuspendContextImpl] is resumed.
+ *
+ * Having an ability to work with the debugger manager thread in coroutine context helps to reduce the work performed in
+ * the debugger manager thread:
+ * ```
+ * // e.g. in actionPerformed
+ * executeOnDMT(debuggerContext) {
+ *   val jdiData = getJdiData() // compute in DMT
+ *   val psiElement = withContext(Dispatchers.Default) {
+ *     // switch to BGT to release DMT for other tasks
+ *     findPsi(jdiData.name)
+ *   }
+ *   // back to DMT to continue with psiElement computed
+ * }
+ * ```
+ *
+ * @param debuggerContext context for starting [com.intellij.debugger.engine.events.DebuggerContextCommandImpl]
+ * @param priority task priority in the manager thread
+ * @param block to execute
+ * @return [Job] of the started coroutine
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -446,11 +514,39 @@ fun executeOnDMT(
 }
 
 /**
- * Runs [block] in debugger manager thread as a [SuspendContextCommandImpl].
- *
- * The coroutine is canceled if the corresponding command is canceled.
+ * Runs [block] in the debugger manager thread as a [SuspendContextCommandImpl].
  *
  * This is similar to [withContext] call to switch to the debugger thread inside a coroutine.
+ *
+ * The execution is canceled if the [suspendContext] is resumed.
+ * This also includes all the coroutines started from [block] -- all of them will be canceled after [suspendContext] is resumed.
+ *
+ * This function can be used to work with the debugger manager thread:
+ * ```
+ * myScope.launch(Dispatchers.Default) {
+ *   val psi = findPsi() // do work in BGT first
+ *   val jdiData = withDebuggerContext(suspendContext) {
+ *     // switch to DMT only when jdi-related data is needed
+ *     compute(psi.name)
+ *   }
+ *   // switch back to BGT and continue with jdiData computed
+ * }
+ * ```
+ *
+ * This function can be also used for switching between different types of the debugger commands:
+ * ```
+ * withDebuggerContext(managerThread) {
+ *   // runs in DebuggerCommandImpl
+ *   withDebuggerContext(suspendContext) {
+ *     // runs in SuspendContextCommandImpl
+ *   }
+ *   // switches back to DebuggerCommandImpl
+ * }
+ * ```
+ *
+ * @param suspendContext context for starting [SuspendContextCommandImpl]
+ * @param priority task priority in the manager thread
+ * @param block block to execute
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -465,11 +561,38 @@ suspend fun <T> withDebugContext(
 )
 
 /**
- * Runs [block] in debugger manager thread as a [DebuggerCommandImpl].
- *
- * The coroutine is canceled if the corresponding command is canceled.
+ * Runs [block] in the debugger manager thread as a [DebuggerCommandImpl].
  *
  * This is similar to [withContext] call to switch to the debugger thread inside a coroutine.
+ *
+ * The started [Job] is tied to the manager thread's [CoroutineScope], so it gets canceled when the manager thread is stoped.
+ *
+ * This function can be used to work with the debugger manager thread:
+ * ```
+ * myScope.launch(Dispatchers.Default) {
+ *   val psi = findPsi() // do work in BGT first
+ *   val jdiData = withDebuggerContext(managerThread) {
+ *     // switch to DMT only when jdi-related data is needed
+ *     compute(psi.name)
+ *   }
+ *   // switch back to BGT and continue with jdiData computed
+ * }
+ * ```
+ *
+ * This function can be also used for switching between different types of the debugger commands:
+ * ```
+ * withDebuggerContext(managerThread) {
+ *   // runs in DebuggerCommandImpl
+ *   withDebuggerContext(suspendContext) {
+ *     // runs in SuspendContextCommandImpl
+ *   }
+ *   // switches back to DebuggerCommandImpl
+ * }
+ * ```
+ *
+ * @param managerThread debugger manager thread to schedule the task
+ * @param priority task priority in the manager thread
+ * @param block block to execute
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -484,11 +607,40 @@ suspend fun <T> withDebugContext(
 )
 
 /**
- * Runs [block] in debugger manager thread as a [com.intellij.debugger.engine.events.DebuggerContextCommandImpl].
- *
- * The coroutine is canceled if the corresponding command is canceled.
+ * Runs [block] in the debugger manager thread as a [com.intellij.debugger.engine.events.DebuggerContextCommandImpl].
  *
  * This is similar to [withContext] call to switch to the debugger thread inside a coroutine.
+ *
+ * The started [Job] is canceled if the [SuspendContextImpl] selected by
+ * [com.intellij.debugger.engine.events.DebuggerContextCommandImpl] is resumed.
+ * This also includes all the coroutines started from [block] -- all of them will be canceled after [SuspendContextImpl] is resumed.
+ *
+ * This function can be used to work with the debugger manager thread:
+ * ```
+ * myScope.launch(Dispatchers.Default) {
+ *   val psi = findPsi() // do work in BGT first
+ *   val jdiData = withDebuggerContext(debuggerContext) {
+ *     // switch to DMT only when jdi-related data is needed
+ *     compute(psi.name)
+ *   }
+ *   // switch back to BGT and continue with jdiData computed
+ * }
+ * ```
+ *
+ * This function can be also used for switching between different types of the debugger commands:
+ * ```
+ * withDebuggerContext(managerThread) {
+ *   // runs in DebuggerCommandImpl
+ *   withDebuggerContext(debuggerContext) {
+ *     // runs in DebuggerContextCommandImpl
+ *   }
+ *   // switches back to DebuggerCommandImpl
+ * }
+ * ```
+ *
+ * @param debuggerContext context for starting [com.intellij.debugger.engine.events.DebuggerContextCommandImpl]
+ * @param priority task priority in the manager thread
+ * @param block block to execute
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
@@ -518,6 +670,8 @@ private suspend fun <T> runWithContext(
   block: suspend CoroutineScope.() -> T,
 ): T = coroutineScope {
   // Ensure the job is canceled when the corresponding CoroutineScope is closed
+  // For example, cancellation of the work performed in Dispatchers.Default within debugger context
+  // is ensured by this scope attachment.
   attachAsChildTo(parentScope)
   async(context, block = block).await()
 }

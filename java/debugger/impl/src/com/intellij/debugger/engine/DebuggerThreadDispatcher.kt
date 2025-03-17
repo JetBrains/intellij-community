@@ -10,7 +10,25 @@ import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * The dispatcher that allows working with the debugger manager thread with coroutines.
+ *
+ * Every task dispatched to this dispatcher is scheduled to the debugger manager thread.
+ * The type of the task is selected based on the [DebuggerDispatchedCommandProvider] that should be present in the [CoroutineContext]
+ * when a task is dispatched.
+ *
+ * N.B. To ensure the correct switching between different commands type, the tasks must pass the [dispatch] method,
+ * see [runWithContext] method for details.
+ *
+ * @see withDebugContext
+ * @see executeOnDMT
+ */
 internal class DebuggerThreadDispatcher(private val managerThread: DebuggerManagerThreadImpl) : CoroutineDispatcher() {
+  /**
+   * The counter that helps to understand whether any task is going to be scheduled to DMT.
+   *
+   * Every [Job] started with this dispatcher should be taken into account by this counter.
+   */
   internal val dispatchedCommandsCounter = AtomicInteger()
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
@@ -29,20 +47,33 @@ internal class DebuggerThreadDispatcher(private val managerThread: DebuggerManag
     val provider = context[DebuggerDispatchedCommandProvider.Key] ?: error("No ${DebuggerDispatchedCommandProvider.Key} in context")
     return provider.createDebuggerCommand(block, cancellationAction = {
       context.cancel()
-      // TODO
-      // Another important use-case is cancellation of tasks scheduled from [com.intellij.debugger.engine.DebuggerThreadDispatcher]:
-      // the dispatcher must guarantee to call the passed action, but we could not do so because the context is already resumed.
-      // In this case, we cancel the [Job] first, and then call the passed action.
-      // For example, a command can start a computation in [kotlinx.coroutines.Dispatchers.Default].
-      // When the program is resumed, the job will be canceled.
+      // By the contract of the CoroutineDispatcher, the passed block must be eventually executed.
+      // However, the debugger commands might be canceled before execution due to context changes (e.g., suspend context might be resumed).
+      // To ensure the contract, we have to call `run()`, but we guarantee that the scheduled task is not executed
+      // by cancelling the corresponding Job first.
       block.run()
     })
   }
 }
 
+/**
+ * Access method for the debugger dispatcher.
+ *
+ * It is intentionally kept internal due to several causes:
+ * 1. Limited number of use-cases for switching to DMT.
+ * Considering the existing needs, the currently provided API should be enough.
+ * 2. Tiding execution to the debugger's [CoroutineScope]s. The provided API ensures job cancellation by attaching to
+ * [DebuggerManagerThreadImpl.coroutineScope] or [SuspendContextImpl.getCoroutineScope].
+ * With a publicly available dispatcher, this should be ensured by the API users.
+ * 3. Switching between different command types. The provided API ensures correct switching between the debugger commands.
+ * With a publicly available dispatcher, the current solution should be reconsidered.
+ */
 @Suppress("FunctionName", "UnusedReceiverParameter")
 internal fun Dispatchers.Debugger(managerThread: DebuggerManagerThreadImpl): CoroutineDispatcher = managerThread.debuggerThreadDispatcher
 
+/**
+ * Debugger command factory passed to the [DebuggerThreadDispatcher] for correct command scheduling.
+ */
 internal sealed interface DebuggerDispatchedCommandProvider : CoroutineContext.Element {
   fun createDebuggerCommand(block: Runnable, cancellationAction: (() -> Unit)): DebuggerCommandImpl
   override val key: CoroutineContext.Key<*> get() = Key
