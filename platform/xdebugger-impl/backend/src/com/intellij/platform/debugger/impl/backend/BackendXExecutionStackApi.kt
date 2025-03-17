@@ -11,6 +11,9 @@ import com.intellij.xdebugger.impl.rhizome.XStackFrameEntity
 import com.intellij.xdebugger.impl.rpc.*
 import fleet.kernel.change
 import fleet.kernel.withEntities
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -31,11 +34,24 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
   override suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent> {
     val executionStackEntity = debuggerEntity<XExecutionStackEntity>(executionStackId.id) ?: return emptyFlow()
     return channelFlow {
+      val channel = Channel<Deferred<XStackFramesEvent>?>(capacity = Channel.UNLIMITED)
+
+      launch {
+        for (event in channel) {
+          if (event == null) {
+            channel.close()
+            this@channelFlow.close()
+            break
+          }
+          this@channelFlow.send(event.await())
+        }
+      }
+
       withEntities(executionStackEntity) {
         val executionStack = executionStackEntity.obj
         executionStack.computeStackFrames(firstFrameIndex, object : XExecutionStack.XStackFrameContainer {
           override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
-            this@channelFlow.launch {
+            channel.trySend(this@channelFlow.async {
               withEntities(executionStackEntity) {
                 val frameEntities = stackFrames.map { frame ->
                   change {
@@ -50,19 +66,18 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
                 val stacks = frameEntities.map { frame ->
                   XStackFrameDto(XStackFrameId(frame.id), frame.obj.sourcePosition?.toRpc())
                 }
-                send(XStackFramesEvent.XNewStackFrames(stacks, last))
-                if (last) {
-                  this@channelFlow.close()
-                }
+                XStackFramesEvent.XNewStackFrames(stacks, last)
               }
+            })
+            if (last) {
+              channel.trySend(null)
             }
           }
 
           override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-            this@channelFlow.launch {
-              send(XStackFramesEvent.ErrorOccurred(errorMessage))
-              this@channelFlow.close()
-            }
+            channel.trySend(this@channelFlow.async {
+              XStackFramesEvent.ErrorOccurred(errorMessage)
+            })
           }
         })
       }

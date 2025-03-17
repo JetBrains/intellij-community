@@ -24,11 +24,10 @@ import fleet.kernel.rete.collect
 import fleet.kernel.rete.query
 import fleet.kernel.withEntities
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun currentEvaluator(sessionId: XDebugSessionId): Flow<XDebuggerEvaluatorDto?> {
@@ -157,8 +156,8 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun currentExecutionStack(sessionId: XDebugSessionId): Flow<XExecutionStackDto?> {
     val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
     val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
-    return withEntities(sessionEntity) {
-      channelFlow {
+    return channelFlow {
+      withEntities(sessionEntity) {
         session.getCurrentExecutionStackFlow().asEntityFlow { executionStack ->
           XExecutionStackEntity.new(this, executionStack)
         }.collect { stackAndId ->
@@ -205,11 +204,23 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
     val suspendContextEntity = debuggerEntity<XSuspendContextEntity>(suspendContextId.id) as? XSuspendContextEntity ?: return emptyFlow()
     return channelFlow {
+      val channel = Channel<Deferred<XExecutionStacksEvent>?>(capacity = Channel.UNLIMITED)
+
+      launch {
+        for (event in channel) {
+          if (event == null) {
+            channel.close()
+            this@channelFlow.close()
+            break
+          }
+          send(event.await())
+        }
+      }
+
       withEntities(suspendContextEntity) {
         suspendContextEntity.obj.computeExecutionStacks(object : XSuspendContext.XExecutionStackContainer {
           override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
-            this@channelFlow.launch {
-              // TODO[IJPL-177087] delete entities!!!
+            channel.trySend(this@channelFlow.async {
               withEntities(suspendContextEntity) {
                 val stackEntities = executionStacks.map { stack ->
                   change {
@@ -226,19 +237,18 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
                     XExecutionStackDto(XExecutionStackId(stack.id), stack.obj.displayName, stack.obj.icon?.rpcId())
                   }
                 }
-                send(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
-                if (last) {
-                  this@channelFlow.close()
-                }
+                XExecutionStacksEvent.NewExecutionStacks(stacks, last)
               }
+            })
+            if (last) {
+              channel.trySend(null)
             }
           }
 
           override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-            this@channelFlow.launch {
-              send(XExecutionStacksEvent.ErrorOccurred(errorMessage))
-              this@channelFlow.close()
-            }
+            channel.trySend(this@channelFlow.async {
+              XExecutionStacksEvent.ErrorOccurred(errorMessage)
+            })
           }
         })
       }
