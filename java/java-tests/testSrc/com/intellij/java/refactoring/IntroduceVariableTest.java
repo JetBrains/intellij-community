@@ -417,7 +417,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
       doTest("input", false, false, false, "Object", false);
     }
     catch (Exception e) {
-      assertEquals("Error message:Cannot perform refactoring.\nThe expression refers to the pattern variable 's' declared outside", e.getMessage());
+      assertEquals("Error message:Cannot perform refactoring.\nThe selected expression refers to pattern variable 's', which will be out of scope.", e.getMessage());
       return;
     }
     fail("Should not be able to perform refactoring");
