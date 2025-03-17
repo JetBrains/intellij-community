@@ -113,9 +113,6 @@ def _jvm_test(ctx):
 
     # adds common test variables, including TEST_WORKSPACE
     files = [ctx.outputs.jar]
-    if providers.java.outputs.jdeps:
-        files.append(providers.java.outputs.jdeps)
-
     return [
         providers.java,
         providers.kt,

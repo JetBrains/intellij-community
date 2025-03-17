@@ -60,21 +60,6 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
         return 0
       }
 
-      "jdeps" -> {
-        val inputs = request.inputPaths.asSequence()
-          .filter { it.endsWith(".jdeps") }
-          .map { baseDir.resolve(it) }
-        //Files.writeString(Path.of("${System.getProperty("user.home")}/f.txt"), inputs.joinToString("\n") { it.toString() })
-        mergeJdeps(
-          consoleOutput = writer,
-          label = command[3],
-          output = Path.of(output),
-          reportUnusedDeps = command[4],
-          inputs = inputs,
-        )
-        return 0
-      }
-
       else -> {
         writer.appendLine("Command is not supported: $taskKind (command=$command)")
         return 1
@@ -91,7 +76,7 @@ private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path
   for (input in inputs) {
     val p = input
     if (!p.startsWith(stripPrefixWithSlash)) {
-      // input can contain jdeps/our jar in the end
+      // input can contain our jar in the end
       continue
     }
 

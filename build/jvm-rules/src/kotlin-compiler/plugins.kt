@@ -4,8 +4,6 @@ package org.jetbrains.bazel.jvm.kotlin
 import androidx.compose.compiler.plugins.kotlin.ComposeCommandLineProcessor
 import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
 import fleet.multiplatform.expects.ExpectsPluginRegistrar
-import io.bazel.kotlin.plugin.jdeps.JdepsGenCommandLineProcessor
-import io.bazel.kotlin.plugin.jdeps.JdepsGenComponentRegistrar
 import org.jetbrains.bazel.jvm.ArgMap
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
@@ -78,22 +76,6 @@ internal inline fun configurePlugins(
 
       else -> throw IllegalArgumentException("plugin requires classpath: $id")
     }
-  }
-
-  args.optionalSingle(JvmBuilderFlags.JDEPS_OUT)?.let { workingDir.resolve(it) }?.let { jdeps ->
-    val options = mutableListOf(
-      cliOptionValue("output", jdeps.toString()),
-      cliOptionValue("target_label", targetLabel),
-    )
-    args.optionalSingle(JvmBuilderFlags.STRICT_KOTLIN_DEPS)?.let {
-      options.add(cliOptionValue("strict_kotlin_deps", it))
-    }
-    consumer(RegisteredPluginInfo(
-      componentRegistrar = null,
-      compilerPluginRegistrar = JdepsGenComponentRegistrar(),
-      commandLineProcessor = JdepsGenCommandLineProcessor(),
-      pluginOptions = options,
-    ))
   }
 
   if (abiOutputConsumer != null) {

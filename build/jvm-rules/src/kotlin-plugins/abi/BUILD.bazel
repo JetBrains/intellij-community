@@ -4,7 +4,6 @@ kt_jvm_library(
     name = "abi",
     srcs = glob(["**/*.kt"]),
     deps = [
-        "//src/jar",
         "//:kotlin-metadata",
         "//:kotlin-compiler",
     ],

@@ -56,10 +56,7 @@ enum class JvmBuilderFlags {
   WARN,
 
   FRIENDS,
-  JDEPS_OUT,
-  TRACE,
   STRICT_KOTLIN_DEPS,
-  REDUCED_CLASSPATH_MODE,
 
   // makes sense only for JPS, not needed for Kotlinc
   ADD_EXPORT,

@@ -112,20 +112,7 @@ common_attr = add_dicts(
             default = None,
             providers = [_JavacOptions],
         ),
-        "_jdeps_merger": attr.label(
-            doc = "the jdeps merger executable",
-            default = "//:worker-impl",
-            executable = True,
-            allow_files = True,
-            cfg = "exec",
-        ),
-        "_kotlin_builder": attr.label(
-            default = "//src/kotlin-builder:worker-jvm",
-            executable = True,
-            allow_files = True,
-            cfg = "exec",
-        ),
-        "_jps_builder": attr.label(
+        "_jvm_builder": attr.label(
             default = "//src/jps-builder:worker-jvm",
             executable = True,
             allow_files = True,
