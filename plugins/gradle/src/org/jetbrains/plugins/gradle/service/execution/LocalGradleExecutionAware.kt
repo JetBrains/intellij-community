@@ -36,7 +36,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleBundle.PATH_TO_BUNDLE
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
-import org.jetbrains.plugins.gradle.util.nonblockingResolveGradleJvmInfo
+import org.jetbrains.plugins.gradle.util.resolveGradleJvmInfo
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
@@ -116,7 +116,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
 
     val provider = getGradleJvmLookupProvider(project, projectSettings)
 
-    val sdkInfo = provider.nonblockingResolveGradleJvmInfo(project, projectSettings.externalProjectPath, projectSettings.gradleJvm)
+    val sdkInfo = provider.resolveGradleJvmInfo(project, projectSettings.externalProjectPath, projectSettings.gradleJvm)
     if (sdkInfo is SdkInfo.Resolved) return sdkInfo
 
     waitForGradleJvmResolving(provider, task, taskNotificationListener)
@@ -128,7 +128,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       projectSettings.gradleJvm = originalGradleJvm ?: ExternalSystemJdkUtil.USE_PROJECT_JDK
     }
 
-    return provider.nonblockingResolveGradleJvmInfo(project, projectSettings.externalProjectPath, projectSettings.gradleJvm)
+    return provider.resolveGradleJvmInfo(project, projectSettings.externalProjectPath, projectSettings.gradleJvm)
   }
 
   private fun checkGradleJvmInfo(

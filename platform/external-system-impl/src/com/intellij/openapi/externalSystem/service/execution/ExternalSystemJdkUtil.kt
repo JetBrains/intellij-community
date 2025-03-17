@@ -10,13 +10,24 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import org.jetbrains.annotations.ApiStatus
 
-
+/**
+ * The initial naming of the method is wrong, the method has nothing to do with "non-blocking execution".
+ * The method could be suspendable without any side-effects.
+ * The original intention of the "non-blocking" is to show that the code inside shouldn't download JDK and execute
+ * any heavy and long operations inside.
+ * The actual resolution of JDK would be performed when a Gradle execution would be started.
+ */
+@Deprecated("Use resolveJdkInfo instead")
 fun SdkLookupProvider.nonblockingResolveJdkInfo(projectSdk: Sdk?, jdkReference: String?): SdkInfo {
+  return resolveJdkInfo(projectSdk, jdkReference)
+}
+
+fun SdkLookupProvider.resolveJdkInfo(projectSdk: Sdk?, jdkReference: String?): SdkInfo {
   return when (jdkReference) {
     USE_JAVA_HOME -> createJdkInfo(JAVA_HOME, getJavaHome())
-    USE_PROJECT_JDK -> nonblockingResolveProjectJdkInfo(projectSdk)
+    USE_PROJECT_JDK -> resolveProjectJdkInfo(projectSdk)
     USE_INTERNAL_JAVA -> createSdkInfo(getInternalJdk())
-    else -> nonblockingResolveSdkInfoBySdkName(jdkReference)
+    else -> resolveSdkInfoBySdkName(jdkReference)
   }
 }
 
@@ -24,19 +35,19 @@ private fun getInternalJdk(): Sdk {
   return ExternalSystemJdkProvider.getInstance().internalJdk
 }
 
-private fun SdkLookupProvider.nonblockingResolveProjectJdkInfo(projectSdk: Sdk?): SdkInfo {
+private fun SdkLookupProvider.resolveProjectJdkInfo(projectSdk: Sdk?): SdkInfo {
   if (projectSdk == null) return SdkInfo.Undefined
   val resolvedSdk = resolveDependentJdk(projectSdk)
-  return nonblockingResolveSdkInfo(resolvedSdk)
+  return resolveSdkInfo(resolvedSdk)
 }
 
-private fun SdkLookupProvider.nonblockingResolveSdkInfo(sdk: Sdk?): SdkInfo {
+private fun SdkLookupProvider.resolveSdkInfo(sdk: Sdk?): SdkInfo {
   if (sdk == null) return SdkInfo.Undefined
   executeSdkLookup(sdk)
   return getSdkInfo()
 }
 
-private fun SdkLookupProvider.nonblockingResolveSdkInfoBySdkName(sdkName: String?): SdkInfo {
+private fun SdkLookupProvider.resolveSdkInfoBySdkName(sdkName: String?): SdkInfo {
   if (sdkName == null) return getSdkInfo()
   executeSdkLookup(sdkName)
   return getSdkInfo()
