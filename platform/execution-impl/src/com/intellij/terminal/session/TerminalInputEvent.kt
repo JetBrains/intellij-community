@@ -15,7 +15,7 @@ data class TerminalResizeEvent(val newSize: TerminalSizeDto) : TerminalInputEven
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInputEvent {
+data class TerminalWriteBytesEvent(val bytes: ByteArray, val id: Int? = null) : TerminalInputEvent {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false

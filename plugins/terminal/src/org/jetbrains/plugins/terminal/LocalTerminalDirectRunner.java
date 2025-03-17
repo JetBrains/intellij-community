@@ -24,6 +24,7 @@ import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -172,6 +173,21 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   public @NotNull TtyConnector createTtyConnector(@NotNull PtyProcess process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset) {
+      @Override
+      public void write(byte[] bytes) throws IOException {
+        var fusActivity = ReworkedTerminalUsageCollector.getBackendTypingActivityOrNull(bytes);
+        try {
+          super.write(bytes);
+          if (fusActivity != null) {
+            fusActivity.reportDuration();
+          }
+        }
+        finally {
+          if (fusActivity != null) {
+            fusActivity.finishBytesProcessing();
+          }
+        }
+      }
 
       @Override
       public void close() {
