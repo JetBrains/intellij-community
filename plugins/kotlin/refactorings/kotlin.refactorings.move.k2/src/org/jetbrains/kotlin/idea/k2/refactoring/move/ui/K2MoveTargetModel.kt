@@ -110,10 +110,6 @@ sealed interface K2MoveTargetModel {
             destinationChooser.setData(project, directory, { s -> onError(s, destinationChooser) }, pkgChooser.childComponent)
         }
 
-        override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
-            panel.installPkgChooser(onError, revalidateButtons)
-        }
-
         private companion object {
             const val RECENT_PACKAGE_KEY = "K2MoveDeclarationsDialog.RECENT_PACKAGE_KEY"
 
@@ -126,6 +122,10 @@ sealed interface K2MoveTargetModel {
         directory: PsiDirectory
     ) : SourceDirectoryChooser(pkgName, directory) {
         override fun toDescriptor(): K2MoveTargetDescriptor.Directory = K2MoveTargetDescriptor.Directory(pkgName, directory)
+
+        override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+            panel.installPkgChooser(onError, revalidateButtons)
+        }
     }
 
     @ApiStatus.Internal
