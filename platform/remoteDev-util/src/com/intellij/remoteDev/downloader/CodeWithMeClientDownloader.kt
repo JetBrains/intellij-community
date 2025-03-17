@@ -747,12 +747,16 @@ object CodeWithMeClientDownloader {
   fun runFrontendProcess(
     lifetime: Lifetime,
     url: String,
-    frontendInstallation: FrontendInstallation
+    frontendInstallation: FrontendInstallation,
+    enableBeforeRunHooks: Boolean = true,
   ): Lifetime {
-    try {
-      processBeforeRunHooks(frontendInstallation)
-    } catch (e: Throwable) {
-      LOG.error("Could not process hooks before launching client $frontendInstallation", e)
+    if (enableBeforeRunHooks) {
+      try {
+        processBeforeRunHooks(frontendInstallation)
+      }
+      catch (e: Throwable) {
+        LOG.error("Could not process hooks before launching client $frontendInstallation", e)
+      }
     }
     when (frontendInstallation) {
       is EmbeddedFrontendInstallation -> {
