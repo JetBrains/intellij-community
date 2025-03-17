@@ -252,7 +252,7 @@ public final class ConfigImportHelper {
           try {
             Path newDisablePluginsFile = newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
             Set<String> newDisabledPlugins = new LinkedHashSet<>();
-            if (newDisablePluginsFile.toFile().isFile()) {
+            if (Files.isRegularFile(newDisablePluginsFile)) {
               newDisabledPlugins.addAll(Files.readAllLines(newDisablePluginsFile, CharsetToolkit.getPlatformCharset()));
             }
             newDisabledPlugins.addAll(currentlyDisabledPlugins);
