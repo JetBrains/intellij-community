@@ -301,9 +301,6 @@ data class UndoGroupReference(val logData: UndoLogDataReference, val undoGroupPo
 typealias GlobalUndoLogRef = Long
 
 val GlobalUndoLogRef.position: Long get() = this
-fun GlobalUndoLogRef(position: Long): GlobalUndoLogRef {
-  return position
-}
 
 data class GlobalUndoInfo(
   // grouped by enclosing undo log, sorted within log
