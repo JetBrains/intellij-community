@@ -13,6 +13,7 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
+import com.jetbrains.python.resolvePythonBinary
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
@@ -21,6 +22,8 @@ import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import com.jetbrains.python.sdk.hatch.createSdk
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class HatchExistingEnvironmentSelector(
   override val model: PythonMutableTargetAddInterpreterModel,
@@ -52,9 +55,10 @@ internal class HatchExistingEnvironmentSelector(
     val module = (moduleOrProject as? ModuleOrProject.ModuleAndProject)?.module
                  ?: return Result.failure(HatchUIError.ModuleIsNotSelected())
 
-    val existingSdk = existingHatchVenv.pythonHomePath.toString().let { venvHomePathString ->
-      ProjectJdkTable.getInstance().allJdks.find { it.homePath == venvHomePathString }
+    val venvPythonBinaryPathString = withContext(Dispatchers.IO) {
+      existingHatchVenv.pythonHomePath.resolvePythonBinary().toString()
     }
+    val existingSdk = ProjectJdkTable.getInstance().allJdks.find { it.homePath == venvPythonBinaryPathString }
 
     val sdk = when {
       existingSdk != null -> Result.success(existingSdk)
