@@ -28,6 +28,8 @@ import com.intellij.platform.ide.progress.updates
 import com.intellij.util.io.DirectByteBufferAllocator
 import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.storage.HeavyProcessLatch
+import com.jetbrains.Extensions
+import com.jetbrains.JBR
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.tokensFlow
 import fleet.kernel.tryWithEntities
@@ -129,7 +131,13 @@ class AppIdleMemoryCleaner(private val cs: CoroutineScope) {
   private fun runGc() {
     // `System.gc()` makes the heap to shrink respecting `-XX:MaxHeapFreeRatio` VM option, so some memory is returned to OS.
     // At the same time, it leads to a long GC pause (hundreds of milliseconds). This should be OK since the IDE is idle.
-    System.gc()
+    val jbrSystemUtils = JBR.getSystemUtils(Extensions.SHRINKING_GC)
+    if (jbrSystemUtils != null) {
+      // Used in a couple with `-XX:JbrShrinkingGcMaxHeapFreeRatio` option
+      jbrSystemUtils.shrinkingGC()
+    } else {
+      System.gc()
+    }
   }
 }
 

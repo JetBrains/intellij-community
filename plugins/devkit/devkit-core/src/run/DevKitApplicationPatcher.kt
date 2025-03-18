@@ -97,6 +97,9 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
       vmParameters.add("-Xmx2g")
     }
+    if (vmParametersAsList.none { it.startsWith("-XX:JbrShrinkingGcMaxHeapFreeRatio=") }) {
+      vmParameters.add("-XX:JbrShrinkingGcMaxHeapFreeRatio=40")
+    }
     if (is17 && vmParametersAsList.none { it.startsWith("-XX:SoftRefLRUPolicyMSPerMB") }) {
       vmParameters.add("-XX:SoftRefLRUPolicyMSPerMB=50")
     }

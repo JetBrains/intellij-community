@@ -14,6 +14,7 @@ object VmOptionsGenerator {
 
   @Suppress("SpellCheckingInspection")
   private val COMMON_VM_OPTIONS: List<String> = listOf(
+    "-XX:JbrShrinkingGcMaxHeapFreeRatio=40", // IJPL-181469. Used in a couple with AppIdleMemoryCleaner.runGc()
     "-XX:ReservedCodeCacheSize=512m",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-XX:-OmitStackTraceInFastThrow",
