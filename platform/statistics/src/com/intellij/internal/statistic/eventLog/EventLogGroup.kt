@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NonNls
  * This class is responsible for registering events within a specific group context.
  *
  * Best practices:
- *  * - Prefer a bigger group with many (related) event types to many small groups of 1-2 events each
- *  * - Prefer shorter group names; avoid common prefixes (such as "statistics.")
+ *  - Prefer a bigger group with many (related) event types to many small groups of 1-2 events each
+ *  - Prefer shorter group names; avoid common prefixes (such as "statistics.")
  *
  * @property id The unique identifier for this group of events.
  * @property version The version of the event group. Has to be incremented when changes are made to the group and/or events
