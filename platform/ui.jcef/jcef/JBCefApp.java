@@ -379,7 +379,7 @@ public final class JBCefApp {
       altCefPath = System.getenv("ALT_CEF_FRAMEWORK_DIR");
     }
 
-    final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK || IS_REMOTE_ENABLED;
+    final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK;
     if (!skipModuleCheck) {
       URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
       if (url == null) {
