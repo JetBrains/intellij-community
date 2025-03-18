@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -27,6 +26,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
+import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
@@ -43,7 +43,15 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (parameters.editor.isReworkedTerminalEditor) {
-      val allTokens = listOf("g")
+      val document = parameters.editor.document
+      val caretOffset = parameters.editor.caretModel.offset
+      val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
+      val lastBlock = blocksModel.blocks.lastOrNull() ?: return
+
+      val wholeCommand = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
+      val command = wholeCommand.trim().split("\\s+".toRegex()).lastOrNull() ?: ""
+
+      val allTokens = listOf(command)
       val lookupElement1 = PrioritizedLookupElement.withPriority(LookupElementBuilder.create("git1"), 100.0)
       val lookupElement2 = PrioritizedLookupElement.withPriority(LookupElementBuilder.create("git2"), 90.0)
       val lookupElement3 = PrioritizedLookupElement.withPriority(LookupElementBuilder.create("git-lala"), 90.0)

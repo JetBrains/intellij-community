@@ -125,6 +125,7 @@ internal class ReworkedTerminalView(
 
     blocksModel = TerminalBlocksModelImpl(outputEditor.document)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
+    outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
 
     controller = TerminalSessionController(
       sessionModel,
