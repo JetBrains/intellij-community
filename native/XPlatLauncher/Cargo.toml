@@ -42,14 +42,12 @@ native-dialog = "0.7.0"
 
 [build-dependencies]
 anyhow = { version = "1.0.95", features = ["std", "backtrace"] }
-# these crates are used in separate build steps; uncomment them from time to time to check for updates
-#cargo-deny = "0.17.0"
-#cargo-about = "0.6.6"
-
-[target.'cfg(target_os = "windows")'.build-dependencies]
 curl = { version = "0.4.47", features = ["static-curl"] }
 sha1 = "0.10.6"
 winresource = "0.1.19"
+# these crates are used in separate build steps; uncomment them from time to time to check for updates
+#cargo-deny = "0.17.0"
+#cargo-about = "0.6.6"
 
 [package.metadata.winresource]
 CompanyName = "JetBrains s.r.o."
