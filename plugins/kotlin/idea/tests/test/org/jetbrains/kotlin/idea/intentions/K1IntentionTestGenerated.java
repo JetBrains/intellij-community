@@ -8559,11 +8559,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertStringTemplateToBuildString/basic3.kt");
         }
 
-        @TestMetadata("disableConversionForDoubleDollarPrefix.kt")
-        public void testDisableConversionForDoubleDollarPrefix() throws Exception {
-            runTest("testData/intentions/convertStringTemplateToBuildString/disableConversionForDoubleDollarPrefix.kt");
-        }
-
         @TestMetadata("empty.kt")
         public void testEmpty() throws Exception {
             runTest("testData/intentions/convertStringTemplateToBuildString/empty.kt");

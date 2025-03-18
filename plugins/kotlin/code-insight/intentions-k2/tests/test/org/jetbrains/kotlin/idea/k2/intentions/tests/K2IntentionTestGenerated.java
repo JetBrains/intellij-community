@@ -2582,11 +2582,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/basic3.kt");
         }
 
-        @TestMetadata("disableConversionForDoubleDollarPrefix.kt")
-        public void testDisableConversionForDoubleDollarPrefix() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/disableConversionForDoubleDollarPrefix.kt");
-        }
-
         @TestMetadata("empty.kt")
         public void testEmpty() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/empty.kt");
@@ -2605,6 +2600,55 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("slashBuck.kt")
         public void testSlashBuck() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/slashBuck.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertStringTemplateToBuildStringMultiDollarPrefix")
+    public static class ConvertStringTemplateToBuildStringMultiDollarPrefix extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inapplicablePrefixedMultiline.kt")
+        public void testInapplicablePrefixedMultiline() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildStringMultiDollarPrefix/inapplicablePrefixedMultiline.kt");
+        }
+
+        @TestMetadata("prefixedBackticks.kt")
+        public void testPrefixedBackticks() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildStringMultiDollarPrefix/prefixedBackticks.kt");
+        }
+
+        @TestMetadata("prefixedDifferentPrefixesInParts.kt")
+        public void testPrefixedDifferentPrefixesInParts() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildStringMultiDollarPrefix/prefixedDifferentPrefixesInParts.kt");
+        }
+
+        @TestMetadata("prefixedNameEntries.kt")
+        public void testPrefixedNameEntries() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildStringMultiDollarPrefix/prefixedNameEntries.kt");
+        }
+
+        @TestMetadata("prefixedSimple.kt")
+        public void testPrefixedSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildStringMultiDollarPrefix/prefixedSimple.kt");
+        }
+
+        @TestMetadata("prefixedUnsafeString.kt")
+        public void testPrefixedUnsafeString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildStringMultiDollarPrefix/prefixedUnsafeString.kt");
+        }
+
+        @TestMetadata("prefixedUnsafeStringAndEntries.kt")
+        public void testPrefixedUnsafeStringAndEntries() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildStringMultiDollarPrefix/prefixedUnsafeStringAndEntries.kt");
         }
     }
 
