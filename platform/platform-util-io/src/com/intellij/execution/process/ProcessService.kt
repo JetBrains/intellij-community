@@ -1,58 +1,53 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.process;
+package com.intellij.execution.process
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus
+import java.io.OutputStream
 
 @ApiStatus.Internal
-public interface ProcessService {
-  @NotNull
-  Process startPtyProcess(String @NotNull [] command,
-                          @Nullable String directory,
-                          @NotNull Map<String, String> env,
-                          @NotNull LocalPtyOptions options,
-                          @Nullable Application app,
-                          boolean redirectErrorStream,
-                          boolean windowsAnsiColorEnabled,
-                          boolean unixOpenTtyToPreserveOutputAfterTermination);
+interface ProcessService {
+  fun startPtyProcess(
+    command: Array<String>,
+    directory: String?,
+    env: Map<String, String>,
+    options: LocalPtyOptions,
+    app: Application?,
+    redirectErrorStream: Boolean,
+    windowsAnsiColorEnabled: Boolean,
+    unixOpenTtyToPreserveOutputAfterTermination: Boolean
+  ): Process
 
-  boolean sendWinProcessCtrlC(@NotNull Process process);
+  fun sendWinProcessCtrlC(process: Process): Boolean
 
   /**
    * For better CTRL+C emulation a process output stream is needed,
    * just sending CTRL+C event might not be enough. Consider using
-   * {@link #sendWinProcessCtrlC(Process)} or {@link #sendWinProcessCtrlC(int, OutputStream)}
+   * `sendWinProcessCtrlC(process: Process)` or
+   * `sendWinProcessCtrlC(pid: Int, processOutputStream: OutputStream?)` instead.
    */
-  boolean sendWinProcessCtrlC(int pid);
+  fun sendWinProcessCtrlC(pid: Int): Boolean
 
-  boolean sendWinProcessCtrlC(int pid, @Nullable OutputStream processOutputStream);
+  fun sendWinProcessCtrlC(pid: Int, processOutputStream: OutputStream?): Boolean
 
-  void killWinProcessRecursively(@NotNull Process process);
+  fun killWinProcessRecursively(process: Process)
 
-  boolean isLocalPtyProcess(@NotNull Process process);
+  fun isLocalPtyProcess(process: Process): Boolean
 
-  @Nullable
-  Integer winPtyChildProcessId(@NotNull Process process);
+  fun winPtyChildProcessId(process: Process): Int?
 
-  boolean hasControllingTerminal(@NotNull Process process);
+  fun hasControllingTerminal(process: Process): Boolean
 
-  static @NotNull ProcessService getInstance() {
-    return ApplicationManager.getApplication().getService(ProcessService.class);
-  }
-
-  void killWinProcess(int pid);
+  fun killWinProcess(pid: Int)
 
   /**
    * @return the command line of the process
    */
-  default @NotNull List<String> getCommand(@NotNull Process process) {
-    return List.of();
+  fun getCommand(process: Process): List<String> = listOf<String>()
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): ProcessService = service<ProcessService>()
   }
 }

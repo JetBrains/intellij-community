@@ -19,7 +19,7 @@ import java.io.OutputStream
 class ProcessServiceImpl : ProcessService {
   override fun startPtyProcess(command: Array<String>,
                                directory: String?,
-                               env: MutableMap<String, String>,
+                               env: Map<String, String>,
                                options: LocalPtyOptions,
                                app: Application?,
                                redirectErrorStream: Boolean,
