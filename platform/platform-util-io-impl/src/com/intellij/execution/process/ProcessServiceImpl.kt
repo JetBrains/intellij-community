@@ -1,31 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process
 
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.SystemProperties
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
 import com.pty4j.windows.conpty.WinConPtyProcess
 import com.pty4j.windows.winpty.WinPtyProcess
 import org.jetbrains.annotations.ApiStatus
 import org.jvnet.winp.WinProcess
-import java.io.File
 import java.io.OutputStream
 
 @ApiStatus.Internal
 class ProcessServiceImpl : ProcessService {
-  override fun startPtyProcess(command: Array<String>,
-                               directory: String?,
-                               env: Map<String, String>,
-                               options: LocalPtyOptions,
-                               app: Application?,
-                               redirectErrorStream: Boolean,
-                               windowsAnsiColorEnabled: Boolean,
-                               unixOpenTtyToPreserveOutputAfterTermination: Boolean): Process {
-    val builder = PtyProcessBuilder(command)
+  override fun startPtyProcess(
+    command: List<String>,
+    directory: String?,
+    env: Map<String, String>,
+    options: LocalPtyOptions,
+    redirectErrorStream: Boolean,
+  ): PtyProcess {
+    val builder = PtyProcessBuilder(command.toTypedArray())
       .setEnvironment(env)
       .setDirectory(directory)
       .setInitialColumns(if (options.initialColumns > 0) options.initialColumns else null)
@@ -33,10 +30,9 @@ class ProcessServiceImpl : ProcessService {
       .setConsole(options.consoleMode)
       .setCygwin(options.useCygwinLaunch && SystemInfo.isWindows)
       .setUseWinConPty(options.useWinConPty)
-      .setLogFile(if (app != null && app.isEAP) File(PathManager.getLogPath(), "pty.log") else null)
       .setRedirectErrorStream(redirectErrorStream)
-      .setWindowsAnsiColorEnabled(windowsAnsiColorEnabled)
-      .setUnixOpenTtyToPreserveOutputAfterTermination(unixOpenTtyToPreserveOutputAfterTermination)
+      .setWindowsAnsiColorEnabled(!SystemProperties.getBooleanProperty("pty4j.win.disable.ansi.in.console.mode", false))
+      .setUnixOpenTtyToPreserveOutputAfterTermination(SystemProperties.getBooleanProperty("pty4j.open.child.tty", SystemInfo.isMac))
       .setSpawnProcessUsingJdkOnMacIntel(Registry.`is`("run.processes.using.pty.helper.on.mac.intel", true))
     return builder.start()
   }

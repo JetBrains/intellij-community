@@ -126,16 +126,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
       else {
         process = (PtyProcess)ProcessService.getInstance().startPtyProcess(
-          command,
+          List.of(command),
           workingDir,
           envs,
           LocalPtyOptions.defaults().builder()
             .initialColumns(initialTermSize != null ? initialTermSize.getColumns() : -1)
             .initialRows(initialTermSize != null ? initialTermSize.getRows() : -1)
             .build(),
-          null,
-          false,
-          false,
           false
         );
       }

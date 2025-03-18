@@ -9,6 +9,15 @@ import java.io.OutputStream
 @ApiStatus.Internal
 interface ProcessService {
   fun startPtyProcess(
+    command: List<String>,
+    directory: String?,
+    env: Map<String, String>,
+    options: LocalPtyOptions,
+    redirectErrorStream: Boolean,
+  ): Process
+
+  @Deprecated("Use the other `startPtyProcess` instead")
+  fun startPtyProcess(
     command: Array<String>,
     directory: String?,
     env: Map<String, String>,
@@ -17,7 +26,9 @@ interface ProcessService {
     redirectErrorStream: Boolean,
     windowsAnsiColorEnabled: Boolean,
     unixOpenTtyToPreserveOutputAfterTermination: Boolean
-  ): Process
+  ): Process {
+    return startPtyProcess(command.toList(), directory, env, options, redirectErrorStream)
+  }
 
   fun sendWinProcessCtrlC(process: Process): Boolean
 

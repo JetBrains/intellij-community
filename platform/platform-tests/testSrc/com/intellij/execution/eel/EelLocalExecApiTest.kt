@@ -5,16 +5,16 @@ import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.Pty
+import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.utils.readAllBytes
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.ttyAndExit.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import io.ktor.util.decodeString
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.*
 import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.`is`
@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junitpioneer.jupiter.cartesian.CartesianTest
+import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -139,6 +140,8 @@ class EelLocalExecApiTest {
           }
         }
 
+        process.stdout.readAllBytesAsync(this)
+        process.stderr.readAllBytesAsync(this)
 
         // Test kill api
         when (exitType) {
@@ -185,6 +188,18 @@ class EelLocalExecApiTest {
           }
         }
       }
+    }
+  }
+
+  /**
+   * Reads all bytes from the channel asynchronously. Otherwise, a PTY process
+   * launched with `unixOpenTtyToPreserveOutputAfterTermination=true` won't exit.
+   * 
+   * @see `com.pty4j.PtyProcessBuilder.setUnixOpenTtyToPreserveOutputAfterTermination`
+   */
+  private fun EelReceiveChannel<IOException>.readAllBytesAsync(coroutineScope: CoroutineScope) {
+    coroutineScope.launch {
+      readAllBytes()
     }
   }
 
