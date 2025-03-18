@@ -118,15 +118,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return true;
   }
 
-  protected void prepareToRunAsInspection(@NotNull HighlightInfoHolder holder) {
-    prepare(holder, holder.getContextFile());
-  }
-
   private void prepare(@NotNull HighlightInfoHolder holder, @NotNull PsiFile file) {
     myCollector = new JavaErrorCollector(file, error -> reportError(error, holder));
   }
 
-  private void reportError(JavaCompilationError<?, ?> error,
+  private void reportError(@NotNull JavaCompilationError<?, ?> error,
                            @NotNull HighlightInfoHolder holder) {
     if (error.kind() == SYNTAX_ERROR) return; // reported by DefaultHighlightVisitor
     JavaErrorHighlightType javaHighlightType = error.highlightType();
