@@ -132,7 +132,14 @@ class ThreadDumpAction : DumbAwareAction() {
           }
         }
         else {
-          getAllItems(null) // todo fix
+          val vm = context.debugProcess!!.virtualMachineProxy
+          vm.suspend()
+          try {
+            return getAllItems(null)
+          }
+          finally {
+            vm.resume()
+          }
         }
       }
       catch (e: Throwable) {
