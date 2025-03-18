@@ -115,7 +115,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   }
 
   fun getFrontendTypingActivityOrNull(event: TerminalInputEvent): FrontendTypingActivity? {
-    return frontendTypingActivityByInputEvent[InputEventIdentityWrapper(event)]
+    return frontendTypingActivityByInputEvent[event.toIdentity()]
   }
 
   fun tryStartBackendTypingActivity(event: TerminalWriteBytesEvent) {
@@ -149,15 +149,17 @@ interface BackendTypingActivity {
 
 private val frontendTypingActivityId = AtomicInteger()
 private var currentKeyEventTypingActivity: FrontendTypingActivityImpl? = null
-private val frontendTypingActivityByInputEvent = ConcurrentHashMap<InputEventIdentityWrapper, FrontendTypingActivityImpl>()
+private val frontendTypingActivityByInputEvent = ConcurrentHashMap<IdentityWrapper<TerminalInputEvent>, FrontendTypingActivityImpl>()
 
 private val backendTypingActivityByByteArray = ConcurrentHashMap<ByteArray, BackendTypingActivityImpl>()
 
-// TerminalWriteBytesEvent is a data class, but we need to track individual events, not their content
-private class InputEventIdentityWrapper(private val event: TerminalInputEvent) {
-  override fun equals(other: Any?): Boolean = event === (other as? InputEventIdentityWrapper)?.event
-  override fun hashCode(): Int = System.identityHashCode(event)
+// used to track individual instances of data classes
+private class IdentityWrapper<T : Any>(private val instance: T) {
+  override fun equals(other: Any?): Boolean = instance === (other as? IdentityWrapper<T>)?.instance
+  override fun hashCode(): Int = System.identityHashCode(instance)
 }
+
+private fun <T : Any> T.toIdentity(): IdentityWrapper<T> = IdentityWrapper(this)
 
 private class FrontendTypingActivityImpl(override val id: Int) : FrontendTypingActivity {
   private val start = TimeSource.Monotonic.markNow()
@@ -165,7 +167,7 @@ private class FrontendTypingActivityImpl(override val id: Int) : FrontendTypingA
 
   override fun startTerminalInputEventProcessing(writeBytesEvent: TerminalWriteBytesEvent) {
     this.writeBytesEvent = writeBytesEvent
-    frontendTypingActivityByInputEvent[InputEventIdentityWrapper(writeBytesEvent)] = this
+    frontendTypingActivityByInputEvent[writeBytesEvent.toIdentity()] = this
     if (frontendTypingActivityByInputEvent.size > 10000) {
       LOG.error(Throwable(
         "Too many simultaneous frontend typing activities, likely a leak!" +
@@ -190,7 +192,7 @@ private class FrontendTypingActivityImpl(override val id: Int) : FrontendTypingA
   override fun finishTerminalInputEventProcessing() {
     val inputEvent = writeBytesEvent
     if (inputEvent != null) {
-      frontendTypingActivityByInputEvent.remove(InputEventIdentityWrapper(inputEvent))
+      frontendTypingActivityByInputEvent.remove(inputEvent.toIdentity())
     }
   }
 }
