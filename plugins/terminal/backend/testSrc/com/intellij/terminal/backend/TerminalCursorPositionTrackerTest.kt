@@ -8,6 +8,7 @@ import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.junit.Test
 
 internal class TerminalCursorPositionTrackerTest {
@@ -15,8 +16,9 @@ internal class TerminalCursorPositionTrackerTest {
   fun `cursor position should correspond to existing line in the TextBuffer`() {
     val textBuffer = TerminalTextBuffer(10, 5, StyleState(), 3)
     val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
+    val fusActivity = ReworkedTerminalUsageCollector.startBackendOutputActivity()
     val terminalDisplay = TerminalDisplayImpl(DefaultSettingsProvider())
-    val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
+    val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker, fusActivity)
     val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
 
     // Prepare
