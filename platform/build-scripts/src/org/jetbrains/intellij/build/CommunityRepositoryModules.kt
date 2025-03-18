@@ -237,6 +237,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.preview-designer")
       spec.withModule("intellij.android.wear-designer")
       spec.withModule("intellij.android.motion-editor")
+      spec.withModule("intellij.android.visual-lint")
 
       // libs:
       spec.withProjectLibrary("layoutlib")
