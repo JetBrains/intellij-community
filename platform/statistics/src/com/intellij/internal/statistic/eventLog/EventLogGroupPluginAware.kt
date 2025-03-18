@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventIdName
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NonNls
  * @param description Optional description of the event group.
  * @param pluginLoadedClass The class used to get the plugin classloader. This is required to get the PluginInfo.
  */
+@ApiStatus.Internal
 class EventLogGroupPluginAware<T>(
   @NonNls @EventIdName id: String,
   version: Int,
