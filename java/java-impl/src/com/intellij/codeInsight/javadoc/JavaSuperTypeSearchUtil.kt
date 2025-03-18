@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.javadoc
 
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.javadoc.PsiDocTagValue
@@ -20,8 +21,17 @@ object JavaSuperTypeSearchUtil {
     target: PsiDocTagValue?,
     locator: JavaDocInfoGenerator.DocTagLocator<T>,
   ): Pair<T, JavaDocInfoGenerator.InheritDocProvider<T>>? {
-    return searchInDelegate(method, target, locator)
-           ?: search(psiClass, method, target, locator, false)
+    val resultInDelegate = searchInDelegate(method, target, locator)
+    if (resultInDelegate != null) return resultInDelegate
+
+    if (psiClass is PsiAnonymousClass) {
+      val baseClass = psiClass.baseClassType.resolve()
+      if (baseClass != null) {
+        return search(baseClass, method, target, locator, true)
+      }
+    }
+
+    return search(psiClass, method, target, locator, false)
   }
 
   private fun <T> searchInDelegate(
