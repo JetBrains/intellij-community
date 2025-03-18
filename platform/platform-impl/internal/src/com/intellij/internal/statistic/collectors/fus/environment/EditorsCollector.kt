@@ -98,7 +98,7 @@ internal class EditorsCollector :  ApplicationUsagesCollector() {
         val vsVersions = VisualStudioCollectionDataProvider().getInstalledVersions()
         if (vsVersions.any()) {
           add(CONFIG_EXISTS.metric(VISUAL_STUDIO_ID))
-          VISUAL_STUDIO_VERSIONS_INSTALLED.metric(vsVersions)
+          add(VISUAL_STUDIO_VERSIONS_INSTALLED.metric(vsVersions))
         }
       }
     }
