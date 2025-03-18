@@ -2641,8 +2641,11 @@ public class JavaDocInfoGenerator {
       if (dataElements.length < 2) continue;
 
       buffer.append(" &ndash; ");
+      final PsiInlineDocTag inheritDocTag = (PsiInlineDocTag) ContainerUtil.find(tag.getChildren(), childTag -> {
+        return childTag instanceof PsiInlineDocTag inlineDocTag && inlineDocTag.getName().equals(INHERIT_DOC_TAG);
+      });
       final Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tagToInheritDocProvider =
-        findInheritDocTag(method, exceptionLocator(reference.getQualifiedName()), tag.getValueElement());
+        findInheritDocTag(method, exceptionLocator(reference.getQualifiedName()), inheritDocTag != null ? inheritDocTag.getValueElement() : null);
 
       generateValue(buffer, dataElements, 1, tagToInheritDocProvider == null ? null : new InheritDocProvider<>() {
         @Override

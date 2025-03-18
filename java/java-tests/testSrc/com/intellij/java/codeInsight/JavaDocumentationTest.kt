@@ -402,14 +402,19 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(method, null)
-    assert(doc != null)
-    val text = doc.toString()
+    val text = retrieveMethodDocString()
     assertContains(text, "A::m-doc")
     assertFails { assertContains(text, "B::m-doc") }
     assertContains(text, "B::m-param")
     assertFails { assertContains(text, "A::m-param") }
+  }
+
+  private fun retrieveMethodDocString(): String {
+    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
+    val doc = JavaDocumentationProvider().generateDoc(method, null)
+    assert(doc != null)
+    val text = doc.toString()
+    return text
   }
 
   fun testInheritDocRecursive() {
@@ -434,10 +439,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(method, null)
-    assert(doc != null)
-    val text = doc.toString()
+    val text = retrieveMethodDocString()
     assertContains(text, "A::m-param")
   }
 
@@ -463,10 +465,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-      val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-      val doc = JavaDocumentationProvider().generateDoc(method, null)
-      assert(doc != null)
-      val text = doc.toString()
+      val text = retrieveMethodDocString()
       assertContains(text, param.contains)
       assertFails { assertContains(text, param.notContains) }
     }
@@ -526,10 +525,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(method, null)
-    assert(doc != null)
-    val text = doc.toString()
+    val text = retrieveMethodDocString()
     assertContains(text, "D::foo-d")
     assertContains(text, "B::foo-b")
     assertContains(text, "A::foo-a")
@@ -558,14 +554,168 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
-    val doc = JavaDocumentationProvider().generateDoc(method, null)
-    assert(doc != null)
-    val text = doc.toString()
+    val text = retrieveMethodDocString()
     // A has priority over Object
     assertContains(text, "A::equals-obj")
     // A has no doc for `return` so we should inherit from Object
     assertContains(text, "if this object is the same as the obj")
+  }
+
+  fun testInheritDocThrows() {
+    configure("""
+      interface A1 {
+        /**
+         * @throws E1 A1::m-E1
+         * @throws E2 A1::m-E2
+         * @throws E3 A1::m-E3
+         * @throws E4 A1::m-E4
+         */
+        void m() throws E1, E2, E3, E4;
+      }
+      
+      interface A2 extends A1 {
+        /**
+         * @throws E1 A2::m-E1
+         * @throws E3 A2::m-E3
+         * @throws E4 A2::m-E4
+         */
+        void m() throws E1, E2, E3, E4;
+      }
+      
+      class B implements A2 {
+        /**
+         * @throws E1 {@inheritDoc}
+         * @throws E2 {@inheritDoc}
+         * @throws E3 {@inheritDoc A1}
+         * @throws E4 {@inheritDoc A2}
+         */
+        @Override void m<caret>() throws E1, E2, E3, E4 {}
+      }
+    """)
+
+    val text = retrieveMethodDocString()
+    assertContains(text, "A2::m-E1")
+    assertContains(text, "A1::m-E2")
+    assertContains(text, "A1::m-E3")
+    assertContains(text, "A2::m-E4")
+  }
+
+  fun testInheritDocParam() {
+    configure("""
+      interface A1 {
+        /**
+         * @param p1 A1::m-p1
+         * @param p2 A1::m-p2
+         * @param p3 A1::m-p3
+         * @param p4 A1::m-p4
+         */
+        void m(int p1, int p2, int p3, int p4);
+      }
+      
+      interface A2 extends A1 {
+        /**
+         * @param p1 A2::m-p1
+         * @param p3 A2::m-p3
+         * @param p4 A2::m-p4
+         */
+        void m(int p1, int p2, int p3, int p4);
+      }
+      
+      class B implements A2 {
+        /**
+         * @param p1 {@inheritDoc}
+         * @param p2 {@inheritDoc}
+         * @param p3 {@inheritDoc A1}
+         * @param p4 {@inheritDoc A2}
+         */
+        @Override void m<caret>(int p1, int p2, int p3, int p4) {}
+      }
+    """)
+
+    val text = retrieveMethodDocString()
+    assertContains(text, "A2::m-p1")
+    assertContains(text, "A1::m-p2")
+    assertContains(text, "A1::m-p3")
+    assertContains(text, "A2::m-p4")
+  }
+
+  fun testInheritDocTypeParam() {
+    configure("""
+      interface A1 {
+        /**
+         * @param <T1> A1::m-T1
+         * @param <T2> A1::m-T2
+         * @param <T3> A1::m-T3
+         * @param <T4> A1::m-T4
+         */
+        <T1, T2, T3, T4> void m();
+      }
+      
+      interface A2 extends A1 {
+        /**
+         * @param <T1> A2::m-T1
+         * @param <T3> A2::m-T3
+         * @param <T4> A2::m-T4
+         */
+        <T1, T2, T3, T4> void m();
+      }
+      
+      class B implements A2 {
+        /**
+         * @param <T1> {@inheritDoc}
+         * @param <T2> {@inheritDoc}
+         * @param <T3> {@inheritDoc A1}
+         * @param <T4> {@inheritDoc A2}
+         */
+        @Override <T1, T2, T3, T4> void m<caret>() {}
+      }
+    """)
+
+    val text = retrieveMethodDocString()
+    assertContains(text, "A2::m-T1")
+    assertContains(text, "A1::m-T2")
+    assertContains(text, "A1::m-T3")
+    assertContains(text, "A2::m-T4")
+  }
+
+  fun testInheritDocReturn() {
+    configure("""
+      interface A1 {
+        /** @return A1::m1 */ void m1();
+        /** @return A1::m2 */ void m2();
+        /** @return A1::m3 */ void m3();
+        /** @return A1::m4 */ void m4();
+      }
+      
+      interface A2 extends A1 {
+        /** @return A2::m1 */ @Override void m1();
+        /** no return tag */ @Override void m2();
+        /** @return A2::m3 */ @Override void m3();
+        /** @return A2::m4 */ @Override void m4();
+      }
+      
+      class B implements A2 {
+        /** @return {@inheritDoc} */ @Override void m1() {}
+        /** @return {@inheritDoc} */ @Override void m2() {}
+        /** @return {@inheritDoc A1} */ @Override void m3() {}
+        /** @return {@inheritDoc A2} */ @Override void m4() {}
+      }
+    """)
+
+    val expected = mapOf(
+      "m1" to "A2::m1",
+      "m2" to "A1::m2",
+      "m3" to "A1::m3",
+      "m4" to "A2::m4",
+    )
+
+    for (method in PsiTreeUtil.findChildrenOfType(file, PsiMethod::class.java)) {
+      if (method.containingClass?.name != "B") continue
+      val doc = JavaDocumentationProvider().generateDoc(method, null)
+      assert(doc != null)
+      val text = doc.toString()
+      assertContains(text, expected[method.name]!!)
+    }
   }
 
   private fun doTestCtrlHoverDoc(inputFile: String, expectedDoc: String) {
