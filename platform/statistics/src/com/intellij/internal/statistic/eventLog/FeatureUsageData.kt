@@ -124,7 +124,11 @@ class FeatureUsageData(val recorderId: String) {
 
   fun addAutomatedPluginVersion(info: PluginInfo?): FeatureUsageData {
     info?.let {
-      StatisticsUtil.addAutomatedPluginVersionTo(info, data)
+      if (!info.type.isSafeToReport()) return@let
+      val version = info.version
+      if (!version.isNullOrEmpty()) {
+        data["automated_plugin_version"] = version
+      }
     }
     return this
   }
