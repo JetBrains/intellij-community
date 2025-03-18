@@ -9,6 +9,8 @@ import com.pty4j.PtyProcess;
 import com.pty4j.unix.UnixPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.fus.BackendOutputActivity;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 
 import java.io.IOException;
@@ -19,10 +21,24 @@ import java.util.concurrent.TimeUnit;
 public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
   private static final Logger LOG = Logger.getInstance(LocalTerminalTtyConnector.class);
   private final @NotNull PtyProcess myProcess;
+  private @Nullable BackendOutputActivity fusActivity;
 
   LocalTerminalTtyConnector(@NotNull PtyProcess process, @NotNull Charset charset) {
     super(process, charset);
     myProcess = process;
+  }
+
+  public void startStatisticsReporting(@NotNull BackendOutputActivity fusActivity) {
+    this.fusActivity = fusActivity;
+  }
+
+  @Override
+  public int read(char[] buf, int offset, int length) throws IOException {
+    var fusActivity = this.fusActivity;
+    var charsRead = super.read(buf, offset, length);
+    if (fusActivity == null) return charsRead;
+    fusActivity.charsRead(charsRead);
+    return charsRead;
   }
 
   @Override

@@ -14,7 +14,6 @@ import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalExecutorServiceManager
 import com.jediterm.terminal.TerminalStarter
-import com.jediterm.terminal.TtyBasedArrayDataStream
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.StyleState
@@ -23,8 +22,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.FusAwareTtyBasedDataStream
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.fus.BackendOutputActivity
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 import java.util.concurrent.CancellationException
@@ -51,15 +53,18 @@ internal fun createTerminalSession(
   initialSize: TermSize,
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
+  fusActivity: BackendOutputActivity,
 ): TerminalSession {
+  ttyConnector.startStatisticsReporting(fusActivity)
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
-  val services: JediTermServices = createJediTermServices(ttyConnector, initialSize, maxHistoryLinesCount, settings)
+  val services: JediTermServices = createJediTermServices(ttyConnector, fusActivity, initialSize, maxHistoryLinesCount, settings)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
   val shellIntegrationController = TerminalShellIntegrationController(services.controller)
   shellIntegrationController.addListener(TerminalShellIntegrationStatisticsListener(project))
   val outputFlow = createTerminalOutputFlow(
     services.textBuffer,
+    fusActivity,
     services.terminalDisplay,
     services.controller,
     shellIntegrationController,
@@ -95,7 +100,8 @@ internal fun createTerminalSession(
 }
 
 private fun createJediTermServices(
-  connector: TtyConnector,
+  connector: LocalTerminalTtyConnector,
+  fusActivity: BackendOutputActivity,
   termSize: TermSize,
   maxHistoryLinesCount: Int,
   settings: JBTerminalSystemSettingsProviderBase,
@@ -109,9 +115,10 @@ private fun createJediTermServices(
   val terminalStarter = StopAwareTerminalStarter(
     controller,
     connector,
-    TtyBasedArrayDataStream(connector),
+    FusAwareTtyBasedDataStream(connector, fusActivity),
     typeAheadManager,
-    executorService
+    executorService,
+    fusActivity
   )
 
   return JediTermServices(textBuffer, terminalDisplay, controller, executorService, terminalStarter)

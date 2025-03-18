@@ -7,6 +7,7 @@ import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import junit.framework.TestCase.assertEquals
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.junit.Test
 
 internal class TerminalContentChangesTrackerTest {
@@ -176,6 +177,7 @@ internal class TerminalContentChangesTrackerTest {
 
   private fun createChangesTracker(textBuffer: TerminalTextBuffer): TerminalContentChangesTracker {
     val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
-    return TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
+    val fusActivity = ReworkedTerminalUsageCollector.startBackendOutputActivity()
+    return TerminalContentChangesTracker(textBuffer, discardedHistoryTracker, fusActivity)
   }
 }

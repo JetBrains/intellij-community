@@ -12,10 +12,12 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.block.ui.withLock
+import org.jetbrains.plugins.terminal.fus.BackendOutputActivity
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun createTerminalOutputFlow(
   textBuffer: TerminalTextBuffer,
+  fusActivity: BackendOutputActivity,
   terminalDisplay: TerminalDisplayImpl,
   controller: ObservableJediTerminal,
   shellIntegrationController: TerminalShellIntegrationController,
@@ -35,7 +37,7 @@ internal fun createTerminalOutputFlow(
   )
 
   val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
-  val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
+  val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker, fusActivity)
   val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
 
   /**
