@@ -794,6 +794,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+    visitElement(expression);
     JavaResolveResult resultForIncompleteCode = doVisitReferenceElement(expression);
     if (!hasErrorResults()) {
       visitExpression(expression);
