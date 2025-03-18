@@ -177,7 +177,7 @@ public final class JBCefApp {
       }
 
       if (IS_REMOTE_ENABLED) {
-        myCefApp.onInitialization(state -> StartupTest.checkBrowserCreation());
+        StartupTest.checkBrowserCreation(myCefApp, () -> restartJCEF(true, true));
         ActionManagerEx.getInstanceEx().registerAction("RestartJCEFActionId", new AnAction("Restart JCEF") {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
