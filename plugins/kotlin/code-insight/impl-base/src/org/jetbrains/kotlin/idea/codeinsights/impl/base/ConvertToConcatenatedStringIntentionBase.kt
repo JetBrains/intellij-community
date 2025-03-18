@@ -85,8 +85,6 @@ abstract class ConvertToConcatenatedStringIntentionBase : PsiUpdateModCommandAct
 
     private fun KtStringTemplateEntry.isStringLiteral(): Boolean = expression == null || expression is KtStringTemplateExpression
 
-    private fun isTripleQuoted(str: String): Boolean = str.startsWith("\"\"\"") && str.endsWith("\"\"\"")
-
     private fun KtStringTemplateEntry.toSeparateString(quote: String, convertExplicitly: Boolean): String {
         if (this !is KtStringTemplateEntryWithExpression) return text.quote(quote)
 
