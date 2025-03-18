@@ -137,6 +137,7 @@ public final class FilePartNodeRoot extends FilePartNode {
     return result;
   }
 
+  /** Find a pointer to the given path, taking into account case-sensitivity of fs, or create a new pointer, if existing not found */
   @NotNull
   NodeToUpdate findOrCreateByPath(@NotNull String path, @NotNull NewVirtualFileSystem fs) {
     NewVirtualFileSystem currentFS;

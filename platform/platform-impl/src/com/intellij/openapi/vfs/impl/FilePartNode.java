@@ -153,14 +153,14 @@ public class FilePartNode {
                                  @NotNull NewVirtualFileSystem childFs) {
     if (nameId <= 0 && nameId != JAR_SEPARATOR_NAME_ID) throw new IllegalArgumentException("invalid argument nameId: "+nameId);
     for (FilePartNode child : children) {
-      if (child.nameEqualTo(nameId)) return child;
+      if (child.nameEqualTo(nameId, childFs)) return child;
     }
     if (createIfNotFound) {
       CharSequence name = fromNameId(nameId);
       int index = children.length == 0 ? -1 : binarySearchChildByName(name);
       FilePartNode child;
       if (index >= 0) throw new AssertionError(index + " : child= '" + (child = children[index]) + "'"
-                         + "; child.nameEqualTo(nameId)=" + child.nameEqualTo(nameId)
+                         + "; child.nameEqualTo(nameId)=" + child.nameEqualTo(nameId, childFs)
                          + "; child.getClass()=" + child.getClass()
                          + "; child.nameId=" + child.nameId
                          + "; child.getName()='" + child.getName() + "'"
@@ -182,8 +182,18 @@ public class FilePartNode {
     return null;
   }
 
-  boolean nameEqualTo(int nameId) {
-    return this.nameId == nameId;
+  /** @return true if this part name is equal to the name denoted by nameId, with case-sensitivity from childFs */
+  boolean nameEqualTo(int nameId,
+                      @NotNull NewVirtualFileSystem childFs) {
+    if (this.nameId == nameId) {
+      return true;
+    }
+    boolean caseSensitive = childFs.isCaseSensitive();
+    if (caseSensitive) {
+      return false;
+    }
+
+    return StringUtilRt.equal(getName(), fromNameId(nameId), caseSensitive);
   }
 
   int binarySearchChildByName(@NotNull CharSequence name) {

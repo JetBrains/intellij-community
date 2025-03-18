@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
@@ -32,8 +31,9 @@ final class UrlPartNode extends FilePartNode {
   }
 
   @Override
-  boolean nameEqualTo(int nameId) {
-    return StringUtilRt.equal(getName(), fromNameId(nameId), SystemInfoRt.isFileSystemCaseSensitive);
+  boolean nameEqualTo(int nameId,
+                      @NotNull NewVirtualFileSystem childFs) {
+    return StringUtilRt.equal(getName(), fromNameId(nameId), childFs.isCaseSensitive());
   }
 
   @Override
