@@ -293,13 +293,12 @@ object CommunityRepositoryModules {
       }
 
       spec.excludeProjectLibrary("Gradle")
-      // android jar is already quite big - put into separate JAR
-      spec.withProjectLibrary("jewel-ide-laf-bridge", "jewel-ide-laf-bridge.jar")
 
       // modules:
       // adt-ui.jar
       spec.withModule("intellij.android.adt.ui.compose", "adt-ui.jar")
-      spec.withModuleLibrary("jewel-markdown-ide-laf-bridge-styling-243", "intellij.android.adt.ui.compose", "jewel-markdown-ide-laf-bridge-styling-242.jar")
+      spec.withModuleLibrary("jewel-ide-laf-bridge-243", "intellij.android.adt.ui.compose", "jewel-ide-laf-bridge-243.jar")
+      spec.withModuleLibrary("jewel-markdown-ide-laf-bridge-styling-243", "intellij.android.adt.ui.compose", "jewel-markdown-ide-laf-bridge-styling-243.jar")
       spec.withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       spec.withModule("intellij.android.adt.ui", "adt-ui.jar")
 
