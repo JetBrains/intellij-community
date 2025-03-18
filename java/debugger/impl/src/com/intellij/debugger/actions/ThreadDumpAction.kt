@@ -122,7 +122,9 @@ class ThreadDumpAction : DumbAwareAction() {
           val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.ms", 500).milliseconds
           try {
             suspendAllAndEvaluate(context, timeout) { suspendContext ->
-              getAllItems(suspendContext)
+              withDebugContext(suspendContext) {
+                getAllItems(suspendContext)
+              }
             }
           }
           catch (_: TimeoutCancellationException) {
