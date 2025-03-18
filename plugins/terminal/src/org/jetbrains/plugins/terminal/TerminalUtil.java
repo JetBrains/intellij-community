@@ -18,12 +18,15 @@ import com.jediterm.core.input.KeyEvent;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.model.TerminalModelListener;
+import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.pty4j.unix.UnixPtyProcess;
 import com.pty4j.windows.conpty.WinConPtyProcess;
 import com.pty4j.windows.winpty.WinPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -161,5 +164,15 @@ public final class TerminalUtil {
   @ApiStatus.Internal
   public static void setGenOneTerminalVisibilityValue(boolean isVisible) {
     PropertiesComponent.getInstance().setValue(GEN_ONE_OPTION_VISIBLE_PROPERTY, Boolean.toString(isVisible));
+  }
+
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated(forRemoval = true)
+  public static void addModelListener(@NotNull TerminalTextBuffer textBuffer,
+                                      @NotNull Disposable parentDisposable,
+                                      @NotNull TerminalModelListener listener) {
+    TerminalUtilKt.addModelListener(textBuffer, parentDisposable, listener);
   }
 }
