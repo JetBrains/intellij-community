@@ -1996,7 +1996,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         void f() {
           //XXX
       
-          <caret> # // Unexpected token
+          <caret> : // Unexpected token
       
         }
       }""";

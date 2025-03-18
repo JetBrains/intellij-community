@@ -738,6 +738,7 @@ com.intellij.codeInsight.daemon.impl.HighlightVisitor
 - a:clone():com.intellij.codeInsight.daemon.impl.HighlightVisitor
 - order():I
 - a:suitableForFile(com.intellij.psi.PsiFile):Z
+- supersedesDefaultHighlighter():Z
 - a:visit(com.intellij.psi.PsiElement):V
 com.intellij.codeInsight.daemon.impl.HighlightingSession
 - a:getColorsScheme():com.intellij.openapi.editor.colors.EditorColorsScheme

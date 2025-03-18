@@ -82,6 +82,17 @@ public final class JavaErrorKinds {
       });
   public static final Simple<PsiErrorElement> SYNTAX_ERROR =
     error(PsiErrorElement.class, "syntax.error")
+      .withRange(e -> {
+        TextRange range = e.getTextRange();
+        if (range.getLength() == 0) {
+          PsiFile file = e.getContainingFile();
+          int endOffset = range.getEndOffset();
+          if (endOffset < file.getTextLength() && file.getFileDocument().getCharsSequence().charAt(endOffset) != '\n') {
+            return TextRange.from(0, 1);
+          }
+        }
+        return null;
+      })
       .withDescription(e -> message("syntax.error", e.getErrorDescription()));
   public static final Parameterized<PsiElement, JavaPreviewFeatureUtil.PreviewFeatureUsage> PREVIEW_API_USAGE =
     parameterized(PsiElement.class, JavaPreviewFeatureUtil.PreviewFeatureUsage.class, "preview.api.usage")

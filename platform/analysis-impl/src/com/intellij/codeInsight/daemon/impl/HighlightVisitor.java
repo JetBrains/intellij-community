@@ -21,6 +21,13 @@ public interface HighlightVisitor extends PossiblyDumbAware {
 
   boolean suitableForFile(@NotNull PsiFile file);
 
+  /**
+   * @return true if this highlighter covers the errors reported by {@link DefaultHighlightVisitor}, so the latter should be turned off.
+   */
+  default boolean supersedesDefaultHighlighter() {
+    return false;
+  }
+
   void visit(@NotNull PsiElement element);
 
   boolean analyze(@NotNull PsiFile file, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable action);
