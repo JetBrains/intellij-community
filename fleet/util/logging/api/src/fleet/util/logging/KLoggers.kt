@@ -1,13 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.logging
 
-import fleet.util.logging.slf4j.Slf4jKLoggerFactory
 import java.util.*
 import kotlin.reflect.KClass
 
 object KLoggers {
-  internal val loggerFactory: KLoggerFactory = ServiceLoader.load(KLoggerFactory::class.java, KLoggerFactory::class.java.classLoader).firstOrNull()
-                              ?: Slf4jKLoggerFactory()
+  internal val loggerFactory: KLoggerFactory = ServiceLoader.load(KLoggerFactory::class.java, KLoggerFactory::class.java.classLoader).first()
+
   fun logger(owner: KClass<*>): KLogger = loggerFactory.logger(owner)
   fun logger(owner: Any): KLogger = loggerFactory.logger(owner)
   fun logger(name: String): KLogger = loggerFactory.logger(name)

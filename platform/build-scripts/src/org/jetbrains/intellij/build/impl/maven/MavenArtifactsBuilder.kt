@@ -114,6 +114,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       "fleet.rpc.server",
       "fleet.util.core",
       "fleet.util.logging.api",
+      "fleet.util.logging.slf4j",
       "fleet.util.multiplatform",
       "fleet.fastutil",
     )

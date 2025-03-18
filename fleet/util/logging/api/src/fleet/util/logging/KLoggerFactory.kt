@@ -2,7 +2,6 @@
 package fleet.util.logging
 
 import kotlinx.coroutines.ThreadContextElement
-import org.slf4j.MDC
 import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KClass
 
