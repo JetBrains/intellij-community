@@ -48,11 +48,11 @@ suspend fun <T> rpcClient(
 ): T =
   newSingleThreadCoroutineDispatcher("rpc-client-$origin").use { dispatcher ->
     withSupervisor { supervisor ->
-      val client = RpcClient(coroutineScope = supervisor + supervisor.coroutineNameAppended("RpcClient"),
+      val client = RpcClient(coroutineScope = supervisor + CoroutineName("RpcScope"),
                              transport = transport,
                              origin = origin,
                              requestInterceptor = requestInterceptor)
-      launch(start = CoroutineStart.ATOMIC, context = dispatcher) { client.work(abortOnError) }
+      launch(start = CoroutineStart.ATOMIC, context = dispatcher + CoroutineName("RpcClient")) { client.work(abortOnError) }
         .use {
           body(client)
         }

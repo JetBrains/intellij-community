@@ -2,6 +2,8 @@
 package fleet.util.async
 
 import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 suspend fun <T : Job, R> T.use(body: suspend CoroutineScope.(T) -> R): R {
   return try {
@@ -35,11 +37,14 @@ suspend fun <T> withSupervisor(body: suspend CoroutineScope.(scope: CoroutineSco
   }
 }
 
-suspend fun<T> withCoroutineScope(body: suspend CoroutineScope.(scope: CoroutineScope) -> T): T {
+suspend fun <T> withCoroutineScope(
+  coroutineContext: CoroutineContext = EmptyCoroutineContext,
+  body: suspend CoroutineScope.(scope: CoroutineScope) -> T,
+): T {
   val context = currentCoroutineContext()
   val job = Job(context.job)
   return try {
-    coroutineScope { body(CoroutineScope(context + job)) }
+    coroutineScope { body(CoroutineScope(context + coroutineContext + job)) }
   }
   finally {
     job.cancelAndJoin()

@@ -10,6 +10,7 @@ import fleet.rpc.core.TransportMessage
 import fleet.util.UID
 import fleet.util.async.*
 import fleet.util.channels.channels
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -36,7 +37,7 @@ fun RequestDispatcher.directRpcClient(
         cc(rpcClient)
       }
     }
-  }.span("directRpcClient")
+  }.span("directRpcClient").onContext(CoroutineName("directRpcClient"))
 
 suspend fun RequestDispatcher.withDirectRpcClient(
   interceptor: RpcInterceptor,

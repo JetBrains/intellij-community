@@ -87,7 +87,7 @@ interface Transactor : CoroutineContext.Element {
 
 internal suspend fun waitForDbSourceToCatchUpWithTimestamp(timestamp: Long) {
   val dbContext = DbContext.threadBound
-  if (dbContext.poison == null) {    
+  if (dbContext.poison == null) {
     if (dbContext.impl.timestamp < timestamp) {
       val dbAfterTimestamp = currentCoroutineContext().dbSource.flow.first { db ->
         db.timestamp >= timestamp
@@ -400,13 +400,13 @@ suspend fun <T> withTransactor(
         val job = currentCoroutineContext().job
         job.ensureActive()
         val span = currentSpan.startChild(
-            SpanInfo(
-              name = "change",
-              job = job,
-              isScope = true,
-              startTimestampNano = null,
-              cause = null,
-              map = HashMap()))
+          SpanInfo(
+            name = "change",
+            job = job,
+            isScope = true,
+            startTimestampNano = null,
+            cause = null,
+            map = HashMap()))
         /**
          * DO NOT WRAP THIS BLOCK IN A SCOPE!
          * see `change suspend is atomic case 2` in [fleet.test.frontend.kernel.TransactorTest]
@@ -471,8 +471,7 @@ suspend fun <T> withTransactor(
     sharedFlow.emit(TransactorEvent.Init(timestamp = 0L, db = initialDb))
 
     newSingleThreadCoroutineDispatcher("Kernel event loop thread ${kernelId}", DispatcherPriority.HIGH).use { coroutineDispatcher ->
-      launch(coroutineNameAppended("Changes processing job for $transactor") + coroutineDispatcher,
-             start = CoroutineStart.ATOMIC) {
+      launch(CoroutineName("Transactor loop $transactor") + coroutineDispatcher, start = CoroutineStart.ATOMIC) {
         spannedScope("kernel changes") {
           var ts = 1L
           consumeEach(priorityDispatchChannel, backgroundDispatchChannel) { changeTask ->
@@ -537,7 +536,7 @@ suspend fun <T> withTransactor(
         }
       }.use {
         try {
-          withContext(transactor + DbSource.ContextElement(FlowDbSource(transactor.dbState, debugName = "kernel $transactor")) + coroutineNameAppended("withKernel")) {
+          withContext(transactor + DbSource.ContextElement(FlowDbSource(transactor.dbState, debugName = "kernel $transactor"))) {
             body(transactor)
           }
         }
@@ -555,7 +554,7 @@ private data class DbTimestamp(override val eid: EID) : Entity {
   }
 }
 
-internal fun currentTimestamp(): Long = 
+internal fun currentTimestamp(): Long =
   DbTimestamp.single()[DbTimestamp.Timestamp]
 
 val Q.timestamp: Long

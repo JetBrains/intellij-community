@@ -35,70 +35,75 @@ class ServerRequestDispatcher(private val connectionListener: ConnectionListener
     return bannedEndpoints.asStateFlow()
   }
 
-  override suspend fun handleConnection(route: UID,
-                                        endpoint: EndpointKind,
-                                        presentableName: String?,
-                                        send: SendChannel<TransportMessage>,
-                                        receive: ReceiveChannel<TransportMessage>) {
-    val socketId = UID.random()
-    log.info { "handleConnection endpoint: $endpoint, route: $route, socket id: $socketId" }
-    receive.consume {
-      send.use {
-        bannedEndpoints.first { !it.contains(route) }
-        try {
-          val existing = connections.put(route, send)
-          if (existing != null) {
-            log.warn { "Replaced existing ${route}, will close previous socket" }
-            existing.close(RuntimeException("Replaced by other connection with same uid ${route}"))
-          }
-          log.info { "Notify $route is connected" }
-          broadcastSafely(TransportMessage.RouteOpened(route))
-          connectionListener?.onConnect(endpoint, route, socketId, presentableName)
-          coroutineScope {
-            val connectionJob = launch {
-              receive.consumeEach { message ->
-                when (message) {
-                  is TransportMessage.Envelope -> {
-                    val destination = connections[message.destination]
-                    if (destination != null) {
-                      kotlin.runCatching { destination.send(message) }
-                        .onFailure { ex ->
-                          if (log.isTraceEnabled) {
-                            log.trace(ex) { "Failed to send message from $route to ${message.destination}: $message" }
-                          } else {
-                            log.warn { "Failed to send message from $route to ${message.destination}" }
+  override suspend fun handleConnection(
+    route: UID,
+    endpoint: EndpointKind,
+    presentableName: String?,
+    send: SendChannel<TransportMessage>,
+    receive: ReceiveChannel<TransportMessage>,
+  ) {
+    withContext(CoroutineName("handleConnection $route")) {
+      val socketId = UID.random()
+      log.info { "handleConnection endpoint: $endpoint, route: $route, socket id: $socketId" }
+      receive.consume {
+        send.use {
+          bannedEndpoints.first { !it.contains(route) }
+          try {
+            val existing = connections.put(route, send)
+            if (existing != null) {
+              log.warn { "Replaced existing ${route}, will close previous socket" }
+              existing.close(RuntimeException("Replaced by other connection with same uid ${route}"))
+            }
+            log.info { "Notify $route is connected" }
+            broadcastSafely(TransportMessage.RouteOpened(route))
+            connectionListener?.onConnect(endpoint, route, socketId, presentableName)
+            coroutineScope {
+              val connectionJob = launch {
+                receive.consumeEach { message ->
+                  when (message) {
+                    is TransportMessage.Envelope -> {
+                      val destination = connections[message.destination]
+                      if (destination != null) {
+                        kotlin.runCatching { destination.send(message) }
+                          .onFailure { ex ->
+                            if (log.isTraceEnabled) {
+                              log.trace(ex) { "Failed to send message from $route to ${message.destination}: $message" }
+                            }
+                            else {
+                              log.warn { "Failed to send message from $route to ${message.destination}" }
+                            }
                           }
-                        }
+                      }
+                      else {
+                        val closed = TransportMessage.RouteClosed(message.destination)
+                        log.trace { "Sending $closed to $route because route is not registered" }
+                        send.send(closed)
+                      }
                     }
-                    else {
-                      val closed = TransportMessage.RouteClosed(message.destination)
-                      log.trace { "Sending $closed to $route because route is not registered" }
-                      send.send(closed)
+                    else -> {
+                      log.warn { "Good endpoints should send only TransportMessage.Envelope, but ${route} sends ${message}" }
                     }
-                  }
-                  else -> {
-                    log.warn { "Good endpoints should send only TransportMessage.Envelope, but ${route} sends ${message}" }
                   }
                 }
               }
-            }
-            val banned = async { bannedEndpoints.first { it.contains(route) } }
-            select {
-              connectionJob.onJoin {
-                banned.cancelAndJoin()
-              }
-              banned.onJoin {
-                connectionJob.cancelAndJoin()
+              val banned = async { bannedEndpoints.first { it.contains(route) } }
+              select {
+                connectionJob.onJoin {
+                  banned.cancelAndJoin()
+                }
+                banned.onJoin {
+                  connectionJob.cancelAndJoin()
+                }
               }
             }
           }
-        }
-        finally {
-          val removed = connections.remove(route, send)
-          connectionListener?.onDisconnect(endpoint, route, socketId)
-          if (removed) {
-            log.info { "Notify $route is disconnected" }
-            broadcastSafely(TransportMessage.RouteClosed(route))
+          finally {
+            val removed = connections.remove(route, send)
+            connectionListener?.onDisconnect(endpoint, route, socketId)
+            if (removed) {
+              log.info { "Notify $route is disconnected" }
+              broadcastSafely(TransportMessage.RouteClosed(route))
+            }
           }
         }
       }
