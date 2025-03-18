@@ -19,6 +19,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.function.BiFunction
 import java.util.function.Function
+import kotlin.collections.LinkedHashSet
 
 private val DEFAULT_CLASSLOADER_CONFIGURATION = UrlClassLoader.build().useCache()
 
@@ -198,13 +199,13 @@ class ClassLoaderConfigurator(
       }
       mainModuleFiles = emptyList()
     }
-    var allFiles: MutableList<Path>? = null
+    var allFiles: MutableSet<Path>? = null
     for (contentModule in module.content.modules) {
       if (contentModule.loadingRule == ModuleLoadingRule.EMBEDDED) {
         val customJarFiles = contentModule.requireDescriptor().jarFiles
         if (customJarFiles != null) {
           if (allFiles == null) {
-            allFiles = ArrayList(mainModuleFiles)
+            allFiles = LinkedHashSet(mainModuleFiles)
           }
           allFiles.addAll(customJarFiles)
         }
@@ -218,7 +219,7 @@ class ClassLoaderConfigurator(
     }
 
     val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
-    val files = allFiles ?: mainModuleFiles
+    val files = allFiles?.toList() ?: mainModuleFiles
     val pluginClassPath = ClassPath(/* files = */ files,
                                     /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
                                     /* resourceFileFactory = */ resourceFileFactory,
