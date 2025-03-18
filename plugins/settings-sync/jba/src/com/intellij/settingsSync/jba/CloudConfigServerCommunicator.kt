@@ -6,6 +6,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.settingsSync.core.AbstractServerCommunicator
 import com.intellij.settingsSync.core.SettingsSyncEventListener
 import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncLocalSettings
 import com.intellij.settingsSync.core.SettingsSyncSettings
 import com.intellij.settingsSync.jba.auth.JBAAuthService
 import com.intellij.util.io.HttpRequests
@@ -157,8 +158,14 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
     val idToken = jbaAuthService.idToken
     _currentIdTokenVar = idToken
     if (idToken == null) {
-      LOG.warn("No idToken provided! Setting Sync is not ready yet")
-      return null
+      if (System.getProperty("settings.sync.allow.user.without.token") == "true")
+        return null
+      else
+        if (jbaAuthService.getAccountInfoService()?.userData != null) {
+          SettingsSyncSettings.getInstance().syncEnabled = false
+          SettingsSyncLocalSettings.getInstance().userId = null
+          SettingsSyncLocalSettings.getInstance().providerCode = null
+        }
     } else {
       configuration.auth(JbaJwtTokenAuthProvider(idToken))
     }
