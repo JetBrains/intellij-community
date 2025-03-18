@@ -57,6 +57,11 @@ public abstract class LineMarkersK2TestGenerated extends AbstractLineMarkersK2Te
             runTest("testData/recursive/defaultValue.kt");
         }
 
+        @TestMetadata("destructuring.kt")
+        public void testDestructuring() throws Exception {
+            runTest("testData/recursive/destructuring.kt");
+        }
+
         @TestMetadata("dispatchExtensionReceivers.kt")
         public void testDispatchExtensionReceivers() throws Exception {
             runTest("testData/recursive/dispatchExtensionReceivers.kt");
