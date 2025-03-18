@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -262,8 +263,13 @@ public abstract class NullableNotNullManager {
       return new NullabilityAnnotationInfo(memberAnno.annotation, nullability, memberAnno.owner == owner ? null : memberAnno.owner, false);
     }
     if (type instanceof PsiPrimitiveType) return null;
-    if (owner instanceof PsiLocalVariable) return null;
-    return findAnnotationInTypeHierarchy(type, annotations);
+    NullabilityAnnotationInfo inHierarchy = findAnnotationInTypeHierarchy(type, annotations);
+    if (inHierarchy != null && 
+        owner instanceof PsiLocalVariable && 
+        !canAnnotateLocals(inHierarchy.getAnnotation().getQualifiedName())) {
+      return null;
+    }
+    return inHierarchy;
   }
 
   protected @NotNull Nullability correctNullability(@NotNull Nullability nullability, @NotNull PsiAnnotation annotation) {
@@ -435,10 +441,18 @@ public abstract class NullableNotNullManager {
         }
       }
       if (!(eachType instanceof PsiClassType)) return true;
+      PsiClassType classType = (PsiClassType)eachType;
       PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(eachType);
       if (!(targetClass instanceof PsiTypeParameter)) return false;
       if (targetClass.getExtendsListTypes().length == 0) {
-        NullabilityAnnotationInfo info = findNullabilityDefault(targetClass, PsiAnnotation.TargetType.TYPE_PARAMETER);
+        PsiAnnotation.TargetType[] targetType;
+        PsiModifierListOwner owner = getOwner(classType);
+        if (owner != null) {
+          targetType = AnnotationTargetUtil.getTargetsForLocation(owner.getModifierList());
+        } else {
+          targetType = new PsiAnnotation.TargetType[]{PsiAnnotation.TargetType.TYPE_PARAMETER};
+        }
+        NullabilityAnnotationInfo info = findNullabilityDefault(targetClass, targetType);
         if (info != null) {
           result.set(info);
           return false;
@@ -447,6 +461,18 @@ public abstract class NullableNotNullManager {
       return true;
     });
     return result.get();
+  }
+  
+  private static PsiModifierListOwner getOwner(@NotNull PsiClassType classType) {
+    PsiJavaCodeReferenceElement context = ObjectUtils.tryCast(classType.getPsiContext(), PsiJavaCodeReferenceElement.class);
+    if (context != null) {
+      PsiTypeElement typeElement = ObjectUtils.tryCast(context.getParent(), PsiTypeElement.class);
+      if (typeElement != null) {
+        PsiModifierListOwner owner = ObjectUtils.tryCast(typeElement.getParent(), PsiModifierListOwner.class);
+        return owner;
+      }
+    }
+    return null;
   }
 
   protected interface NullabilityAnnotationDataHolder {
