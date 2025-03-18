@@ -15,7 +15,6 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.error
-import kotlin.jvm.JvmInline
 
 /**
  * Same as [Result], but non-throwable based. Can store any kind of errors
@@ -137,13 +136,54 @@ inline fun <T, E> Either<T, E>.onError(action: (error: E) -> Unit): Either<T, E>
 }
 
 /**
- * Unwraps the value of an `Either` instance.
+ * Returns the encapsulated value if this instance represents [success][Either.isValue] or the
+ * result of [onError] function for the encapsulated [E] if it is [error][Either.isError].
  *
- * If the instance is a `error`, it will call the provided [action] function that is supposed to throw or unwind.
- * If the instance is a `value`, it will return the contained value.
+ * Note, that this function rethrows any [Throwable] exception thrown by [onError] function.
+ *
+ * This function is a shorthand for `fold(onValue = { it }, onError = onError)` (see [fold]).
  */
-inline fun <T, E> Either<T, E>.unwrap(action: (error: E) -> Nothing): T =
-  onError { action(it) }.value
+inline fun <R, T : R, E> Either<T, E>.getOrElse(onError: (error: E) -> R): R {
+  contract {
+    callsInPlace(onError, InvocationKind.AT_MOST_ONCE)
+  }
+  return when (val error = errorOrNull) {
+    null -> value
+    else -> onError(error)
+  }
+}
+
+
+/**
+ * Returns the encapsulated value if this instance represents [value][Either.isValue] or the
+ * [defaultValue] if it is [error][Either.isError].
+ *
+ * This function is a shorthand for `getOrElse { defaultValue }` (see [getOrElse]).
+ */
+inline fun <R, T : R, E> Either<T, E>.getOrDefault(defaultValue: R): R {
+  if (isError) return defaultValue
+  return value
+}
+
+/**
+ * Returns the result of [onValue] for the encapsulated value if this instance represents [value][Either.isValue]
+ * or the result of [onError] function for the encapsulated [E] error if it is [error][Either.isError].
+ *
+ * Note, that this function rethrows any [Throwable] exception thrown by [onValue] or by [onError] function.
+ */
+inline fun <R, T, E> Either<T, E>.fold(
+  onValue: (value: T) -> R,
+  onError: (error: E) -> R,
+): R {
+  contract {
+    callsInPlace(onValue, InvocationKind.AT_MOST_ONCE)
+    callsInPlace(onError, InvocationKind.AT_MOST_ONCE)
+  }
+  return when (val error = errorOrNull) {
+    null -> onValue(value)
+    else -> onError(error)
+  }
+}
 
 /**
  * Performs the given [action] on the encapsulated value if this instance represents [value][Either.isValue].
