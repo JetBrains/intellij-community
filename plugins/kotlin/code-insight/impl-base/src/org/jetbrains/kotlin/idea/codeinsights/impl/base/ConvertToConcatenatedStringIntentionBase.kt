@@ -2,39 +2,43 @@
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
-import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
-abstract class ConvertToConcatenatedStringIntentionBase : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
+abstract class ConvertToConcatenatedStringIntentionBase : PsiUpdateModCommandAction<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
-    KotlinBundle.lazyMessage("convert.template.to.concatenated.string")
-), LowPriorityAction {
-    override fun isApplicableTo(element: KtStringTemplateExpression): Boolean {
+) {
+    override fun getPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation? =
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
+
+    override fun getFamilyName(): @IntentionFamilyName String {
+        return KotlinBundle.message("convert.template.to.concatenated.string")
+    }
+
+    override fun isElementApplicable(element: KtStringTemplateExpression, context: ActionContext): Boolean {
         if (element.lastChild.node.elementType != KtTokens.CLOSING_QUOTE) return false // not available for unclosed literal
         if (element.interpolationPrefix?.textLength?.let { it > 1 } == true) return false // not supported for multi-dollar strings
         return element.entries.any { it is KtStringTemplateEntryWithExpression }
     }
 
-    override fun startInWriteAction(): Boolean = false
-
-    override fun getElementToMakeWritable(currentFile: PsiFile) = currentFile
-
-    override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {
+    override fun invoke(context: ActionContext, element: KtStringTemplateExpression, updater: ModPsiUpdater) {
         checkNotNull(element.text) { "Failed to get template expression's text" }
         val tripleQuoted = !element.isSingleQuoted()
         val quote = if (tripleQuoted) "\"\"\"" else "\""
         val entries = element.entries.filterNot { it is KtStringTemplateEntryWithExpression && it.expression == null }
 
         val convertFirstEntryExplicitly = (entries.firstOrNull() as? KtStringTemplateEntryWithExpression)?.expression?.let {
-            !checkIfExpressionIsStringFromModalView(it)
+            !isExpressionOfStringType(it)
         } ?: false
 
         val entryTexts = entries.mapIndexed { index, entry ->
@@ -59,10 +63,8 @@ abstract class ConvertToConcatenatedStringIntentionBase : SelfTargetingOffsetInd
         }
 
         val text = targetTexts.joinToString("+")
-        val replacement = KtPsiFactory(element).createExpression(text).safeDeparenthesizeOperands()
-        runWriteActionIfPhysical(element) {
-            element.replace(replacement)
-        }
+        val replacement = KtPsiFactory(element.project).createExpression(text).safeDeparenthesizeOperands()
+        element.replace(replacement)
     }
 
     private fun KtExpression.safeDeparenthesizeOperands(): KtExpression {
@@ -112,15 +114,6 @@ abstract class ConvertToConcatenatedStringIntentionBase : SelfTargetingOffsetInd
     }
 
     private fun String.quote(quote: String): String = quote + this + quote
-
-    private fun checkIfExpressionIsStringFromModalView(expression: KtExpression): Boolean {
-        return ActionUtil.underModalProgress(
-            expression.project,
-            KotlinBundle.message("convert.to.concatenated.string.statement.analyzing.entry.type")
-        ) {
-            isExpressionOfStringType(expression)
-        }
-    }
 
     /**
      * Tells whether given [expression] is of the string type.
