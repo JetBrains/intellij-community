@@ -1,6 +1,8 @@
 package com.intellij.terminal.frontend
 
 
+import com.google.common.base.Ascii
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupArranger
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
@@ -24,6 +26,9 @@ class TerminalLookup(session: ClientProjectSession, editor: Editor, myArranger: 
       hideWithItemSelected(null, completionChar)
       return
     }
+    val prefixMatcher: PrefixMatcher = arranger.itemMatcher(item)
+    val commandSize = prefixMatcher.prefix.length
+    terminalInput.sendBytes(ByteArray(commandSize) { Ascii.BS })
     terminalInput.sendString(item.lookupString)
     hide()
   }
