@@ -53,11 +53,24 @@ fun KotlinCodeStyleSettings.addTrailingCommaIsAllowedFor(node: ASTNode): Boolean
 fun KotlinCodeStyleSettings.addTrailingCommaIsAllowedFor(element: PsiElement): Boolean =
     addTrailingCommaIsAllowedFor(PsiUtilCore.getElementType(element))
 
-private fun KotlinCodeStyleSettings.addTrailingCommaIsAllowedFor(type: IElementType?): Boolean = when (type) {
-    null -> false
-    in TYPES_WITH_TRAILING_COMMA_ON_DECLARATION_SITE -> ALLOW_TRAILING_COMMA
-    in TYPES_WITH_TRAILING_COMMA_ON_CALL_SITE -> ALLOW_TRAILING_COMMA_ON_CALL_SITE || trailingCommaIsAllowedOnCallSite()
-    else -> false
+private fun KotlinCodeStyleSettings.isTrailingCommaAllowedFor(type: IElementType?) = when (type) {
+    KtNodeTypes.WHEN_ENTRY -> ALLOW_TRAILING_COMMA_WHEN_ENTRY
+    KtNodeTypes.TYPE_PARAMETER_LIST -> ALLOW_TRAILING_COMMA_TYPE_PARAMETER_LIST
+    KtNodeTypes.DESTRUCTURING_DECLARATION -> ALLOW_TRAILING_COMMA_DESTRUCTURING_DECLARATION
+    KtNodeTypes.FUNCTION_LITERAL -> ALLOW_TRAILING_COMMA_FUNCTION_LITERAL
+    KtNodeTypes.VALUE_PARAMETER_LIST -> ALLOW_TRAILING_COMMA_VALUE_PARAMETER_LIST
+    KtNodeTypes.CONTEXT_RECEIVER_LIST -> ALLOW_TRAILING_COMMA_CONTEXT_RECEIVER_LIST
+    KtNodeTypes.COLLECTION_LITERAL_EXPRESSION -> ALLOW_TRAILING_COMMA_COLLECTION_LITERAL_EXPRESSION
+    KtNodeTypes.TYPE_ARGUMENT_LIST -> ALLOW_TRAILING_COMMA_TYPE_ARGUMENT_LIST
+    KtNodeTypes.INDICES -> ALLOW_TRAILING_COMMA_INDICES
+    KtNodeTypes.VALUE_ARGUMENT_LIST -> ALLOW_TRAILING_COMMA_VALUE_ARGUMENT_LIST
+    else -> true
+}
+
+private fun KotlinCodeStyleSettings.addTrailingCommaIsAllowedFor(type: IElementType?): Boolean {
+    if (type == null) return false
+    if (type in TYPES_WITH_TRAILING_COMMA && ALLOW_TRAILING_COMMA && isTrailingCommaAllowedFor(type)) return true
+    return type in TYPES_WITH_TRAILING_COMMA_ON_CALL_SITE && (ALLOW_TRAILING_COMMA_ON_CALL_SITE || trailingCommaIsAllowedOnCallSite())
 }
 
 fun PsiElement.canAddTrailingComma(): Boolean = when {
